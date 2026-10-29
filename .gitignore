@@ -1,8 +1,29 @@
+# Build artifacts and local installations
 node_modules/
 dist/
 .astro/
 .vercel/
+.next/
+coverage/
+*.log
+
+# Never commit credentials, auth material, or local secrets
 .env
 .env.*
 !.env.example
-*.log
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*secret*.json
+
+# Never version private participant data, exports or database dumps
+data/private/
+exports/private/
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+*.sql.gz
+*.dump
