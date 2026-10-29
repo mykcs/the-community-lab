@@ -15,6 +15,10 @@ function guest(id, scores, override = {}) {
     id, stage_name: `合成嘉宾${id}`, season: 2,
     question_version: 'licensed-source-2026', scoring_version: 'licensed-official-v1',
     score_source_url: `https://example.org/synthetic/${id}`, score_checked_at: '2026-10-29',
+    // Synthetic ONLY: exercise the future provenance contract; never publish as a real guest.
+    score_review_status: 'human_reviewed_primary_source',
+    score_reviewed_at: '2026-10-29',
+    score_source_locator: 'synthetic fixture only / no real episode',
     dimensions: ['a', 'b', 'c'].map((axis, i) => ({ id: axis, score: scores[i] })),
     social_accounts: [], ...override,
   };
@@ -116,4 +120,30 @@ test('public account navigation rejects misleading platforms, post links and cre
   })]);
   assert.deepEqual(ranked.matches[0].social_accounts.map(a => a.platform),
     ['X', 'Instagram', 'YouTube']);
+});
+
+
+test('a URL and a checked date alone cannot promote unreviewed guest scores', () => {
+  const unreviewed = [
+    { score_review_status: undefined },
+    { score_review_status: 'two_agents_checked' },
+    { score_reviewed_at: undefined },
+    { score_reviewed_at: '2099-01-01' },
+    { score_reviewed_at: '2026-10-28' },
+    { score_source_locator: '' },
+    { score_source_locator: 'S2' },
+  ];
+  for (const mutation of unreviewed) {
+    const data = guest('unverified', [40, -30, 0], mutation);
+    const ranked = rankComparableGuests(user, [data]);
+    assert.equal(ranked.status, 'no_verified_comparables', JSON.stringify(mutation));
+    assert.equal(ranked.excluded, 1);
+    assert.deepEqual(ranked.matches, []);
+  }
+});
+
+test('reviewed synthetic examples still rank, without qualifying the production directory', () => {
+  const checked = rankComparableGuests(user, [guest('fixture', [40, -30, 0])]);
+  assert.equal(checked.status, 'ready');
+  assert.deepEqual(checked.matches.map(x => x.guest_id), ['fixture']);
 });
