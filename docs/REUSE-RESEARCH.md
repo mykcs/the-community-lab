@@ -30,6 +30,7 @@
 - 在 [官方新站首页](https://thecommunity.co.kr/)、[第一季页](https://thecommunity.co.kr/season/1)、[第二季页](https://thecommunity.co.kr/season/2) 与 [ON AIR 页](https://thecommunity.co.kr/broadcast) 的可见页面中，未找到版权条款、隐私条款或版权联络入口。第一季页仍显示 87 题。所查首页及这些页面可见同一页脚文字：`THE COMMUNITY © 2026 PRINCIPLE / STRUCTURE / MEANING`；它没有给出可识别的法人／权利人名称或题库复用许可，因此不能据此判断版权归属。
 - 官方站点 `robots.txt` 指向的 sitemap 只列出首页、两季页和 ON AIR 页；对 `/terms`、`/privacy`、`/privacy-policy`、`/about` 的直接读取都返回相同的 SPA 外壳，没有检出条款文本或版权联系人。这是有限的公开路由检查，不证明不存在未链接、未收录或需登录才能访问的条款。
 - ON AIR 页的「Wavve에서 보기」链接经 Naver 短链转到 Wavve 观看入口，能确认节目与播放平台之间的导流关系；它没有证明测试题由 Wavve 持有或授予转载权。[Wavve 通用服务条款](https://member.wavve.com/signup/terms?category=service)（2026-08-31 生效）第 18 条一般区分 Wavve 自制作品与合作提供作品的权利归属，并要求在未获事先许可时不得复制、传播或发行受其知识产权保护的信息；条款没有指明本测试题目的具体权利人或许可范围。条款登记的 `helpdesk@wavve.com` 是一般客服邮箱，页面未标注专门的版权许可联系人。
+- [Wavve 新闻室“伙伴提案”页](https://www.contentwavve.com/com/com-2.html) 当前接受合作提案，建议发至 `partner@wavve.com`，并称会转给相关部门；“内容”示例包括频道入驻与 VOD 供应。它提供了一个可询问权利归属／许可流程的官方分流入口，但没有明示题库转载授权流程或授予本项目任何许可。此轮没有发送邮件。
 - 结论保持 `UNKNOWN`：原题、选项、翻译及评分规则均未获可核验的重用许可。没有向 Wavve、制作方或第三方发送联络；如要继续申请许可，仍需用户对具体收件人和发送内容作出动作级授权。
 
 ## 当前公开客户端的逐题元数据补充（2026-10-29）
