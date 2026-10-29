@@ -32,7 +32,7 @@
 | --- | --- | --- |
 | 已公开测试形式 | 87 道题、四级同意程度 | 37 个选择 |
 | 已介绍的维度 | 政治、性别观念、阶级、开放性 | 原则／结果、结构／能力、意义／实利 |
-| 现有入口 | 历史页面 `the-community-survey.web.app`，需确认现状 | [thecommunity.co.kr](https://thecommunity.co.kr/) |
+| 已核实韩文原站入口 | [第一季 87 题（新系统）](https://the-community-survey.web.app/season/1) | [第二季 37 题](https://the-community-survey.web.app/season/2) |
 | 本项目状态 | 待核对原始计分规则与版权许可 | 待核对原始题库与计分规则和版权许可 |
 
 上表来自节目方页面、Wavve 制作访谈及公开报道；详细的**已核实／尚未知**边界见 [资料调查](docs/REUSE-RESEARCH.md)。本项目不会把独立设计的题目或分数冒充官方原版。
@@ -50,7 +50,7 @@
 ## 我们先复用哪些成熟成果
 
 1. [第二季现有测试网站](https://thecommunity.co.kr/)：优先参考官方已公开的体验与结果概念。
-2. [第一季历史测试页面](https://the-community-survey.web.app/)：调查是否仍可访问、能否合法引用；不能默认复制题库。
+2. [第一季韩文测试现行入口](https://the-community-survey.web.app/season/1)：2026-10-29 已实际打开并进入测试开始页面，显示 87 题、预计约 9 分钟；可直接跳转参与原站，不等于获得题目转载许可。
 3. [8values 开源项目](https://github.com/8values/8values.github.io)：MIT 许可证，适合学习“问卷 → 维度计分 → 结果可视化”的通用实现；**不是**《The Community》原版。
 4. [非官方第一、二季人物倾向对照页面](https://thecommunity-fan.pages.dev/)：现有相似度比较与可视化可以作为方法参考；不能据此断言题库或源码开放。
 
