@@ -25,6 +25,13 @@
 - 两季原站均明确表示测试是为节目使用而设计，并提示结果可能不完全反映真实观点；第二季网站还声称经过学者咨询与研究机构可靠性验证。这里只记录网站自己的声明，不将其扩展为独立科学认证。
 - **版权边界未改变**：页面可以打开、可供访客原站答题，不代表本项目可将 87＋37 道题及评分算法复制、翻译、公开再发布。我们先在本项目提供清楚的原站链接；待有合法依据后再复刻双语题库。
 
+### 官方新站署名与授权入口核查（2026-10-29）
+
+- 在 [官方新站首页](https://thecommunity.co.kr/)、[第一季页](https://thecommunity.co.kr/season/1)、[第二季页](https://thecommunity.co.kr/season/2) 与 [ON AIR 页](https://thecommunity.co.kr/broadcast) 的可见页面中，未找到版权条款、隐私条款或版权联络入口。第一季页仍显示 87 题。所查首页及这些页面可见同一页脚文字：`THE COMMUNITY © 2026 PRINCIPLE / STRUCTURE / MEANING`；它没有给出可识别的法人／权利人名称或题库复用许可，因此不能据此判断版权归属。
+- 官方站点 `robots.txt` 指向的 sitemap 只列出首页、两季页和 ON AIR 页；对 `/terms`、`/privacy`、`/privacy-policy`、`/about` 的直接读取都返回相同的 SPA 外壳，没有检出条款文本或版权联系人。这是有限的公开路由检查，不证明不存在未链接、未收录或需登录才能访问的条款。
+- ON AIR 页的「Wavve에서 보기」链接经 Naver 短链转到 Wavve 观看入口，能确认节目与播放平台之间的导流关系；它没有证明测试题由 Wavve 持有或授予转载权。[Wavve 通用服务条款](https://member.wavve.com/signup/terms?category=service)（2026-08-31 生效）第 18 条一般区分 Wavve 自制作品与合作提供作品的权利归属，并要求在未获事先许可时不得复制、传播或发行受其知识产权保护的信息；条款没有指明本测试题目的具体权利人或许可范围。条款登记的 `helpdesk@wavve.com` 是一般客服邮箱，页面未标注专门的版权许可联系人。
+- 结论保持 `UNKNOWN`：原题、选项、翻译及评分规则均未获可核验的重用许可。没有向 Wavve、制作方或第三方发送联络；如要继续申请许可，仍需用户对具体收件人和发送内容作出动作级授权。
+
 ## 当前公开客户端的逐题元数据补充（2026-10-29）
 
 [原站公开资源](https://the-community-survey.web.app/assets/index-C735ffg4.js) 共 331,501 字节，SHA-256 为 `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`。只读取公开页面已加载的资源，未访问管理路径或绕过 App Check。可核对的结果保存在 [逐题纯元数据索引](../data/original-question-index.json)，未保存题干或选项描述。
