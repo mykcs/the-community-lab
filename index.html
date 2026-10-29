@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#10131a" />
+    <meta name="description" content="用韩文与中文双语探索价值选择的独立粉丝实验。两季原创示例测试；不代表韩国综艺《The Community》官方结果。" />
+    <title>同频实验室 · The Community Lab</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%2310131a'/%3E%3Ccircle cx='24' cy='24' r='14' fill='none' stroke='%23ff7468' stroke-width='4'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ff7468'/%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="./style.css" />
+    <script type="module" src="./app.mjs"></script>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href="#home" aria-label="同频实验室首页">
+          <span class="brand-symbol" aria-hidden="true"><span></span></span>
+          <span class="brand-name">THE COMMUNITY <strong>LAB.</strong><small>同频实验室</small></span>
+        </a>
+        <nav aria-label="主导航" class="header-links">
+          <a href="#experiments">双季测试</a>
+          <a href="#how-it-works">我们的标准</a>
+          <a class="nav-github" href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+        </nav>
+      </header>
+
+      <main id="main-content">
+        <section id="home-view" class="view">
+          <div class="intro-strip"><span class="live-dot"></span><span>독립 팬 프로젝트 · 独立非官方项目</span><span class="intro-separator"></span><span>实验版 0.1</span></div>
+          <section class="hero" aria-labelledby="hero-title">
+            <div class="hero-copy">
+              <div class="eyebrow"><span>01 / ABOUT YOUR VALUES</span><span class="eyebrow-line"></span></div>
+              <p class="hero-korean" lang="ko">당신은 누구와 가장 닮았을까요?</p>
+              <h1 id="hero-title">立场不同，<br /><em>也能找到同频。</em></h1>
+              <p class="hero-description">灵感来自韩国综艺《The Community》。以<span class="highlight-text">韩文原文在前、信达雅中文译文在后</span>的方式，重新体验价值选择。先了解自己，再寻找与你观点相近的节目嘉宾。</p>
+              <div class="hero-actions">
+                <button id="hero-start" class="button button-primary" type="button">开始第二季示例测试 <span aria-hidden="true">↗</span></button>
+                <a href="#experiments" class="button button-text">先看看两季有什么不同 <span aria-hidden="true">↓</span></a>
+              </div>
+              <p class="safe-note"><span aria-hidden="true">✳</span> 当前为本站原创演示题，不是节目原题；不计算真实嘉宾匹配。</p>
+            </div>
+            <div class="hero-art" aria-hidden="true">
+              <div class="art-caption art-caption-top">THE COMMUNITY / VALUES INDEX</div>
+              <div class="orb orb-one"></div><div class="orb orb-two"></div><div class="orb orb-three"></div>
+              <div class="orb-center"><span>당신의</span><strong>좌표</strong><small>YOUR POSITION</small></div>
+              <span class="art-pin pin-one">원칙 <i>01</i></span>
+              <span class="art-pin pin-two">구조 <i>02</i></span>
+              <span class="art-pin pin-three">의미 <i>03</i></span>
+              <div class="art-caption art-caption-bottom">THREE AXES. MANY PERSPECTIVES.</div>
+            </div>
+          </section>
+
+          <section class="section experiments" id="experiments" aria-labelledby="experiments-title">
+            <div class="section-topline"><span>01 — SELECT YOUR SEASON</span><span>두 개의 시즌 / 两季入口</span></div>
+            <div class="section-heading"><div><h2 id="experiments-title">从哪一季开始？</h2><p>先用少量原创题感受双语体验。正式原题需完成来源与版权核验后才能上线。</p></div><span class="section-count">02 <small>TESTS</small></span></div>
+            <div class="season-grid">
+              <article class="season-card season-two"><div class="season-meta"><span class="chip chip-accent">优先开发</span><span>SEASON 02 / 2026</span></div><div class="season-number">02<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">보이지 않는 손</p><h3>第二季 · 看不见的手</h3><p>原则与结果，结构与能力，意义与实利。三个坐标，看看你如何取舍。</p></div><div class="season-footer"><span>3 组价值轴 <i>·</i> 6 道原创演示题</span><button id="start-s2" class="season-arrow" type="button" aria-label="开始第二季演示测试">↗</button></div></article>
+              <article class="season-card season-one"><div class="season-meta"><span class="chip">同步预览</span><span>SEASON 01 / 2024</span></div><div class="season-number">01<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">더 커뮤니티</p><h3>第一季 · 价值观探索</h3><p>公共参与、性别观念、阶级分配与开放性。四个角度，看见差异。</p></div><div class="season-footer"><span>4 组价值轴 <i>·</i> 8 道原创演示题</span><button id="start-s1" class="season-arrow" type="button" aria-label="开始第一季演示测试">↗</button></div></article>
+            </div>
+          </section>
+
+          <section class="section principle-section" id="how-it-works" aria-labelledby="principles-title">
+            <div class="section-topline"><span>02 — OUR APPROACH</span><span>한글 × 中文</span></div>
+            <h2 id="principles-title">一份好翻译，<br />让立场被真正听见。</h2>
+            <div class="principle-grid"><div class="principle-item"><span class="principle-index">01 / 原文</span><strong lang="ko">한국어 원문</strong><p>每道题先放韩文，保留关键条件、否定和语气，方便懂韩语的人逐句核对。</p></div><div class="principle-item"><span class="principle-index">02 / 中文</span><strong>信 · 达 · 雅</strong><p>先忠于原义，再清楚自然。中文译文不是替题目改立场，而是帮助更多人理解。</p></div><div class="principle-item"><span class="principle-index">03 / 证据</span><strong>来源可核验</strong><p>区分本站原创题与节目原题；嘉宾成绩、社媒链接也必须有可靠的公开证据。</p></div></div>
+          </section>
+
+          <section class="vision-banner"><div><span class="eyebrow-plain">COMING WHEN VERIFIED / 资料核实后开放</span><h2>做完测试，找到与你<br />想法最接近的嘉宾。</h2><p>未来将展示 3–5 位同季嘉宾、相似与不同的价值轴，以及本人确认的 X、Instagram、YouTube 等公开主页。不会编造匹配分数或账号。</p></div><div class="vision-symbol" aria-hidden="true">≋<span>YOU × CAST</span></div></section>
+        </section>
+
+        <section id="quiz-view" class="view quiz-view" hidden aria-labelledby="quiz-heading">
+          <div class="quiz-header"><button id="quiz-exit" class="back-button" type="button"><span aria-hidden="true">←</span> 返回入口 / 暂停</button><div class="quiz-top-marker" id="quiz-season-label">SEASON 02</div></div>
+          <div class="quiz-progress-info"><span id="quiz-count">QUESTION 01 / 06</span><span id="quiz-percent">17%</span></div><div class="progress-track"><div id="quiz-progress" class="progress-fill"></div></div>
+          <div class="quiz-layout"><div class="quiz-aside"><span class="aside-index">VALUES STUDY</span><strong id="quiz-axis-name">原则与结果</strong><p>每一个回答都只是你在这个情境下的选择，没有标准答案。</p><span class="aside-mark" aria-hidden="true">Q<span>.</span></span></div><div class="question-panel"><span class="question-label" id="quiz-heading">한국어 · 자체 제작 예시 / 韩文原创示例</span><h1 class="question-korean" id="question-ko" lang="ko"></h1><div class="translation-divider"><span>中文翻译 · 待独立双语复核</span><span>↘</span></div><p class="question-chinese" id="question-zh"></p><p class="answer-instruction" id="answer-instruction"></p><div id="answer-options" class="answer-options" role="group" aria-label="请选择答案"></div><div class="quiz-bottom"><button id="quiz-back" class="button button-outline" type="button">← 上一题</button><button id="quiz-next" class="button button-primary" type="button" disabled>确认，继续 <span aria-hidden="true">→</span></button></div><div class="quiz-disclaimer">本站原创演示题，并非节目官方原题。答题内容仅保留在当前页面内存中，不会上传。</div></div></div>
+        </section>
+
+        <section id="result-view" class="view result-view" hidden aria-labelledby="result-title"><div id="result-content"></div></section>
+      </main>
+
+      <footer class="site-footer" id="privacy"><div class="footer-main"><div><span class="footer-brand">THE COMMUNITY LAB.</span><p>一个关于差异、理解与同频的非官方实验。</p></div><div class="footer-links"><a href="https://github.com/mykcs/the-community-lab/blob/main/WISH.md" target="_blank" rel="noopener noreferrer">项目愿望 ↗</a><a href="https://github.com/mykcs/the-community-lab/blob/main/docs/TRANSLATION-STANDARD.md" target="_blank" rel="noopener noreferrer">翻译标准 ↗</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">公开源码 ↗</a></div></div><div class="footer-bottom"><span>INDEPENDENT FAN EXPERIMENT · NOT OFFICIAL</span><span>不会上传答案 · 不含个人资料 · 无第三方追踪</span></div></footer>
+    </div>
+  </body>
+</html>
