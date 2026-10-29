@@ -1,6 +1,16 @@
 # 部署与持续集成 · 2026-10-29 更新
 
-## 当前线上确切版本（有证据）
+## Git 自动发布的功能验收版本
+
+- 功能提交：[PR #6](https://github.com/mykcs/the-community-lab/pull/6) 合并后的 `3bd73a130e94b6c61d1cd754faafa47f44a81f6b`。后续纯文档提交可能使 `main` SHA 前进；本节固定本次功能验收身份，最新部署以 Vercel 实际状态为准。
+- 自动 Preview：[dpl_5yWeaGcTBu8STz267ZfBznighn5W](https://vercel.com/wangrui92-team/the-community-lab/5yWeaGcTBu8STz267ZfBznighn5W)，`source=git`、`READY`，SHA 为 PR head `4babb6fbaf33918a9ed82bf334afb7bf15e94f8f`。使用已有短期项目身份访问受保护预览，未关闭保护或公开凭据。
+- 自动 Production：[dpl_GiyDQfdburtWUuZUkETMct9NZu6B](https://vercel.com/wangrui92-team/the-community-lab/GiyDQfdburtWUuZUkETMct9NZu6B)，`source=git`、`target=production`、`READY`，SHA 为上述功能提交，分支 `main`；正式域名指向此部署。
+- [GitHub Actions #40927040352](https://github.com/mykcs/the-community-lab/actions/runs/40927040352) 的实际日志证明 26/26 测试、0 失败／0 跳过、Astro 0 错误／0 警告和构建执行完成。独立只读源码、源题元数据重解析及浏览器证据审查通过。
+- 本地、受保护预览和正式域名分别完成 Chrome 156 的 440×956 与 1440×900 CSS px 两季流程验收；正式域名的 JS／CSS 字节与本地已验收构建一致。答案未上传，`localStorage`／`sessionStorage` 均为空，原题许可与官方计分仍未通过。
+
+验收详情见 [QA](QA-2026-10-29.md)。无需第二个生产项目、宽权限 Token、付费升级或额外部署流水线。
+
+## Astro 首次手动生产发布（历史证据）
 
 - 正式网址：<https://the-community-lab.vercel.app/>，现已部署 **Astro + Tailwind** 的韩中双语独立原创演示版，非节目官方复刻。
 - GitHub 权威源码：`mykcs/the-community-lab` `main` 提交 `1740ee7431b286f6c899cf1c4166ed0966568b35`（[已合并 PR #4](https://github.com/mykcs/the-community-lab/pull/4)）。
@@ -10,11 +20,11 @@
 - GitHub Actions：本次 PR 的最终 head `71975239db298c003319b03dd6864f48eb4a6eb7` 对应 [Verify Astro bilingual demo #40918101519](https://github.com/mykcs/the-community-lab/actions/runs/40918101519) **success**；18/18 测试通过，包括两季 65,600 种原创演示答案组合。
 - **真实 Chrome 浏览器复验**：在正式域名和本地构建，分别检查 440×956 CSS px 移动视口及 1440×900 CSS px 桌面，双季完整答题、韩文先于中文、结果、暂停/恢复/返回和横向溢出均通过。此为模拟 iPhone 18 Pro Max 的浏览器 CSS 视口，不冒充实体手机。详情见 [实际 QA](QA-2026-10-29.md)。
 
-## GitHub 连接已恢复，自动触发待实际验收
+## GitHub 自动触发已实际验收
 
 用户为现有 Vercel App 加入本仓库后，Vercel 的仓库搜索实际返回 `mykcs/the-community-lab`。官方 CLI 在已核实的现有 `the-community-lab` 项目执行 `vercel git connect`，返回 `Connected`；没有创建第二个生产项目、扩大 Token 或关闭部署保护。连接前后的差异是 App 对这个仓库的访问。
 
-本轮将使用一个真实 PR 验证自动 Preview，再通过已审查和 CI 通过的合并验证自动 Production。只有 Git 来源、构建 SHA、正式域名内容和桌面／440×956 CSS px 浏览器均核对后，才关闭 [Issue #3](https://github.com/mykcs/the-community-lab/issues/3)。连接成功本身只完成配置，不证明自动发布。
+PR #6 已真实触发自动 Preview；经独立审查与 CI 通过后，使用 expected head SHA 合并，随后自动触发 Production。Git 来源、SHA、正式域名内容和桌面／440×956 CSS px 浏览器均已核对。[Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 按这些实际证据收束。实体 iPhone 仍没有实测记录，浏览器模拟不冒充真机。
 
 ## 自动连接故障的历史记录（连接现已恢复）
 
@@ -24,7 +34,7 @@
 
 当时 Vercel GitHub namespace `mykcs` 为 `isAccessRestricted=true`，项目搜索 `the-community-lab` 返回空；同一团队其他三个已有 GitHub 关联项目可见。**这支持「Vercel GitHub App 尚不能访问新仓库」的判断，但不能仅凭该错误断言唯一根因。** 仓库本身为公开仓库且 GitHub Git 正常读取。此失败不是 Astro 构建或生产网站故障。
 
-当时的修复路径如下；本轮授权与连接两步已完成，实际触发验收尚待收束：
+当时的修复路径如下；本轮授权、连接与实际触发验收均已完成：
 
 1. 由 GitHub 安装管理员在 **GitHub → Settings → Applications → Installed GitHub Apps → Vercel → Configure** 核查是否按 selected repositories 限制授权；仅为 `mykcs/the-community-lab` 添加 Vercel App 的仓库访问（不新建宽范围 token，不申请无关 repo scope）。若安装管理员和调用 Agent 权限不同，停在平台的人类授权界面。
 2. 然后在 **Vercel → the-community-lab → Settings → Git** 将现有项目连接到 `mykcs/the-community-lab`，生产分支指向 `main`；也可以重新运行官方 `vercel git connect`，但必须以平台实际成功回应为准。
