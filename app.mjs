@@ -1,10 +1,13 @@
 import { SEASONS } from './data/questions.mjs';
 import { scoreAnswers, validateSeason } from './lib/quiz.mjs';
+import { createQuizSessions } from './lib/quiz-session.mjs';
 
 for (const season of Object.values(SEASONS)) validateSeason(season);
 
 // Only in-memory state: answers never leave this browser tab or enter URL/logs/storage.
-const state = { seasonId: null, index: 0, answers: {}, view: 'home', result: null };
+const sessions = createQuizSessions(SEASONS);
+const state = { view: 'home' };
+let active = null;
 const $ = (id) => document.getElementById(id);
 const views = { home: $('home-view'), quiz: $('quiz-view'), result: $('result-view') };
 
@@ -19,39 +22,53 @@ function switchView(name) {
   for (const [key, view] of Object.entries(views)) view.hidden = key !== name;
   state.view = name;
   window.scrollTo({ top: 0, behavior: 'instant' });
+  const heading = name === 'quiz' ? $('question-ko') : name === 'result' ? $('result-title') : $('hero-title');
+  heading?.focus({ preventScroll: true });
 }
 
 function begin(seasonId, fresh = false) {
   if (!SEASONS[seasonId]) return;
-  if (fresh || state.seasonId !== seasonId || state.view === 'result') {
-    state.seasonId = seasonId;
-    state.index = 0;
-    state.answers = {};
-    state.result = null;
-  }
+  active = sessions.begin(seasonId, fresh);
+  if (active.result) { renderResult(); return; }
   renderQuestion();
   switchView('quiz');
 }
 
 function showHome() {
+  for (const id of [1, 2]) {
+    const saved = sessions.get(id);
+    const answered = saved ? Object.keys(saved.answers).length : 0;
+    const action = saved?.result ? '查看' : answered ? '继续' : '开始';
+    const label = id === 1 ? '第一季' : '第二季';
+    const button = $('start-s' + id);
+    button.firstChild.textContent = saved?.result ? '结果' : action;
+    button.setAttribute('aria-label', `${action}${label}演示${saved?.result ? '结果' : '测试'}`);
+    const note = $('s' + id + '-session-note');
+    note.hidden = !answered;
+    note.textContent = !answered ? '' : saved.result ? '本页已有你的示例结果，可随时查看。' : `已答 ${answered} / ${SEASONS[id].questions.length} 题 · 继续第 ${saved.index + 1} 题`;
+    if (id === 2) $('hero-start').firstChild.textContent = `${action}第二季示例${saved?.result ? '结果' : '测试'} `;
+  }
   switchView('home');
-  // Pausing a quiz keeps progress in memory only, until this tab is refreshed or closed.
-  const hasProgress = state.seasonId && Object.keys(state.answers).length > 0 && state.result === null;
-  $('hero-start').firstChild.textContent = hasProgress && state.seasonId === 2 ? '继续第二季示例测试 ' : '开始第二季示例测试 ';
+}
+
+function updateProgress() {
+  const count = SEASONS[active.seasonId].questions.length;
+  const answered = Object.keys(active.answers).length;
+  $('quiz-percent').textContent = `已答 ${answered} / ${count} 题`;
+  $('quiz-progress').max = count;
+  $('quiz-progress').value = answered;
 }
 
 function renderQuestion() {
-  const season = SEASONS[state.seasonId];
-  const question = season.questions[state.index];
+  const season = SEASONS[active.seasonId];
+  const question = season.questions[active.index];
   const axis = season.axes.find((entry) => entry.id === question.axis);
   const count = season.questions.length;
-  const currentNumber = String(state.index + 1).padStart(2, '0');
+  const currentNumber = String(active.index + 1).padStart(2, '0');
   const totalNumber = String(count).padStart(2, '0');
   $('quiz-season-label').textContent = `SEASON ${String(season.id).padStart(2, '0')} / ORIGINAL DEMO`;
-  $('quiz-count').textContent = `QUESTION ${currentNumber} / ${totalNumber}`;
-  const percentage = Math.round(((state.index + 1) / count) * 100);
-  $('quiz-percent').textContent = `${percentage}%`;
-  $('quiz-progress').style.width = `${percentage}%`;
+  $('quiz-count').textContent = `第 ${currentNumber} / ${totalNumber} 题`;
+  updateProgress();
   $('quiz-axis-name').textContent = axis.name;
   $('question-ko').textContent = question.source_text_ko;
   $('question-zh').textContent = question.translation_zh_cn;
@@ -61,7 +78,7 @@ function renderQuestion() {
   for (const [index, choice] of question.options.entries()) {
     const button = node('button', 'answer-option');
     button.type = 'button';
-    button.setAttribute('aria-pressed', String(state.answers[question.id] === choice.value));
+    button.setAttribute('aria-pressed', String(active.answers[question.id] === choice.value));
     const marker = node('span', 'answer-choice-mark', season.id === 2 ? String.fromCharCode(65 + index) : String(index + 1));
     marker.setAttribute('aria-hidden', 'true');
     const label = node('span', 'answer-choice-text');
@@ -71,20 +88,25 @@ function renderQuestion() {
     label.append(korean, chinese);
     button.append(marker, label);
     button.addEventListener('click', () => {
-      state.answers[question.id] = choice.value;
+      active.answers[question.id] = choice.value;
       for (const sibling of container.children) sibling.setAttribute('aria-pressed', String(sibling === button));
       $('quiz-next').disabled = false;
+      updateProgress();
     });
     container.append(button);
   }
-  $('quiz-back').disabled = state.index === 0;
-  $('quiz-next').disabled = state.answers[question.id] === undefined;
-  $('quiz-next').firstChild.textContent = state.index === count - 1 ? '查看我的示例结果 ' : '确认，继续 ';
+  $('quiz-back').disabled = active.index === 0;
+  $('quiz-next').disabled = active.answers[question.id] === undefined;
+  $('quiz-next').firstChild.textContent = active.index === count - 1 ? '查看我的示例结果 ' : '确认，继续 ';
+  if (state.view === 'quiz') {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    $('question-ko').focus({ preventScroll: true });
+  }
 }
 
 function renderResult() {
-  const season = SEASONS[state.seasonId];
-  state.result = scoreAnswers(season, state.answers);
+  const season = SEASONS[active.seasonId];
+  active.result ??= scoreAnswers(season, active.answers);
   const root = $('result-content');
   root.replaceChildren();
 
@@ -93,6 +115,7 @@ function renderResult() {
   const intro = node('div');
   const title = node('h1', '', '你在这张价值地图上的坐标。');
   title.id = 'result-title';
+  title.tabIndex = -1;
   const subtitle = node('p', '', `${season.label} · ${season.description} 本页仅依据 ${season.questions.length} 道本站原创示例题计算，不是节目官方成绩或心理学诊断。`);
   intro.append(title, subtitle);
   const emblem = node('div', 'result-emblem', `0${season.id}`);
@@ -103,7 +126,7 @@ function renderResult() {
   const panelHeading = node('div', 'panel-heading');
   panelHeading.append(node('h2', '', '价值坐标'), node('span', '', '－100 → ＋100'));
   resultPanel.append(panelHeading);
-  for (const axis of state.result.dimensions) {
+  for (const axis of active.result.dimensions) {
     const item = node('div', 'axis-result');
     const top = node('div', 'axis-result-top');
     top.append(node('span', '', axis.name), node('strong', '', `${axis.score > 0 ? '+' : ''}${axis.score}`));
@@ -146,13 +169,13 @@ function renderResult() {
 }
 
 function downloadResult() {
-  if (!state.result) return;
-  const content = JSON.stringify({ ...state.result, notice: '本站原创示例，不代表节目官方结果；请勿用于嘉宾匹配。' }, null, 2);
+  if (!active.result) return;
+  const content = JSON.stringify({ ...active.result, notice: '本站原创示例，不代表节目官方结果；请勿用于嘉宾匹配。' }, null, 2);
   const blob = new Blob([content], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  anchor.download = `community-demo-season-${state.result.season}-result.json`;
+  anchor.download = `community-demo-season-${active.result.season}-result.json`;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
@@ -162,12 +185,12 @@ $('start-s2').addEventListener('click', () => begin(2));
 $('start-s1').addEventListener('click', () => begin(1));
 $('quiz-exit').addEventListener('click', showHome);
 $('quiz-back').addEventListener('click', () => {
-  if (state.index > 0) { state.index--; renderQuestion(); }
+  if (active.index > 0) { active.index--; renderQuestion(); }
 });
 $('quiz-next').addEventListener('click', () => {
-  const season = SEASONS[state.seasonId];
-  if (state.answers[season.questions[state.index].id] === undefined) return;
-  if (state.index < season.questions.length - 1) { state.index++; renderQuestion(); }
+  const season = SEASONS[active.seasonId];
+  if (active.answers[season.questions[active.index].id] === undefined) return;
+  if (active.index < season.questions.length - 1) { active.index++; renderQuestion(); }
   else renderResult();
 });
 document.querySelectorAll('.brand,.header-links a[href^="#"]').forEach((link) => {

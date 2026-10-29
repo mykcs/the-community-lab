@@ -63,4 +63,4 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 这是一份工程方案，不构成法律意见，也不授权开始收集真实个人信息。
 
-当前 Astro + Tailwind 静态演示版已在 [Vercel](https://the-community-lab.vercel.app/) 通过精确 SHA 的 CLI 部署发布，仍仅有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。Vercel GitHub App 对本新仓库的访问未连通，**GitHub 提交仍不会自动更新线上网站**。详见 [2026-10-29 生产发布与自动连接缺口](DEPLOYMENT.md)；不得为绕过该缺口创建宽权限 GitHub Token。
+当前 Astro + Tailwind 静态演示版已在 [Vercel](https://the-community-lab.vercel.app/) 通过精确 SHA 的 CLI 部署发布，仍仅有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。Vercel GitHub App 现已获得本仓库访问，原有生产项目的 Git 连接已恢复；PR Preview 与 `main` Production 的自动触发仍待本轮真实事件验收。详见 [2026-10-29 生产发布与自动连接缺口](DEPLOYMENT.md)；不得为绕过该缺口创建宽权限 GitHub Token。
