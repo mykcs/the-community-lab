@@ -13,6 +13,13 @@
 
 此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。后续每次部署都需核实当前 main SHA、Vercel `source=git` 和生产域名的版本身份，不把上表快照永久视作最新。
 
+## 本轮线上身份快照（2026-10-29，文档变更前）
+
+- 本轮复核时 main：`d3891389bb107a4418b47af5c81dccbe61178821`。
+- 当前 Production：[dpl_BGR5tvXaMSRtALdkicqDQKz6vpSY](https://vercel.com/wangrui92-team/the-community-lab/BGR5tvXaMSRtALdkicqDQKz6vpSY) 为 `READY`、`source=git`、`target=production`；Vercel Git SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式域名 HTTP GET 返回 200，页面标题为「同频实验室 · The Community Lab」。
+- 当前 PR #11 是 Draft，候选 head `140971f0bee67c02c85d8177d9a2ad4d447c7517`，基于上述 main。其 Preview 和精确 SHA CI 状态见 [QA 验收记录](QA-2026-10-29.md)；候选没有进入 Production。
+- 本轮复核的 Production SHA 尚未完成整套浏览器回归；不要把前述较早提交的浏览器验收当作对该 SHA 的验证。
+
 ## 历史故障（已解决）
 
 2026-10-29 早些时候首次尝试 `vercel git connect` 时，Vercel GitHub namespace `mykcs` 处于 selected-repository 受限状态，现有项目无法关联新仓库，返回访问错误。旧版本因此曾用 Vercel CLI 直接部署。后来仓库的 Vercel GitHub App 访问已恢复、原有 Vercel 项目完成 Git 连接；上表两项 `source=git` 实测结果证明自动发布已生效。历史操作、错误原文及旧版本 SHA 可从 [此前文档提交](https://github.com/mykcs/the-community-lab/blob/bebfd3f35c3011532df95815782d9f6ff81eb851/docs/DEPLOYMENT.md) 追溯，而不是当作当前阻碍。
