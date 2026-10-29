@@ -147,3 +147,33 @@ test('reviewed synthetic examples still rank, without qualifying the production 
   assert.equal(checked.status, 'ready');
   assert.deepEqual(checked.matches.map(x => x.guest_id), ['fixture']);
 });
+
+test('missing official axes or unversioned official results must never enter guest ranking', () => {
+  const malformed = [
+    { dimensions: user.dimensions.slice(0, 2) },
+    { dimensions: [{ id: 'a', score: 40 }, { id: 'b', score: -30 }, { id: '', score: 0 }] },
+    { dimensions: [{ id: 'a', score: 40 }, { id: 'b', score: -30 }, { score: 0 }] },
+    { season: 3 },
+    { question_version: '' },
+    { scoring_version: undefined },
+  ];
+  for (const mutation of malformed) {
+    assert.throws(() => rankComparableGuests({ ...user, ...mutation }, [guest('test', [40, -30, 0])]),
+      /无效的匹配输入|用户维度不完整或重复/, JSON.stringify(mutation));
+  }
+});
+
+test('a complete first-season four-axis synthetic score is structurally eligible', () => {
+  const s1 = {
+    ...user, season: 1,
+    dimensions: ['p', 'g', 'c', 'o'].map(id => ({ id, score: 0 })),
+  };
+  const s1Guest = guest('s1-synthetic', [0, 0, 0], {
+    season: 1,
+    dimensions: ['p', 'g', 'c', 'o'].map(id => ({ id, score: 0 })),
+  });
+  assert.deepEqual(rankComparableGuests(s1, [s1Guest]).matches.map(g => g.guest_id), ['s1-synthetic']);
+  assert.throws(() => rankComparableGuests({
+    ...s1, dimensions: s1.dimensions.slice(0, 3),
+  }, [s1Guest]), /无效的匹配输入/);
+});
