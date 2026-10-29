@@ -25,6 +25,24 @@ test('a coincidentally equal question count cannot validate an official reproduc
   assert.equal(audit.rows[0].reproductionReady, false);
 });
 
+test('source status flags cannot promote a full-sized independent demo into an official reproduction', () => {
+  const demos = structuredClone(SEASONS);
+  const evidence = structuredClone(ORIGINAL_SITE_AUDIT);
+  for (const id of [1, 2]) {
+    const original = demos[id].questions;
+    demos[id].questions = Array.from({ length: evidence[id].observedQuestionCount }, (_, i) => ({
+      ...original[i % original.length], id: `demo-${i}`,
+    }));
+    Object.assign(evidence[id], {
+      questionTextReusePermission: 'verified', questionIdentityCoverage: 'verified_complete',
+      answerBranchingCoverage: 'verified_complete', scoringAgreement: 'validated_against_original',
+    });
+  }
+  const audit = buildReproductionAudit(demos, evidence);
+  assert.equal(audit.originalEquivalenceVerified, false);
+  assert.ok(audit.rows.every(row => !row.reproductionReady));
+});
+
 test('exhaustively exercise every independent-demo answer vector, without implying official scoring correctness', () => {
   for (const season of Object.values(SEASONS)) {
     const values = season.questions.map(q => q.options.map(o => o.value));
