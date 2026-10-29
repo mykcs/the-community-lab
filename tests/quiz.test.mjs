@@ -49,6 +49,25 @@ test('missing and invalid answers are rejected', () => {
   assert.throws(() => scoreAnswers(season, answers), /非法答案/);
 });
 
+test('scoring rejects cross-season, obsolete and inherited answer contamination', () => {
+  for (const season of Object.values(SEASONS)) {
+    const valid = Object.fromEntries(season.questions.map(q => [q.id, q.options[0].value]));
+    const other = SEASONS[season.id === 1 ? 2 : 1].questions[0].id;
+    assert.throws(() => scoreAnswers(season, { ...valid, [other]: 1 }),
+      /其他季别或未知题号/);
+    assert.throws(() => scoreAnswers(season, { ...valid, 'obsolete-question': 1 }),
+      /其他季别或未知题号/);
+    assert.throws(() => scoreAnswers(season, Object.assign(
+      Object.create({ inherited: true }), valid)), /答案集合必须是纯对象/);
+    assert.throws(() => scoreAnswers(season, null), /答案集合必须是纯对象/);
+    assert.throws(() => scoreAnswers(season, []), /答案集合必须是纯对象/);
+    const symbolAnswer = { ...valid, [Symbol('unexpected')]: 1 };
+    assert.throws(() => scoreAnswers(season, symbolAnswer), /其他季别或未知题号/);
+    assert.deepEqual(scoreAnswers(season, Object.assign(Object.create(null), valid)),
+      scoreAnswers(season, valid), 'null-prototype answer maps remain valid');
+  }
+});
+
 test('official content cannot be silently smuggled into the demo', () => {
   const draft = structuredClone(SEASONS[2]);
   draft.questions[0].origin = 'official';
