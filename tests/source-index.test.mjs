@@ -44,3 +44,48 @@ test('duplicate IDs, count drift, missing version fingerprints and question pros
   prose.questions[0].source_text_ko = 'synthetic text that must not enter the metadata index';
   assert.throws(() => summarizeSourceIndex(prose), /非元数据/);
 });
+
+test('source array and presented order must each be complete permutations', () => {
+  const duplicateDisplay = structuredClone(INDEX);
+  duplicateDisplay.questions[0].displayPositionDerivedFromClient =
+    duplicateDisplay.questions[1].displayPositionDerivedFromClient;
+  assert.throws(() => summarizeSourceIndex(duplicateDisplay), /顺序/);
+
+  const duplicateSource = structuredClone(INDEX);
+  duplicateSource.questions[1].sourceArrayPosition =
+    duplicateSource.questions[0].sourceArrayPosition;
+  assert.throws(() => summarizeSourceIndex(duplicateSource), /顺序/);
+
+  const outOfRange = structuredClone(INDEX);
+  outOfRange.questions[0].displayPositionDerivedFromClient = 0;
+  assert.throws(() => summarizeSourceIndex(outOfRange), /顺序/);
+});
+
+test('group counts, option scale and reverse-flag summaries cannot silently drift', () => {
+  const groupCount = structuredClone(INDEX);
+  groupCount.groups[0].count++;
+  assert.throws(() => summarizeSourceIndex(groupCount), /组别|客户端摘要/);
+
+  const falseOptionCount = structuredClone(INDEX);
+  falseOptionCount.questions[0].optionCount = 4;
+  falseOptionCount.questions[0].optionValues = [1, 2, 3, 4];
+  assert.throws(() => summarizeSourceIndex(falseOptionCount), /客户端摘要/);
+
+  const changedReverseFlag = structuredClone(INDEX);
+  changedReverseFlag.questions[0].reverseFlagInPublicClient =
+    !changedReverseFlag.questions[0].reverseFlagInPublicClient;
+  assert.throws(() => summarizeSourceIndex(changedReverseFlag), /客户端摘要/);
+
+  const unlistedGroup = structuredClone(INDEX);
+  unlistedGroup.questions[0].sourceGroup = 'unverified-group';
+  assert.throws(() => summarizeSourceIndex(unlistedGroup), /客户端摘要|未登记/);
+});
+
+test('two distinct choices cannot be silently replaced by equal values', () => {
+  const duplicateChoice = structuredClone(INDEX);
+  duplicateChoice.questions[0].optionValues[1] = duplicateChoice.questions[0].optionValues[0];
+  assert.throws(() => summarizeSourceIndex(duplicateChoice), /选项值/);
+  const unknownSecondReverse = structuredClone(INDEX);
+  unknownSecondReverse.questions.find(q => q.season === 2).reverseFlagInPublicClient = false;
+  assert.throws(() => summarizeSourceIndex(unknownSecondReverse), /第二季客户端/);
+});
