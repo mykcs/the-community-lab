@@ -6,7 +6,7 @@
 
 | 职责 | 组件 | 原因 |
 | --- | --- | --- |
-| 网站 | 无依赖静态原型 → 必要时 Next.js + TypeScript → Vercel | 第一阶段缩短开发和构建时间；登录和服务端逻辑需要时再引入完整框架 |
+| 网站 | Astro 6 + Tailwind CSS 4 静态构建 → Vercel | 当前已发布；无账号问卷由浏览器直接运行。未来需要私有数据 API 时先复用成熟认证及服务端服务，不为了登录无故重写前端框架 |
 | 登录 | Supabase Auth 的 GitHub OAuth | 不自己处理 OAuth 回调、会话等高风险细节 |
 | 私有记录 | Supabase Postgres + Row Level Security（RLS） | 每条结果与身份绑定，数据库阻止访问别人的行 |
 | 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
@@ -63,4 +63,4 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 这是一份工程方案，不构成法律意见，也不授权开始收集真实个人信息。
 
-目前的静态演示版部署在 [Vercel](https://the-community-lab.vercel.app/)，仅有浏览器本地计算。由于 Vercel 团队尚未授权 GitHub 集成，当前采用直接部署，**GitHub 提交不会自动更新线上网站**。不要将直接部署等同于自动 CI/CD，也不要为绕过该缺口创建宽权限的 GitHub Token。
+当前 Astro + Tailwind 静态演示版已在 [Vercel](https://the-community-lab.vercel.app/) 通过精确 SHA 的 CLI 部署发布，仍仅有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。Vercel GitHub App 对本新仓库的访问未连通，**GitHub 提交仍不会自动更新线上网站**。详见 [2026-10-29 生产发布与自动连接缺口](DEPLOYMENT.md)；不得为绕过该缺口创建宽权限 GitHub Token。
