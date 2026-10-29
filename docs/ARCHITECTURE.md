@@ -29,7 +29,7 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 **预期初始账单为 $0/月，不保证无限流量或持续免费。** Supabase 免费项目若一周缺乏足够活动可能暂停；需要长期可靠公开服务时应评估付费方案，不得未经批准自行升级。Vercel Hobby 同样受非商业使用条款和额度约束。
 
-官方参考：[GitHub OAuth App 注册](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)、[Supabase GitHub 登录](https://supabase.com/docs/guides/auth/social-login/auth-github)、[Supabase 价格](https://supabase.com/pricing)、[Supabase 免费项目暂停](https://supabase.com/docs/guides/platform/free-project-pausing)、[Vercel Hobby](https://vercel.com/docs/plans/hobby)。实际开通时重新检查实时价格。
+官方参考：[GitHub OAuth App 注册](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)、[Supabase GitHub 登录](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)、[Supabase 价格](https://supabase.com/pricing)、[Supabase 免费项目暂停](https://supabase.com/docs/guides/platform/free-project-pausing)、[Vercel Hobby](https://vercel.com/docs/plans/hobby)。实际开通时重新检查实时价格。
 
 ## 数据流与用户决定权
 
