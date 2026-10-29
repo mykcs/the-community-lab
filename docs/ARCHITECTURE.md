@@ -6,13 +6,15 @@
 
 | 职责 | 组件 | 原因 |
 | --- | --- | --- |
-| 网站 | Next.js + TypeScript → Vercel | GitHub 更新后可自动预览与部署，适合问卷和结果可视化 |
+| 网站 | 无依赖静态原型 → 必要时 Next.js + TypeScript → Vercel | 第一阶段缩短开发和构建时间；登录和服务端逻辑需要时再引入完整框架 |
 | 登录 | Supabase Auth 的 GitHub OAuth | 不自己处理 OAuth 回调、会话等高风险细节 |
 | 私有记录 | Supabase Postgres + Row Level Security（RLS） | 每条结果与身份绑定，数据库阻止访问别人的行 |
 | 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
 | 可选结果分享 | 用户主动生成的去身份化卡片 | 默认不包含用户名、逐题答案、账号 ID |
 | 嘉宾匹配 | 同季公开嘉宾成绩数据 + 浏览器本地计算 | 不必把访客结果上传至服务器即可计算最相近嘉宾 |
 | 嘉宾社媒目录 | 经过人工核实的公开账号及来源记录 | 网站展示资料来源和核查日期，不需要读取用户的社媒账户 |
+
+题库采用版本化双语数据：`source_text_ko` 与 `translation_zh_cn` 是不同字段，韩文优先展示，逐题附 `origin`（官方原题／本站原创演示）、`source_url`、`rights_status`、`review_status` 和 `translation_version`。本地演示题不得声称官方测量等价；完整规则见 [翻译与题库标准](TRANSLATION-STANDARD.md)。
 
 GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答案**；持续保存需要自己的数据库。认证并不要求用户授权我们读取或修改其 GitHub 仓库。
 
