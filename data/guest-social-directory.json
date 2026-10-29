@@ -1,0 +1,261 @@
+{
+  "scope": "public social navigation only; no scores, rankings, activity claims or human-review claims",
+  "source_review": "Two independent Agents checked original public pages/articles on 2026-10-29. This is not human review or ownership/legal verification.",
+  "ig_limit": "Instagram profiles were not directly opened because requests were throttled; links were cross-published by the referenced participant channels.",
+  "people": [
+    {
+      "season": 1,
+      "stage_name_ko": "테드",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCu3BjLd03jxTVHXTPqZ77iQ",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=NUviO_w8tVA",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=CLOKG9vgoYo",
+            "https://www.youtube.com/watch?v=NUviO_w8tVA"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/geniussklee/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/watch?v=NUviO_w8tVA",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=CLOKG9vgoYo",
+            "https://www.youtube.com/watch?v=NUviO_w8tVA"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 1,
+      "stage_name_ko": "벤자민",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCmNpN_XfKSf_JCxYIomLB2w",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=uVVL05MUsss",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=UtrGeetjboU",
+            "https://www.youtube.com/watch?v=uVVL05MUsss",
+            "https://www.youtube.com/channel/UCmNpN_XfKSf_JCxYIomLB2w/about"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/ddoominism/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/channel/UCmNpN_XfKSf_JCxYIomLB2w/about",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=UtrGeetjboU",
+            "https://www.youtube.com/watch?v=uVVL05MUsss",
+            "https://www.youtube.com/channel/UCmNpN_XfKSf_JCxYIomLB2w/about"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 1,
+      "stage_name_ko": "마이클",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCtOMYewmtPGNs-QjavhIIkw",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=gRWbu_suKGc",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.newsen.com/news_view.php?uid=202402011450106310",
+            "https://sports.donga.com/ent/article/all/20240402/124214022/2",
+            "https://www.youtube.com/watch?v=gRWbu_suKGc",
+            "https://www.youtube.com/channel/UCtOMYewmtPGNs-QjavhIIkw/about"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/yunbnotlilb/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/channel/UCtOMYewmtPGNs-QjavhIIkw/about",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.newsen.com/news_view.php?uid=202402011450106310",
+            "https://sports.donga.com/ent/article/all/20240402/124214022/2",
+            "https://www.youtube.com/watch?v=gRWbu_suKGc",
+            "https://www.youtube.com/channel/UCtOMYewmtPGNs-QjavhIIkw/about"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 2,
+      "stage_name_ko": "마이야르",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UC1AbNPOrkzCxtiPP4v712Vg",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=vb1u5FsFihk",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=vb1u5FsFihk"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 2,
+      "stage_name_ko": "루나",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCipPJH21NhG02pClcnfQOsg",
+          "relationship": "co_hosted_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=seNpYmP_a5U",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=seNpYmP_a5U",
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+            "https://enews.imbc.com/News/ViewAmp/521829",
+            "https://www.youtube.com/channel/UCipPJH21NhG02pClcnfQOsg/about"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/_seseung/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/channel/UCipPJH21NhG02pClcnfQOsg/about",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=seNpYmP_a5U",
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+            "https://enews.imbc.com/News/ViewAmp/521829",
+            "https://www.youtube.com/channel/UCipPJH21NhG02pClcnfQOsg/about"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 2,
+      "stage_name_ko": "동키",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCnakFImHHLAK7LRfIWtbovA",
+          "relationship": "co_hosted_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/cheol.9/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    },
+    {
+      "season": 2,
+      "stage_name_ko": "피트",
+      "accounts": [
+        {
+          "platform": "YouTube",
+          "url": "https://www.youtube.com/channel/UCXZBf3y9LCeZD0pyWzbrBWA",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/watch?v=jC35wbcsm7E",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=jC35wbcsm7E",
+            "https://www.youtube.com/channel/UCXZBf3y9LCeZD0pyWzbrBWA/about",
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+          ]
+        },
+        {
+          "platform": "Instagram",
+          "url": "https://www.instagram.com/my_yxuth_/",
+          "relationship": "personal_account",
+          "evidence_url": "https://www.youtube.com/channel/UCXZBf3y9LCeZD0pyWzbrBWA/about",
+          "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
+          "checked_at": "2026-10-29",
+          "profile_directly_checked": false,
+          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "source_urls": [
+            "https://www.youtube.com/watch?v=jC35wbcsm7E",
+            "https://www.youtube.com/channel/UCXZBf3y9LCeZD0pyWzbrBWA/about",
+            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+          ]
+        }
+      ],
+      "score_source": "UNKNOWN",
+      "matching_eligible": false,
+      "activity": "UNKNOWN"
+    }
+  ]
+}
