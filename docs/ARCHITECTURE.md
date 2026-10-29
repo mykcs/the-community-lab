@@ -1,0 +1,56 @@
+# 网站、登录、结果保存与费用设计
+
+状态：**架构候选与预算调查，不代表已开通服务。** 调查日期：2026-10-29。
+
+## 推荐最小方案
+
+| 职责 | 组件 | 原因 |
+| --- | --- | --- |
+| 网站 | Next.js + TypeScript → Vercel | GitHub 更新后可自动预览与部署，适合问卷和结果可视化 |
+| 登录 | Supabase Auth 的 GitHub OAuth | 不自己处理 OAuth 回调、会话等高风险细节 |
+| 私有记录 | Supabase Postgres + Row Level Security（RLS） | 每条结果与身份绑定，数据库阻止访问别人的行 |
+| 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
+| 可选结果分享 | 用户主动生成的去身份化卡片 | 默认不包含用户名、逐题答案、账号 ID |
+
+GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答案**；持续保存需要自己的数据库。认证并不要求用户授权我们读取或修改其 GitHub 仓库。
+
+## 初期费用（美元）
+
+| 项目 | 小型非商业项目 | 可能开始产生费用的条件 |
+| --- | --- | --- |
+| GitHub 公共仓库与 OAuth App 注册 | $0 | 通常没有“每次 GitHub 登录收费” |
+| Vercel Hobby | $0/月（额度内，仅限个人／非商业使用） | 商业化、使用限制或需要 Pro 功能 |
+| Supabase Free（认证与数据库） | $0/月：50,000 月活用户、500 MB 数据库、5 GB 流量额度 | 超额／需要稳定在线；Pro 从 $25/月起 |
+| 可选独立域名 | 可暂时 $0，使用提供商免费子域名 | 购买并每年续费自定义域名 |
+
+**预期初始账单为 $0/月，不保证无限流量或持续免费。** Supabase 免费项目若一周缺乏足够活动可能暂停；需要长期可靠公开服务时应评估付费方案，不得未经批准自行升级。Vercel Hobby 同样受非商业使用条款和额度约束。
+
+官方参考：[GitHub OAuth App 注册](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)、[Supabase GitHub 登录](https://supabase.com/docs/guides/auth/social-login/auth-github)、[Supabase 价格](https://supabase.com/pricing)、[Supabase 免费项目暂停](https://supabase.com/docs/guides/platform/free-project-pausing)、[Vercel Hobby](https://vercel.com/docs/plans/hobby)。实际开通时重新检查实时价格。
+
+## 数据流与用户决定权
+
+1. 访客在浏览器答题，临时答案先留在本地，不向数据库发送。
+2. 结束后显示结果，并解释维度与娱乐性局限。
+3. 用户可直接离开、下载本地结果，或点击「保存到我的账号」。
+4. 保存时弹出易懂的隐私告知并要求**单独、主动同意**；尚未登录则可选择 GitHub 登录。
+5. 只写入其账号的测试版本、归一化结果、时间戳等最小必要字段。原始逐题答案默认不上传。
+6. 用户可以回看／删除；取消保存同意时有明确的数据删除路径，不能只在前端隐藏。
+
+## 数据模型与服务端限制
+
+建议 `test_runs(id, owner_id, season, question_version, scoring_version, result_json, created_at)`；原始答案如未来确需保存，必须单独设置 `consent_version` 和明确用途。所有记录默认私有，禁止公开查询个人测试结果。
+
+必须实施并实测：
+
+- `owner_id = auth.uid()` 的 `SELECT`、`INSERT`、`UPDATE`、`DELETE` 行级策略；禁止匿名绕过。
+- 后端验证用户会话、参数、测试版本；绝不把数据库 service role key 发到浏览器。
+- 双账号隔离测试、退出后不可访问、删除后服务端确认、URL 不泄露结果。
+- 登录仅申请必要范围；不要申请 `repo` 或 `read:org` 等与测试无关权限。
+- 错误日志不得记录答题内容、政治观点、GitHub OAuth code 或 access token。
+- 公开展示的统计若将来需要，先另行取得同意、设计最低人数阈值和去识别措施。
+
+## 敏感信息与合规提示
+
+政治／性别／价值观题目可能推断私人政治观点。欧盟委员会将揭示政治观点的数据列为 GDPR 特殊类别，可能需要额外合法依据与明确同意；其他地区也可能适用隐私法规。上线真实账户保存功能前，应确定运营地域、发布隐私政策、保存期限、删除机制并按适用法律审查。参见 [欧盟委员会：个人数据与特殊类别](https://commission.europa.eu/law/law-topic/data-protection/information-individuals_en)。
+
+这是一份工程方案，不构成法律意见，也不授权开始收集真实个人信息。
