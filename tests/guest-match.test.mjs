@@ -65,3 +65,55 @@ test('a complete set of guests without sufficient evidence remains unranked', ()
   assert.equal(ranked.status, 'no_verified_comparables');
   assert.equal(ranked.matches.length, 0);
 });
+
+
+test('same-season duplicate guest IDs are excluded rather than taking two ranking slots', () => {
+  const records = [
+    guest('same', [40, -30, 0]),
+    guest('same', [-100, 100, -100]),
+    guest('unique', [50, -30, 0]),
+  ];
+  const ranked = rankComparableGuests(user, records);
+  assert.equal(ranked.status, 'ready');
+  assert.deepEqual(ranked.matches.map(g => g.guest_id), ['unique']);
+  assert.equal(ranked.excluded, 2);
+});
+
+test('invalid calendar dates and future verification dates cannot authenticate results', () => {
+  for (const badDate of ['2026-02-30', '2026-13-01', '2099-01-01', 'yesterday']) {
+    const ranked = rankComparableGuests(user, [guest('false-date', [40, -30, 0], {
+      score_checked_at: badDate,
+    })]);
+    assert.equal(ranked.status, 'no_verified_comparables', badDate);
+    assert.equal(ranked.matches.length, 0);
+  }
+  const ranked = rankComparableGuests(user, [guest('bad-social-date', [40, -30, 0], {
+    social_accounts: [
+      { platform: 'X', profile_url: 'https://x.com/synthetic',
+        identity_source_url: 'https://example.org/evidence', verified_at: '2026-02-30' },
+    ],
+  })]);
+  assert.equal(ranked.matches[0].social_accounts.length, 0);
+});
+
+test('public account navigation rejects misleading platforms, post links and credentialed URLs', () => {
+  const evidence = 'https://example.org/evidence';
+  const account = (platform, profile_url, identity_source_url = evidence) =>
+    ({ platform, profile_url, identity_source_url, verified_at: '2026-10-29' });
+  const ranked = rankComparableGuests(user, [guest('links', [40, -30, 0], {
+    social_accounts: [
+      account('X', 'https://x.com/synthetic'),
+      account('Instagram', 'https://www.instagram.com/synthetic'),
+      account('YouTube', 'https://youtube.com/@synthetic'),
+      account('X', 'https://x.com.evil.invalid/synthetic'),
+      account('Instagram', 'https://example.org/synthetic'),
+      account('YouTube', 'https://youtube.com/watch?v=example'),
+      account('X', 'https://x.com/intent'),
+      account('Instagram', 'https://instagram.com/p/abcdef'),
+      account('X', 'https://name:password@x.com/synthetic'),
+      account('X', 'https://x.com/synthetic', 'https://localhost/identity'),
+    ],
+  })]);
+  assert.deepEqual(ranked.matches[0].social_accounts.map(a => a.platform),
+    ['X', 'Instagram', 'YouTube']);
+});
