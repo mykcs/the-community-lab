@@ -168,7 +168,10 @@ function renderResult() {
       const link = node('a', '', account.platform);
       link.href = account.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
       link.setAttribute('aria-label', `${guest.stage_name_ko} 的公开 ${account.platform} 账号链接（社媒目录）`);
-      links.append(link);
+      const evidence = node('a', 'guest-social-source', '来源 ↗');
+      evidence.href = account.evidence_url; evidence.target = '_blank'; evidence.rel = 'noopener noreferrer';
+      evidence.setAttribute('aria-label', `${guest.stage_name_ko} 的 ${account.platform} 链接核查来源`);
+      links.append(link, evidence);
     }
     person.append(links, node('small', '', '核查：两名独立 Agent 的原始来源 · 2026-10-29 · 待真人复核'));
     guestDirectory.append(person);
