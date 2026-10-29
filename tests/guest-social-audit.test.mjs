@@ -93,3 +93,25 @@ test('shared channels may appear twice only if both accounts explicitly say co-h
   second.relationship = 'personal_channel';
   assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, false);
 });
+
+test('YouTube @handles are case-insensitive across aliases and encoded Unicode', () => {
+  for (const [left, right] of [
+    ['https://www.youtube.com/@GuestName', 'https://youtube.com/@guestname'],
+    ['https://www.youtube.com/@ÄBC', 'https://m.youtube.com/@äbc'],
+  ]) {
+    const modified = structuredClone(source);
+    modified.people[0].accounts[0].url = left;
+    modified.people[1].accounts[0].url = right;
+    const checked = auditGuestSocialDirectory(modified, { today: '2026-10-29' });
+    assert.equal(checked.valid, false, left + ' vs ' + right);
+    assert.deepEqual(checked.people, []);
+    assert.ok(checked.issues.some(issue => issue.includes('profile attributed')));
+  }
+});
+
+test('YouTube /channel IDs preserve case in duplicate matching', () => {
+  const modified = structuredClone(source);
+  modified.people[0].accounts[0].url = 'https://www.youtube.com/channel/UCAbC';
+  modified.people[1].accounts[0].url = 'https://youtube.com/channel/UCabc';
+  assert.equal(auditGuestSocialDirectory(modified, { today: '2026-10-29' }).valid, true);
+});
