@@ -68,10 +68,9 @@
 ## 已验证与剩余工作
 
 - 已有生产证据：Astro 版本 `1740ee7` 的 18/18 自动测试和 65,600 种原创演示答案组合、生产 SHA 对齐及桌面／440×956 CSS px 浏览器验收。
-- 本轮改进已由 [PR #6](https://github.com/mykcs/the-community-lab/pull/6) 合并并自动发布，通过 26/26 自动测试、类型检查、构建及本地／预览／生产的桌面与 440×956 CSS px 浏览器验收。新增双季独立进度、演示题不可晋级为原版的反例和源题索引检查；具体证据见 [验收笔记](docs/QA-2026-10-29.md)。
-- 并发自动任务随后合并了 [PR #7](https://github.com/mykcs/the-community-lab/pull/7) 的嘉宾证据防错；本轮完整保留并纳入新主线后，本地共 29/29 测试通过，真实嘉宾资料仍未入库。
+- 已合并 [PR #6](https://github.com/mykcs/the-community-lab/pull/6)（双季独立会话与源题标识索引）及 [PR #7](https://github.com/mykcs/the-community-lab/pull/7)（嘉宾证据日期、重复身份和社媒网址防错），GitHub Actions 与 Git 自动生产发布通过；最新生产 Chrome 双视口的完整 8＋6 题回归记录见 [验收笔记](docs/QA-2026-10-29.md)。
 - 需继续：实体 iPhone 18 Pro Max 设备尚未核验（现有 440×956 为真实 Chrome 的移动视口模拟）；原版许可、独立韩中复核、官方计分／路径金标准及真实嘉宾同季数据和社媒归属均未完成。
-- **GitHub 自动发布已验证：** 原有 Vercel 项目已自动为 PR #6 生成 Preview，并在合并后从 `main` 自动发布 Production。部署来源均为 `git`，SHA、正式域名及实际页面一致；全程保留部署保护，详情见 [部署状态](docs/DEPLOYMENT.md)。
+- **GitHub→Vercel 自动部署已验收：** 2026-10-29 PR #7 触发 Git Preview，合并 main 后由 Git 自动发布 Production，均 `READY`、`source=git` 且提交 SHA 对齐。详情见 [部署证据](docs/DEPLOYMENT.md)。
 
 ## 开发和证据检查
 

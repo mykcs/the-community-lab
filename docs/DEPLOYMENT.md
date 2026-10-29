@@ -1,51 +1,24 @@
-# 部署与持续集成 · 2026-10-29 更新
+# 部署与持续集成 · 2026-10-29
 
-## Git 自动发布的功能验收版本
+## 当前结论：GitHub → Vercel 自动发布已验收
 
-- 功能提交：[PR #6](https://github.com/mykcs/the-community-lab/pull/6) 合并后的 `3bd73a130e94b6c61d1cd754faafa47f44a81f6b`。后续纯文档提交可能使 `main` SHA 前进；本节固定本次功能验收身份，最新部署以 Vercel 实际状态为准。
-- 自动 Preview：[dpl_5yWeaGcTBu8STz267ZfBznighn5W](https://vercel.com/wangrui92-team/the-community-lab/5yWeaGcTBu8STz267ZfBznighn5W)，`source=git`、`READY`，SHA 为 PR head `4babb6fbaf33918a9ed82bf334afb7bf15e94f8f`。使用已有短期项目身份访问受保护预览，未关闭保护或公开凭据。
-- 自动 Production：[dpl_GiyDQfdburtWUuZUkETMct9NZu6B](https://vercel.com/wangrui92-team/the-community-lab/GiyDQfdburtWUuZUkETMct9NZu6B)，`source=git`、`target=production`、`READY`，SHA 为上述功能提交，分支 `main`；正式域名指向此部署。
-- [GitHub Actions #40927040352](https://github.com/mykcs/the-community-lab/actions/runs/40927040352) 的实际日志证明 26/26 测试、0 失败／0 跳过、Astro 0 错误／0 警告和构建执行完成。独立只读源码、源题元数据重解析及浏览器证据审查通过。
-- 本地、受保护预览和正式域名分别完成 Chrome 156 的 440×956 与 1440×900 CSS px 两季流程验收；正式域名的 JS／CSS 字节与本地已验收构建一致。答案未上传，`localStorage`／`sessionStorage` 均为空，原题许可与官方计分仍未通过。
+**现有项目已接通 GitHub，完成了从 PR 预览到 main 生产的两次真实自动发布。** 项目 `the-community-lab` 仍属于原来的 Vercel Hobby 团队 `wangrui92-team`，未新增第二个站点、付费升级或 OAuth 秘钥。团队 Git 连接信息可读回 `mykcs/the-community-lab`。
 
-验收详情见 [QA](QA-2026-10-29.md)。无需第二个生产项目、宽权限 Token、付费升级或额外部署流水线。
+| 验收 | GitHub 证据 | Vercel 证据与结论 |
+| --- | --- | --- |
+| PR 预览自动构建 | [PR #7](https://github.com/mykcs/the-community-lab/pull/7)，head `7a039802a3e28d8535db27337ff6a3c21ed1c20a` | [dpl_Dj8VYdDu8YBY5B6NuB8aRyknmpSd](https://vercel.com/wangrui92-team/the-community-lab/Dj8VYdDu8YBY5B6NuB8aRyknmpSd)：`READY`、`source=git`、SHA 一致 |
+| 正式 CI | [GitHub Actions #40928001277](https://github.com/mykcs/the-community-lab/actions/runs/40928001277) | `success`，包含 npm ci/check/build |
+| main 自动生产发布 | [合并 commit `44bf2f7`](https://github.com/mykcs/the-community-lab/commit/44bf2f7ffc377d77c4dfa6ad89347d3295679596) | [dpl_3DD17FdVKpCmLTUttyonbP1HkByT](https://vercel.com/wangrui92-team/the-community-lab/3DD17FdVKpCmLTUttyonbP1HkByT)：`READY`、`source=git`、`target=production`、SHA 一致、alias 包含 `the-community-lab.vercel.app` |
+| 浏览器交互回归 | [QA 记录](QA-2026-10-29.md) | 生产域名在 Chrome 440×956 和 1440×900 CSS px 双视口：第一季 8/8、第二季 6/6，韩先中后、分别暂停恢复和结果卡、无横向溢出、JS 页面错误 0、非 GET 写入请求 0 |
 
-## Astro 首次手动生产发布（历史证据）
+此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。后续每次部署都需核实当前 main SHA、Vercel `source=git` 和生产域名的版本身份，不把上表快照永久视作最新。
 
-- 正式网址：<https://the-community-lab.vercel.app/>，现已部署 **Astro + Tailwind** 的韩中双语独立原创演示版，非节目官方复刻。
-- GitHub 权威源码：`mykcs/the-community-lab` `main` 提交 `1740ee7431b286f6c899cf1c4166ed0966568b35`（[已合并 PR #4](https://github.com/mykcs/the-community-lab/pull/4)）。
-- 生产 Vercel 部署：[dpl_DofTF4BAwFYCXDXhtKu5SkDGFL4P](https://vercel.com/wangrui92-team/the-community-lab/DofTF4BAwFYCXDXhtKu5SkDGFL4P)，`READY`，`target=production`，`source=cli`，`meta.githubCommitSha` 与以上 `main` SHA 完全一致；正式域名已被 Vercel 绑定到此部署。
-- 预览构建：[dpl_FWYcdLgnf7pzx6VVbszhqr5okbq9](https://vercel.com/wangrui92-team/the-community-lab/FWYcdLgnf7pzx6VVbszhqr5okbq9)，亦为同一 SHA、`READY`。生产/预览由已授权 Mac 的独立临时 checkout 通过 Vercel CLI 部署，无新 Token、付费套餐或第三方服务。
-- Vercel **现有项目** `the-community-lab`：框架已配置为 `astro`、构建 `npm run build`、输出 `dist`，Node 为 `24.x`。未创建第二个同名站点。
-- GitHub Actions：本次 PR 的最终 head `71975239db298c003319b03dd6864f48eb4a6eb7` 对应 [Verify Astro bilingual demo #40918101519](https://github.com/mykcs/the-community-lab/actions/runs/40918101519) **success**；18/18 测试通过，包括两季 65,600 种原创演示答案组合。
-- **真实 Chrome 浏览器复验**：在正式域名和本地构建，分别检查 440×956 CSS px 移动视口及 1440×900 CSS px 桌面，双季完整答题、韩文先于中文、结果、暂停/恢复/返回和横向溢出均通过。此为模拟 iPhone 18 Pro Max 的浏览器 CSS 视口，不冒充实体手机。详情见 [实际 QA](QA-2026-10-29.md)。
+## 历史故障（已解决）
 
-## GitHub 自动触发已实际验收
+2026-10-29 早些时候首次尝试 `vercel git connect` 时，Vercel GitHub namespace `mykcs` 处于 selected-repository 受限状态，现有项目无法关联新仓库，返回访问错误。旧版本因此曾用 Vercel CLI 直接部署。后来仓库的 Vercel GitHub App 访问已恢复、原有 Vercel 项目完成 Git 连接；上表两项 `source=git` 实测结果证明自动发布已生效。历史操作、错误原文及旧版本 SHA 可从 [此前文档提交](https://github.com/mykcs/the-community-lab/blob/bebfd3f35c3011532df95815782d9f6ff81eb851/docs/DEPLOYMENT.md) 追溯，而不是当作当前阻碍。
 
-用户为现有 Vercel App 加入本仓库后，Vercel 的仓库搜索实际返回 `mykcs/the-community-lab`。官方 CLI 在已核实的现有 `the-community-lab` 项目执行 `vercel git connect`，返回 `Connected`；没有创建第二个生产项目、扩大 Token 或关闭部署保护。连接前后的差异是 App 对这个仓库的访问。
+## 版权、用户隐私与科学正确性仍有独立门槛
 
-PR #6 已真实触发自动 Preview；经独立审查与 CI 通过后，使用 expected head SHA 合并，随后自动触发 Production。Git 来源、SHA、正式域名内容和桌面／440×956 CSS px 浏览器均已核对。[Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 按这些实际证据收束。实体 iPhone 仍没有实测记录，浏览器模拟不冒充真机。
+网页是**双季原创韩中双语演示**：第一季原站观测 87 题、第二季 37 题；本站原创题 8 和 6。后续已获得对应 87＋37 个**客户端源题标识与元数据索引**，这仍不代表可以合法复制原题、已经完成真人韩中双语审校或掌握官方评分金标准。真实嘉宾排名与社媒归属未经核验，不提供虚构榜单。
 
-## 自动连接故障的历史记录（连接现已恢复）
-
-**以下是恢复连接前的证据。** 2026-10-29 上一轮从已有 Git 项目执行 `vercel git connect https://github.com/mykcs/the-community-lab --scope wangrui92-team`，Vercel 实际返回：
-
-> Failed to connect mykcs/the-community-lab to project. Make sure there aren't any typos and that you have access to the repository if it's private.
-
-当时 Vercel GitHub namespace `mykcs` 为 `isAccessRestricted=true`，项目搜索 `the-community-lab` 返回空；同一团队其他三个已有 GitHub 关联项目可见。**这支持「Vercel GitHub App 尚不能访问新仓库」的判断，但不能仅凭该错误断言唯一根因。** 仓库本身为公开仓库且 GitHub Git 正常读取。此失败不是 Astro 构建或生产网站故障。
-
-当时的修复路径如下；本轮授权、连接与实际触发验收均已完成：
-
-1. 由 GitHub 安装管理员在 **GitHub → Settings → Applications → Installed GitHub Apps → Vercel → Configure** 核查是否按 selected repositories 限制授权；仅为 `mykcs/the-community-lab` 添加 Vercel App 的仓库访问（不新建宽范围 token，不申请无关 repo scope）。若安装管理员和调用 Agent 权限不同，停在平台的人类授权界面。
-2. 然后在 **Vercel → the-community-lab → Settings → Git** 将现有项目连接到 `mykcs/the-community-lab`，生产分支指向 `main`；也可以重新运行官方 `vercel git connect`，但必须以平台实际成功回应为准。
-3. 做一次独立验证：从 PR 提交触发 Vercel Preview，确认完成构建与精确 commit SHA；随后合并一个经 CI 通过的安全变更，确认 Vercel **由 Git 自动触发** Production、部署 SHA 与 `main` 相符，域名上的版本更新，移动端回归无异常。只看到「连接成功」还不足以标记自动部署完成。
-
-恢复前未改 GitHub 账户的安装授权；本轮用户明确批准并完成了单仓库授权。全程未借用其它仓库的 token，也未关闭已有保护。问题追踪为 [Issue #3](https://github.com/mykcs/the-community-lab/issues/3)。
-
-## 历史与当前安全边界
-
-首版无依赖静态网站于 2026-10-29 通过 Vercel API 直接文件部署且状态 `READY`，该状态**只属于旧快照**；随后合并上述 Astro 版本，进行了本次精确 SHA 手动生产部署与实测。不要再以旧的部署说明判断当前正式站点。
-
-访客无需登录即可做原创演示题，答案保留在当前浏览器内存，关闭／刷新即失效；尚无用户账号、数据库、追踪、上传真实答卷。节目原题的合法复制、官方评分金标准、真实嘉宾数据、韩中独立人工双语审校均未完成。GitHub OAuth 和云端私有历史记录必须先单独完成用户隐私同意、会话权限、RLS、双账号隔离与删除读回验收，不能仅凭本轮网页/部署测试开启。
-
-初始预算继续保持不增加付费订阅；Vercel Hobby 的实际条款与额度由当前账户和平台负责确认。
+当前不要求登录、不上传答题数据、未启用数据库或 GitHub OAuth；服务器存储个人结果需先取得用户主动同意并通过 RLS、双用户交叉隔离和删除读回。仅以 Vercel Hobby 和现有工具执行，不增加付费服务。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
