@@ -8,7 +8,7 @@
 | [第一季历史测试](https://the-community-survey.web.app/) | 历史资料指向第一季调查页面 | **未知** | 核查是否可用、是否有公开评分说明 |
 | [Wavve 制作方访谈](https://www.contentwavve.com/news/articleView.html?idxno=522) | 介绍第一季「政治、阶级、性别观念、开放性」及其设计思路 | 访谈事实可引用，原文大段转载需另核权利 | 区分节目分类与科学有效性 |
 | [2024 年测试报道](https://star.ohmynews.com/NWS_Web/OhmyStar/at_pg.aspx?CNTN_CD=A0003000598) | 公开报道第一季 87 道题、四个维度，并讨论有效性争议 | 不自动获得题目重用权 | 留存研究局限与风险 |
-| [非官方粉丝人物对照](https://thecommunity-fan.pages.dev/) | 第一、二季角色倾向可视化的现成页面 | 未发现可复用源码许可 | 借鉴信息组织，不照搬素材 |
+| [非官方粉丝人物对照](https://thecommunity-fan.pages.dev/) | 第一、二季嘉宾倾向散点、比较和相似性展示；作者曾在 [2026-09-08 社区帖](https://gall.dcinside.com/mgallery/board/view/?id=community2&no=4171) 说明可逐人查看、按队比较，手机可用 | 未发现可复用源码许可 | **优先学习其相似性处理办法**，新增中文、个人答题自动匹配与社交媒体验证，避免重复造轮子 |
 | [8values GitHub](https://github.com/8values/8values.github.io) | MIT 许可的政治价值观问卷开源项目，包含问答流程、计分、结果图示 | **可在遵守 MIT 许可前提下复用其代码**；测量内容和原节目不同 | 研究计分与结果渲染的最小实现，保留许可 |
 | [8values 韩文项目](https://github.com/8values-ko/8values-ko.github.io) | 本地化的开源问卷候选实现 | 先核对该仓库许可 | 参考多语言文案与本地化结构 |
 
@@ -35,3 +35,5 @@
 - 两季计分归一化、反向题、权重、边界值与结果描述的确切规则。
 - 第二季官网能否长期稳定提供测试，第一季入口是否已迁移。
 - 游戏回合、信息隐藏、资源交易与结算规则在节目公开内容中是否完整。
+- 嘉宾同季逐维原始分数是否可靠公开，是否包含来源可核对的访谈／节目截图；非官方汇编须单独标明。
+- 嘉宾 X、Instagram、YouTube 等公开账号的本人归属和最近活动证据；不应推测或生成账号链接。
