@@ -1,20 +1,8 @@
-# Local secrets and credentials
+node_modules/
+dist/
+.astro/
+.vercel/
 .env
 .env.*
 !.env.example
-*.pem
-*.key
-
-# Application and tooling
-node_modules/
-.next/
-.vercel/
-coverage/
 *.log
-
-# Never version real participant data or local database dumps
-data/private/
-exports/private/
-*.sqlite
-*.sqlite3
-*.sql.gz

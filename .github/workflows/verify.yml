@@ -1,10 +1,10 @@
-name: Verify independent demo
+name: Verify Astro bilingual demo
 on:
   pull_request:
-    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'index.html', 'style.css', 'package.json', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
   push:
     branches: [main]
-    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'index.html', 'style.css', 'package.json', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
 permissions:
   contents: read
 concurrency:
@@ -13,10 +13,13 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 8
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm test
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build

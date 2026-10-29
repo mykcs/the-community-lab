@@ -1,3 +1,8 @@
+---
+import '../styles/global.css';
+import { SEASONS } from '../../data/questions.mjs';
+import { ORIGINAL_SITE_AUDIT } from '../../data/original-site-audit.mjs';
+---
 <!doctype html>
 <html lang="zh-CN">
   <head>
@@ -7,8 +12,7 @@
     <meta name="description" content="用韩文与中文双语探索价值选择的独立粉丝实验。两季原创示例测试；不代表韩国综艺《The Community》官方结果。" />
     <title>同频实验室 · The Community Lab</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%2310131a'/%3E%3Ccircle cx='24' cy='24' r='14' fill='none' stroke='%23ff7468' stroke-width='4'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ff7468'/%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./style.css" />
-    <script type="module" src="./app.mjs"></script>
+    <script>import '../../app.mjs';</script>
   </head>
   <body>
     <div class="grain" aria-hidden="true"></div>
@@ -58,6 +62,24 @@
               <article class="season-card season-two"><div class="season-meta"><span class="chip chip-accent">优先开发</span><span>SEASON 02 / 2026</span></div><div class="season-number">02<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">보이지 않는 손</p><h3>第二季 · 看不见的手</h3><p>原则与结果，结构与能力，意义与实利。三个坐标，看看你如何取舍。</p></div><div class="season-footer"><span>3 组价值轴 <i>·</i> 6 道原创演示题</span><button id="start-s2" class="season-arrow" type="button" aria-label="开始第二季演示测试">↗</button></div><a class="source-site" href="https://the-community-survey.web.app/season/2" target="_blank" rel="noopener noreferrer">另去韩文原站完成 37 题 <span aria-hidden="true">↗</span></a></article>
               <article class="season-card season-one"><div class="season-meta"><span class="chip">同步预览</span><span>SEASON 01 / 2024</span></div><div class="season-number">01<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">더 커뮤니티</p><h3>第一季 · 价值观探索</h3><p>公共参与、性别观念、阶级分配与开放性。四个角度，看见差异。</p></div><div class="season-footer"><span>4 组价值轴 <i>·</i> 8 道原创演示题</span><button id="start-s1" class="season-arrow" type="button" aria-label="开始第一季演示测试">↗</button></div><a class="source-site" href="https://the-community-survey.web.app/season/1" target="_blank" rel="noopener noreferrer">另去韩文原站完成 87 题 <span aria-hidden="true">↗</span></a></article>
             </div>
+            <section aria-labelledby="audit-heading" class="mt-10 border border-white/15 bg-[#171c23] p-5 md:p-7">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 id="audit-heading" class="m-0 text-xl font-bold tracking-tight text-[#f4f0e7]">我们到底复刻了多少？</h3>
+                <span class="rounded-full border border-[#ff776c]/50 px-3 py-1 text-xs text-[#ffb4a5]">公开的核验账本 · 非官方</span>
+              </div>
+              <p class="mt-3 text-sm leading-7 text-[#b6bbc5]">程序跑通，不代表节目原题和官方算法已核实。下面是两种不同的数量，不能相互冒充。</p>
+              <div class="mt-5 grid gap-3 md:grid-cols-2">
+                {Object.values(SEASONS).map(season => (
+                  <div class="border border-white/10 bg-[#101319] p-4">
+                    <span class="text-xs tracking-widest text-[#ffb4a5]">SEASON 0{season.id}</span>
+                    <p class="mt-3 text-base text-[#f4f0e7]">韩文原站显示 <strong class="text-xl">{ORIGINAL_SITE_AUDIT[season.id as 1 | 2].observedQuestionCount}</strong> 题</p>
+                    <p class="mt-1 text-sm text-[#aab0bc]">本站只有 {season.questions.length} 道自行设计的双语演示题</p>
+                    <p class="mt-3 text-xs text-[#ffb4a5]">官方题库完整性：未验收 · 官方评分一致性：未验收</p>
+                  </div>
+                ))}
+              </div>
+              <a class="mt-5 inline-flex text-sm text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/docs/VERIFICATION-MATRIX.md" target="_blank" rel="noopener noreferrer">查看每一道验证关卡与证据 →</a>
+            </section>
           </section>
 
           <section class="section principle-section" id="how-it-works" aria-labelledby="principles-title">

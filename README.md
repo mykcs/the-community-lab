@@ -22,7 +22,7 @@
 
 匹配方法、社媒资料证据和验收标准见 [嘉宾匹配设计](docs/GUEST-MATCHING.md)。
 
-题库的原文校对、忠实翻译和复核标准见 [翻译与题库标准](docs/TRANSLATION-STANDARD.md)。
+题库的原文校对、忠实翻译和复核标准见 [翻译与题库标准](docs/TRANSLATION-STANDARD.md)。题目**是否齐全**、所有答题路径和最终结论是否正确，参见 [题库、路径和评分验证矩阵](docs/VERIFICATION-MATRIX.md)：它把原创演示版的自动测试与尚无可靠证据的官方复刻分开。
 
 项目的完整愿望与验收标准见 [WISH.md](WISH.md)。
 
@@ -39,7 +39,7 @@
 
 ## 技术方案
 
-- 界面：已使用无依赖静态网页验证双语答题和结果体验；接入登录和私有存储时再评估迁移至 Next.js + TypeScript。当前部署于 Vercel。
+- 界面：采用 **Astro + Tailwind CSS 4**，保留零登录要求的前端问卷逻辑；Astro 生成静态资源，由 Vercel 托管。历史首版为原生静态文件，新版本须通过构建、自动测试、实际部署与浏览器验收后才称为上线。
 - 登录：可选 GitHub OAuth。访客无需登录即可体验；愿意长期保存才需要账号。
 - 结果：计划用 Supabase Auth + 私有 Postgres 表，配合行级权限（RLS）隔离每位用户。
 - 隐私：默认只在本地浏览器保留临时结果；明确同意后才上传。提供本人查看、下载和删除。
@@ -68,3 +68,17 @@
 - 已验证：两季实际浏览器从答题到结果、第一季暂停恢复；11 项小型计分、双语字段和嘉宾数据隔离测试通过。记录见 [验收笔记](docs/QA-2026-10-29.md)。
 - 需继续：在 iPhone 18 Pro Max 440×956 CSS px 做真实移动端渲染验收；取得可合法转载的节目原题、独立韩中复核、可靠的官方计分与嘉宾同季分数；核验公开社交主页。
 - **自动部署尚未连通：** Vercel 团队缺少 GitHub 集成权限，首版经 Vercel 直接部署；今后仓库 `main` 更新暂不会自动发布。详情见 [部署状态](docs/DEPLOYMENT.md)。
+
+## 开发和证据检查
+
+```bash
+npm ci
+npm test
+npm run audit:reproduction
+npm run check
+npm run build
+```
+
+题库审计会分别报出第一季 **87 道原站可观察题 vs 8 道演示题**、第二季 **37 vs 6**，并明确「原版等价尚未验证」。这些数字不能直接被当作复刻完成百分比。
+
+项目已设置每小时推进任务，要求在 WISH、版权、隐私和权限边界内主动修 Bug、验证、更新进度，并用新加坡时间汇报；可复用流程计划沉淀为 [Hourly Project Steward](https://github.com/mykcs/myk-skills/tree/main/hourly-project-steward)。
