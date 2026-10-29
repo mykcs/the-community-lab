@@ -25,4 +25,4 @@
 
 ## 最新候选复核（2026-10-29）
 
-[Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 的 head `99cf14670ccc342576cdc86bff8e62d48cb5f2a7` 获得精确 SHA 的 GitHub Actions `success` 和 Vercel Preview `READY`（`source=git`）。现有 Production alias 仍指向最新 `main=95f2732c65052a62014704841188a46ff7762353` 的 READY 生产部署。该 PR 未合并，因此候选功能尚未影响 Production。
+[Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 当前 head `96b60818beb449e70b2053a7d61d9f4216b29b38` 获得精确 SHA 的 GitHub Actions [run #40938619367](https://github.com/mykcs/the-community-lab/actions/runs/40938619367) `success` 和 Vercel Preview [dpl_GRLLydBMJL6Nfmp68DxR4ZhDerTV](https://vercel.com/wangrui92-team/the-community-lab/GRLLydBMJL6Nfmp68DxR4ZhDerTV) `READY`（`source=git`）。现有 Production alias 仍指向最新 `main=95f2732c65052a62014704841188a46ff7762353` 的 READY 生产部署。该 PR 未合并，因此候选功能尚未影响 Production。
