@@ -25,6 +25,8 @@
 
 应用保存需要：有效的精确站点 origin 与 Supabase 配置、Auth 开关、保存开关、隐私批准、可用的注销流程，以及已决定的区域和服务器期限。数据库另外默认 `enabled=false`，客户端不能修改。只改前端开关不能开始写入。
 
+Supabase Data API 的 `public.history_capabilities()` 仅作 `SECURITY INVOKER` 薄封装；读取受限设置的 `SECURITY DEFINER` 实现在 `community_private`。该 schema 不得加入 Exposed schemas。
+
 关闭**新增保存**不应关闭已有账号访问：保留 Auth 和删除端点，使记录仍可查看、导出、删除与注销。不能用整体移除身份配置作为正常停采方式。
 
 ## 登录和存储

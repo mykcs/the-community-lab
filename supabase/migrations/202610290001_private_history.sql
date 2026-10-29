@@ -145,8 +145,9 @@ WITH CHECK (owner_id = (SELECT auth.uid()) AND (SELECT community_private.active_
 CREATE POLICY test_runs_own_delete ON public.test_runs FOR DELETE TO authenticated
 USING (owner_id = (SELECT auth.uid()) AND (SELECT community_private.active_history_session()));
 
--- A no-argument, caller-scoped capability RPC. It returns no user/session IDs.
-CREATE FUNCTION public.history_capabilities() RETURNS jsonb
+-- Keep privileged reads in the non-exposed schema. The only Data API RPC is an
+-- invoker wrapper with no direct table privileges or caller-controlled args.
+CREATE FUNCTION community_private.history_capabilities() RETURNS jsonb
 LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
   SELECT jsonb_build_object(
     'session_active', community_private.active_history_session(),
@@ -154,6 +155,15 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = '' AS $$
       (SELECT settings.enabled FROM community_private.history_capture_settings AS settings WHERE settings.singleton), false),
     'consent_version', (SELECT settings.consent_version FROM community_private.history_capture_settings AS settings WHERE settings.singleton)
   );
+$$;
+REVOKE ALL ON FUNCTION community_private.history_capabilities() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION community_private.history_capabilities() TO authenticated;
+
+-- Supabase advises against SECURITY DEFINER functions in exposed schemas.
+-- This public RPC delegates only the fixed capability response above.
+CREATE FUNCTION public.history_capabilities() RETURNS jsonb
+LANGUAGE sql STABLE SET search_path = '' AS $$
+  SELECT community_private.history_capabilities();
 $$;
 REVOKE ALL ON FUNCTION public.history_capabilities() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.history_capabilities() TO authenticated;

@@ -29,6 +29,14 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
       assert.deepEqual(catalog, [...HISTORY_TEST_VERSIONS].sort((a, b) => a.season - b.season));
       const tables = (await pg.query("SELECT relname,relrowsecurity FROM pg_class WHERE oid IN ('public.test_runs'::regclass,'community_private.test_versions'::regclass,'community_private.history_capture_settings'::regclass)")).rows;
       assert.equal(tables.length, 3); assert.ok(tables.every(x => x.relrowsecurity));
+      const rpcSecurity = (await pg.query(`SELECT namespace.nspname, procedure.prosecdef
+        FROM pg_proc AS procedure JOIN pg_namespace AS namespace ON namespace.oid = procedure.pronamespace
+        WHERE procedure.oid IN ('public.history_capabilities()'::regprocedure, 'community_private.history_capabilities()'::regprocedure)
+        ORDER BY namespace.nspname`)).rows;
+      assert.deepEqual(rpcSecurity, [
+        { nspname: 'community_private', prosecdef: true },
+        { nspname: 'public', prosecdef: false },
+      ]);
       await assert.rejects(pg.exec("UPDATE community_private.test_versions SET origin='independent_demo'"), e => e.code === '55000');
     });
 
