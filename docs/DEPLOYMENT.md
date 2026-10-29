@@ -22,3 +22,7 @@
 网页是**双季原创韩中双语演示**：第一季原站观测 87 题、第二季 37 题；本站原创题 8 和 6。后续已获得对应 87＋37 个**客户端源题标识与元数据索引**，这仍不代表可以合法复制原题、已经完成真人韩中双语审校或掌握官方评分金标准。真实嘉宾排名与社媒归属未经核验，不提供虚构榜单。
 
 当前不要求登录、不上传答题数据、未启用数据库或 GitHub OAuth；服务器存储个人结果需先取得用户主动同意并通过 RLS、双用户交叉隔离和删除读回。仅以 Vercel Hobby 和现有工具执行，不增加付费服务。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
+
+## 最新候选复核（2026-10-29）
+
+[Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 的 head `99cf14670ccc342576cdc86bff8e62d48cb5f2a7` 获得精确 SHA 的 GitHub Actions `success` 和 Vercel Preview `READY`（`source=git`）。现有 Production alias 仍指向最新 `main=95f2732c65052a62014704841188a46ff7762353` 的 READY 生产部署。该 PR 未合并，因此候选功能尚未影响 Production。
