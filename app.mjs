@@ -1,6 +1,9 @@
 import { SEASONS } from './data/questions.mjs';
 import { scoreAnswers, validateSeason } from './lib/quiz.mjs';
 import { createQuizSessions } from './lib/quiz-session.mjs';
+import { addHistorySaveAction } from './lib/history-save.mjs';
+import { browserHistoryConfig } from './lib/history-browser.mjs';
+import { GUEST_SOCIAL_DIRECTORY } from './data/guest-social-directory.mjs';
 
 for (const season of Object.values(SEASONS)) validateSeason(season);
 
@@ -10,6 +13,8 @@ const state = { view: 'home' };
 let active = null;
 const $ = (id) => document.getElementById(id);
 const views = { home: $('home-view'), quiz: $('quiz-view'), result: $('result-view') };
+const historyConfig = browserHistoryConfig();
+if ($('history-navigation')) $('history-navigation').hidden = !historyConfig.configured;
 
 function node(tag, className = '', content = null) {
   const element = document.createElement(tag);
@@ -151,6 +156,24 @@ function renderResult() {
     steps.append(step);
   }
   guestPanel.append(steps);
+  const directoryHeading = node('h3', '', '嘉宾公开来源中的社媒链接');
+  const directoryNote = node('p', '', '下列链接由两个 Agent 逐条核对公开原始来源；这不等于真人逐条复核或法律身份认证。Instagram 页面未能直接读取，仅核对公开来源中发布的链接。共同频道会明确标注。这里只供导航，不代表嘉宾成绩已核实；近期活跃度未知。');
+  const guestDirectory = node('ul', 'guest-social-directory');
+  for (const guest of GUEST_SOCIAL_DIRECTORY) {
+    if (guest.season !== season.id) continue;
+    const person = node('li', 'guest-social-person');
+    person.append(node('strong', '', `${guest.stage_name_ko} · ${guest.accounts.some(account => account.relationship === 'co_hosted_channel') ? '节目共同频道' : '公开账号链接'}`));
+    const links = node('div', 'guest-social-links');
+    for (const account of guest.accounts) {
+      const link = node('a', '', account.platform);
+      link.href = account.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      link.setAttribute('aria-label', `${guest.stage_name_ko} 的公开 ${account.platform} 账号链接（社媒目录）`);
+      links.append(link);
+    }
+    person.append(links, node('small', '', '核查：两个 Agent 的原始来源 · 2026-10-29 · 待真人复核'));
+    guestDirectory.append(person);
+  }
+  guestPanel.append(directoryHeading, directoryNote, guestDirectory);
   grid.append(resultPanel, guestPanel);
   const actions = node('div', 'result-actions');
   const restart = node('button', 'button button-primary', '重新测试 ↗');
@@ -163,7 +186,8 @@ function renderResult() {
   home.type = 'button';
   home.addEventListener('click', showHome);
   actions.append(restart, download, home);
-  const footnote = node('p', 'result-footnote', '隐私说明：所有答案只存在于当前页面的内存中，不会上传或写入浏览器持久存储；关闭或刷新后就会消失。下载结果时仅包含维度分数与版本信息，不含逐题答案。GitHub 登录与私人历史记录功能尚未启用。');
+  addHistorySaveAction(actions, active.result);
+  const footnote = node('p', 'result-footnote', '隐私说明：逐题答案只存在于当前页面的内存中；关闭或刷新后就会消失。下载结果仅含维度分数与版本，不含逐题答案。' + (historyConfig.saveAvailable ? '只有你另外勾选同意并选择保存，才会交接最小结果并连接私人历史。' : '私人历史新增保存尚未启用，游客结果不会上传。'));
   root.append(overline, header, grid, actions, footnote);
   switchView('result');
 }

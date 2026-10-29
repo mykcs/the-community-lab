@@ -1,0 +1,38 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+---
+<AccountLayout title="私人历史">
+  <h1 id="history-title" tabindex="-1">私人历史</h1>
+  <p class="account-lead">测试不需要账号。只有你主动同意保存的示例结果，才会出现在这里。</p>
+  <p id="account-status" class="history-status" role="status" aria-live="polite"></p>
+  <section id="account-unavailable" class="history-notice" aria-labelledby="unavailable-title">
+    <h2 id="unavailable-title">登录与保存尚未开放</h2>
+    <p>功能正在进行隐私、真实双账号权限和删除验收。目前没有通过这里收集测试结果。</p>
+    <a class="button button-primary" href="/">直接以游客测试 →</a>
+  </section>
+  <section id="account-login" class="history-notice" hidden aria-labelledby="login-title">
+    <h2 id="login-title">选择 GitHub 登录</h2>
+    <p>Supabase 会处理 GitHub 账号标识、提供的资料及邮箱。登录本身不会保存任何测试结果，不申请仓库权限。</p>
+    <div class="history-actions"><button id="history-login" class="button button-primary" type="button">使用 GitHub 登录 →</button><button id="history-cancel-login" class="button button-outline" type="button">取消本标签页的登录交接</button></div>
+  </section>
+  <section id="account-private" hidden aria-labelledby="saved-title">
+    <div class="history-heading"><h2 id="saved-title">已保存的示例结果</h2><div class="history-actions"><button id="history-export" class="button button-outline" type="button">导出全部 ↓</button><button id="history-signout" class="button button-outline" type="button">退出本次登录</button></div></div>
+    <p class="history-muted">按保存时间从新到旧排列。记录只用于回顾，不用于节目嘉宾匹配。</p>
+    <form id="pending-history" class="history-notice" hidden>
+      <h3>有一条尚未确认保存的结果</h3>
+      <p>此前你同意了保存，但登录返回时未能确认写入。15 分钟的交接期限内，可以重新确认或取消。</p>
+      <label class="history-consent"><input type="checkbox" required /><span>我仍同意保存这次示例结果。</span></label>
+      <div class="history-actions"><button class="button button-primary" type="submit">重试保存</button><button id="pending-cancel" class="button button-outline" type="button">取消并清除暂存</button></div>
+    </form>
+    <ol id="history-list" class="history-list"></ol>
+    <p id="history-empty" hidden>尚无已保存的结果。你仍可以先以游客完成测试。</p>
+    <button id="history-more" class="button button-outline" type="button" hidden>加载更早的记录</button>
+    <section class="history-danger" aria-labelledby="remove-account-title">
+      <h2 id="remove-account-title">注销本站账号</h2>
+      <p>这会永久删除本站账号及其保存的全部结果，不会删除 GitHub 账号。你可以先导出历史。</p>
+      <button id="history-remove-account" class="button button-outline" type="button">查看注销确认</button>
+    </section>
+  </section>
+  <noscript><p>这里需要 JavaScript 才能登录或读取私人历史；游客测试不需要注册。</p></noscript>
+  <script>import '../../lib/history-page.mjs';</script>
+</AccountLayout>

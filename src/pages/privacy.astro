@@ -1,0 +1,27 @@
+---
+import AccountLayout from '../layouts/AccountLayout.astro';
+const region = import.meta.env.PUBLIC_HISTORY_REGION_LABEL || '尚未确定，保存保持关闭';
+const retention = import.meta.env.PUBLIC_HISTORY_RETENTION_LABEL || '尚未确定，保存保持关闭';
+---
+<AccountLayout title="隐私与数据选择">
+  <article class="privacy-copy">
+    <h1>先测试，再决定是否保存。</h1>
+    <p class="account-lead">这是独立粉丝项目。价值观结果可能涉及敏感观点，你可以一直使用游客模式。</p>
+    <p class="history-notice">游客测试始终不需要账号。私人历史是否开放，以结果页和私人历史页的实际入口为准；每次保存都需要你另外同意。本页也说明尚未开放功能的数据处理方式。</p>
+    <h2>以游客测试</h2>
+    <p>逐题答案和当前结果只存在于本页内存。刷新或关闭页面即消失，不上传到认证服务或数据库，不放进 URL，不加入追踪事件。你可以下载本机结果；下载文件由你自己保管。</p>
+    <p>托管服务会接收提供网站所必需的请求信息，例如 IP 地址、浏览器信息和请求时间。这与把测试答案上传保存是两回事。本站不添加第三方分析追踪。</p>
+    <h2>选择 GitHub 登录</h2>
+    <p>只有你选择登录或进入已配置的私人历史，才会连接 Supabase。GitHub 和 Supabase 会按各自政策处理登录；Supabase 会取得 GitHub 账号标识及提供的资料／邮箱，用于识别你的本站账号，不申请 GitHub 仓库权限。登录成功本身不会保存结果。</p>
+    <p>本站使用当前标签页的 sessionStorage 保存登录会话和登录交接，不写入 localStorage。关闭标签页会清除这份本机存储；这不等于服务器已退出或数据已删除。要结束服务器会话，请点击“退出本次登录”。</p>
+    <h2>明确同意保存一次结果</h2>
+    <p>只有勾选同意并点击继续，才会准备保存该次结果。上传内容限于季别、题库／计分／译文版本、原创示例标识、各维度分数、同意版本和用于防止重复写入的请求标识；服务器关联本站账号并记录保存及同意时间。不会上传逐题答案。</p>
+    <p>前往 GitHub 前，最小结果会暂存在当前标签页，交接有效期为 15 分钟。过期后不能用于保存，返回网站时检查并清理，关闭标签页也会清除。取消交接、确认保存成功或拒绝登录返回时也会清理；浏览器若阻止清理，会明确提示。</p>
+    <dl><div><dt>数据区域</dt><dd>{region}</dd></div><div><dt>服务器保存期限</dt><dd>{retention}</dd></div><div><dt>当前同意说明版本</dt><dd>history-consent-v1（候选）</dd></div></dl>
+    <p>区域、服务器保留政策及运营责任尚未确认时，不能打开结果保存。任何今后的变更都应先更新告知和验收，不以登录代替同意。</p>
+    <h2>查看、导出与删除</h2>
+    <p>在私人历史中，可以查看和导出自己的全部记录。导出文件不含账号标识、邮箱或逐题答案。删除单条记录后，页面会再次从服务器读取并确认已无该条记录；未确认时不会显示成功。</p>
+    <p>注销本站账号会永久删除本站登录身份及其历史记录，不会注销 GitHub 账号。注销需要单独确认，并以服务端身份验证和删除后读回为准。停止新增保存时，已有账号仍应能够导出、删除和注销。</p>
+    <div class="history-actions"><a class="button button-primary" href="/">回到游客测试 →</a><a class="button button-outline" href="/history">私人历史</a></div>
+  </article>
+</AccountLayout>

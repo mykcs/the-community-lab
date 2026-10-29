@@ -27,3 +27,6 @@ exports/private/
 *.sql
 *.sql.gz
 *.dump
+
+# Reviewed versioned schema only; private SQL dumps remain ignored.
+!/supabase/migrations/*.sql
