@@ -71,3 +71,47 @@ test('a future edit may not smuggle in scores, private contact fields or stronge
     assert.equal(auditGuestSocialDirectory(copy, { today: '2026-10-29' }).valid, false);
   }
 });
+
+test('a single personal profile cannot be attributed to unrelated guests, including URL aliases', () => {
+  const modified = structuredClone(source);
+  modified.people[1].accounts[0].url =
+    modified.people[0].accounts[0].url.replace('www.youtube.com', 'youtube.com');
+  const checked = auditGuestSocialDirectory(modified, { today: '2026-10-29' });
+  assert.equal(checked.valid, false, 'same channel via www alias must not be claimed as two personal accounts');
+  assert.deepEqual(checked.people, []);
+  assert.ok(checked.issues.some(issue => issue.includes('profile attributed')));
+});
+
+test('shared channels may appear twice only if both accounts explicitly say co-hosted', () => {
+  const shared = structuredClone(source);
+  const first = shared.people[4].accounts[0];
+  const second = shared.people[5].accounts[0];
+  assert.equal(first.relationship, 'co_hosted_channel');
+  assert.equal(second.relationship, 'co_hosted_channel');
+  second.url = first.url;
+  assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, true);
+  second.relationship = 'personal_channel';
+  assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, false);
+});
+
+test('YouTube @handles are case-insensitive across aliases and encoded Unicode', () => {
+  for (const [left, right] of [
+    ['https://www.youtube.com/@GuestName', 'https://youtube.com/@guestname'],
+    ['https://www.youtube.com/@ÄBC', 'https://m.youtube.com/@äbc'],
+  ]) {
+    const modified = structuredClone(source);
+    modified.people[0].accounts[0].url = left;
+    modified.people[1].accounts[0].url = right;
+    const checked = auditGuestSocialDirectory(modified, { today: '2026-10-29' });
+    assert.equal(checked.valid, false, left + ' vs ' + right);
+    assert.deepEqual(checked.people, []);
+    assert.ok(checked.issues.some(issue => issue.includes('profile attributed')));
+  }
+});
+
+test('YouTube /channel IDs preserve case in duplicate matching', () => {
+  const modified = structuredClone(source);
+  modified.people[0].accounts[0].url = 'https://www.youtube.com/channel/UCAbC';
+  modified.people[1].accounts[0].url = 'https://youtube.com/channel/UCabc';
+  assert.equal(auditGuestSocialDirectory(modified, { today: '2026-10-29' }).valid, true);
+});
