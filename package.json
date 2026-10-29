@@ -1,13 +1,29 @@
 {
   "name": "the-community-lab",
   "version": "0.1.0",
-  "description": "Unofficial Chinese-first Korean/Chinese bilingual values-test demo",
+  "description": "Astro and Tailwind bilingual Korean-Chinese values-test fan project",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "check": "npm test"
+    "audit:reproduction": "node scripts/audit-reproduction.mjs",
+    "check": "npm test && npm run audit:reproduction && astro check",
+    "build": "astro build",
+    "dev": "astro dev",
+    "preview": "astro preview"
   },
-  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.2.2",
+    "astro": "^6.1.8",
+    "tailwindcss": "^4.2.2"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.8",
+    "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "vite": "7.3.7"
+  },
+  "engines": { "node": ">=22.12" },
   "license": "UNLICENSED"
 }
