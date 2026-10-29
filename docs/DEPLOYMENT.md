@@ -13,6 +13,17 @@
 
 此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。后续每次部署都需核实当前 main SHA、Vercel `source=git` 和生产域名的版本身份，不把上表快照永久视作最新。
 
+## 本轮线上身份快照（2026-10-29，文档变更前）
+
+- 本轮复核时 main：`d3891389bb107a4418b47af5c81dccbe61178821`。
+- 当时 Production：[dpl_BGR5tvXaMSRtALdkicqDQKz6vpSY](https://vercel.com/wangrui92-team/the-community-lab/BGR5tvXaMSRtALdkicqDQKz6vpSY) 为 `READY`、`source=git`、`target=production`；Vercel Git SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式域名 HTTP GET 返回 200，页面标题为「同频实验室 · The Community Lab」。
+- 当时 PR #11 是 Draft，候选 head `140971f0bee67c02c85d8177d9a2ad4d447c7517`，基于上述 main。其 Preview 和精确 SHA CI 状态见 [QA 验收记录](QA-2026-10-29.md)；候选没有进入 Production。
+- 本轮复核当时 Production SHA 尚未完成整套浏览器回归；随后在文档 PR #22 合并后的精确 Production SHA 完成验收，见下节。
+
+## 文档 PR #22 合并后的 Production 浏览器验收（2026-10-29）
+
+PR #22 合并后生产版本为 main `8f719869da1c842297b9286f5a20feadd2c88340`，Vercel [dpl_9gkoNH5GQDdZaCQaofqq1RmEbgCJ](https://vercel.com/wangrui92-team/the-community-lab/9gkoNH5GQDdZaCQaofqq1RmEbgCJ) 状态 `READY`、`source=git`、`target=production`，SHA 一致且 alias 包含正式域名。对此精确版本运行 Chrome/Playwright 两季全流程：第一季 8/8、第二季 6/6，均在 440×956 和 1440×900 CSS px 完成。两季题干和选项中韩文及中文非空，结果页出现；无横向溢出、浏览器错误、失败响应或非 GET 请求，localStorage 与 sessionStorage 均为空。仅使用合成答案；这是浏览器视口模拟，不是实体 iPhone 测试，也不验证节目官方算法。
+
 ## 历史故障（已解决）
 
 2026-10-29 早些时候首次尝试 `vercel git connect` 时，Vercel GitHub namespace `mykcs` 处于 selected-repository 受限状态，现有项目无法关联新仓库，返回访问错误。旧版本因此曾用 Vercel CLI 直接部署。后来仓库的 Vercel GitHub App 访问已恢复、原有 Vercel 项目完成 Git 连接；上表两项 `source=git` 实测结果证明自动发布已生效。历史操作、错误原文及旧版本 SHA 可从 [此前文档提交](https://github.com/mykcs/the-community-lab/blob/bebfd3f35c3011532df95815782d9f6ff81eb851/docs/DEPLOYMENT.md) 追溯，而不是当作当前阻碍。
