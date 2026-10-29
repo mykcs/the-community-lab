@@ -1,10 +1,15 @@
 name: Verify independent demo
 on:
   pull_request:
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'index.html', 'style.css', 'package.json', '.github/workflows/verify.yml']
   push:
     branches: [main]
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'index.html', 'style.css', 'package.json', '.github/workflows/verify.yml']
 permissions:
   contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
