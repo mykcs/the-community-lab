@@ -13,12 +13,12 @@
 
 此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。后续每次部署都需核实当前 main SHA、Vercel `source=git` 和生产域名的版本身份，不把上表快照永久视作最新。
 
-## 最新线上身份复核（2026-10-29）
+## 本轮线上身份快照（2026-10-29，文档变更前）
 
-- 当前 main：`d3891389bb107a4418b47af5c81dccbe61178821`。
+- 本轮复核时 main：`d3891389bb107a4418b47af5c81dccbe61178821`。
 - 当前 Production：[dpl_BGR5tvXaMSRtALdkicqDQKz6vpSY](https://vercel.com/wangrui92-team/the-community-lab/BGR5tvXaMSRtALdkicqDQKz6vpSY) 为 `READY`、`source=git`、`target=production`；Vercel Git SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式域名 HTTP GET 返回 200，页面标题为「同频实验室 · The Community Lab」。
 - 当前 PR #11 是 Draft，候选 head `140971f0bee67c02c85d8177d9a2ad4d447c7517`，基于上述 main。其 Preview 和精确 SHA CI 状态见 [QA 验收记录](QA-2026-10-29.md)；候选没有进入 Production。
-- 当前 SHA 的完整生产浏览器回归尚未执行；不要把前述较早提交的浏览器验收当作对当前 SHA 的验证。
+- 本轮复核的 Production SHA 尚未完成整套浏览器回归；不要把前述较早提交的浏览器验收当作对该 SHA 的验证。
 
 ## 历史故障（已解决）
 
