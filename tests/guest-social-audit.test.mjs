@@ -117,3 +117,21 @@ test('YouTube /channel IDs preserve case in duplicate matching', () => {
   modified.people[1].accounts[0].url = 'https://youtube.com/channel/UCabc';
   assert.equal(auditGuestSocialDirectory(modified, { today: '2026-10-29' }).valid, true);
 });
+
+
+test('special-use domains cannot support the public guest directory, even with HTTPS', () => {
+  for (const host of [
+    'records.test', 'records.invalid', 'records.example',
+    'records.example.org', 'records.example.net', 'records.example.com',
+    'printer.home.arpa', 'service.onion', 'resolver.alt',
+    'staff.internal', 'local', 'localhost.', 'records.test.',
+  ]) {
+    const modified = structuredClone(source);
+    const proof = `https://${host}/public-proof`;
+    modified.people[0].accounts[0].evidence_url = proof;
+    modified.people[0].accounts[0].source_urls = [proof];
+    const checked = auditGuestSocialDirectory(modified, { today: '2026-10-29' });
+    assert.equal(checked.valid, false, host);
+    assert.deepEqual(checked.people, [], host);
+  }
+});
