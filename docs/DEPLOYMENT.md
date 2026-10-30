@@ -1,12 +1,14 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
+## 2026-10-30 · GitHub Pages 正式主站（PR #126 最新发布）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
-- **最新 Pages 发布身份（2026-10-30）：** [PR #124](https://github.com/mykcs/the-community-lab/pull/124) 已合并为 `4d829eebe622dd2837fef9140c9db17d7bfa7dbd`。这是该次站点内容发布源。该提交的 [Pages run #41141148194](https://github.com/mykcs/the-community-lab/actions/runs/41141148194) 的 build 与 deploy 均成功；标准验证 run [#41141148138](https://github.com/mykcs/the-community-lab/actions/runs/41141148138) 和译审页验证 run [#41141148185](https://github.com/mykcs/the-community-lab/actions/runs/41141148185) 均成功。构建执行 `npm ci`、`npm run check`、`npm run build`，并复制两份复核页。此次只统一 23 道 S1 题中韩文选项“전혀 아니다”的 AI 草译“完全不符合”，并修订 `s1-openness-05` 的无障碍用语；韩文原题、答案值和复核状态没有改变。PR #120 的发布记录现为上一版历史快照。
-- **最新发布后访问验收：** 首页、`/questionnaire/?season=1`、`/translation-review/` 与 `/original-question-translation-review/` 均返回 HTTP 200。最新原题复核页大小为 136,489 字节，SHA-256 `7eb5b91307f0a3e17fe7f04fa5c86ae5796843717f08928b040cfe8990aad591`；124 题仍均为 AI 草稿、独立韩中人工复核为 `0/124`，独立性和正式译文门槛未改变，评分公式仍为 `UNKNOWN`。此前 440×956 与 1440×900 CSS px 浏览器视口验收记录见 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1#issuecomment-6529806750)；这是浏览器视口模拟，不是实体 iPhone 验收。
-- **Vercel 回退快照：** 当前 `vercel.json` 已禁用 Git 自动部署。Vercel 项目当前读回的 Production 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA` 为 `READY`，`source=git`、branch 为 `main`，对应 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`，alias 仍包含 `the-community-lab.vercel.app`。该 SHA 早于当前 Pages 发布；Vercel 域名保留作历史回退快照，不代表当前正式站发布身份。
-- **尚未完成的产品目标：** 两季原题的正式复刻仍未验收；独立韩中人工复核为 `0/124`，官方评分与同季可比嘉宾成绩仍为 `UNKNOWN`。PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
+- **当前发布身份：** PR #126 合并提交 `79669a1fadce7ab5f0f49edf1192637423e12dae`。Pages push run [#41142960187](https://github.com/mykcs/the-community-lab/actions/runs/41142960187)（workflow run 53）在该 SHA 上 build 与 deploy 均成功；PR head `7994496478d2dc4a0cc6fe07823ac9fca970b4c3` 的 Astro 验证 run [#41142886709](https://github.com/mykcs/the-community-lab/actions/runs/41142886709) 也成功。构建完成 `npm ci`、`npm run check`、`npm run build`，并将 124 题 AI 草稿与独立原题复核页纳入 Pages artifact。
+- **本次产品改动：** PR #126 为本机下载的试填进度增加译文内容指纹。恢复旧备份时，即使译文版本号意外未改，只要中文题干或选项文字变动，也要求重新确认答案；指纹不证明翻译正确，答案不上传。原题仍是 AI 初译，真人韩中复核仍为 `0/124`，官方评分仍为 `UNKNOWN`。
+- **发布后读回：** Pages 首页返回 HTTP 200（26,673 字节）；第二季问卷路由 `/questionnaire/?season=2` 返回 HTTP 200（93,369 字节）；原题复核页返回 HTTP 200（136,489 字节），SHA-256 `7eb5b91307f0a3e17fe7f04fa5c86ae5796843717f08928b040cfe8990aad591`。当前三个路由均由该 Pages 主站提供。
+- **当前浏览器抽查：** 线上第二季首题在 440×956 与 1440×900 CSS px 视口均显示韩文在前、中文 AI 初译在后；在隔离临时页选择一个合成答案后，进度从 0/37 到 1/37，前进再返回仍保留该答案。未提交结果。此抽查不替代全路径或实体 iPhone 验收。
+- **Vercel 回退状态（2026-10-30 23:15 UTC 读回）：** 同一 Vercel 项目仍连接 GitHub 仓库 `mykcs/the-community-lab`、生产分支 `main`，但项目当前将 Git 自动创建部署设为 `disabled`，并禁用 repository dispatch。最新 Production 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA` 仍指向旧 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`；它只作为历史回退快照，GitHub Pages 是当前正式发布方。不要把这条旧 Production 当作 main 的自动部署验收。
+- **仍未验收：** 两季忠实复刻、独立人工翻译审校、官方计分一致性和同版本真实嘉宾匹配。社媒目录继续只作导航。
 
 ## 历史迁移计划快照（已被上述正式验收取代）
 
