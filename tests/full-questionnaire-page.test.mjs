@@ -40,18 +40,19 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(page, /默认只存在于当前页面内存/);
   assert.match(page, /不自动持久保存/);
   assert.match(page, /私人观点/);
-  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index\)/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions\)/);
   assert.match(app, /restorePrivateProgressReceipt\(pack, record\)/);
   assert.match(app, /file\.size > 128 \* 1024/);
   assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
   assert.match(app, /saved\.set\(session\.season/);
   assert.match(page, /如导入会删除或覆盖本页已答选择，系统会先要求确认/);
+  assert.match(page, /会保留原答案版本并要求你重新阅读题目/);
   const validatedAt = app.indexOf('restorePrivateProgressReceipt(pack, record)');
   const confirmedAt = app.indexOf('window.confirm(');
   const overwrittenAt = app.indexOf('saved.set(session.season');
   assert.ok(validatedAt >= 0 && validatedAt < confirmedAt && confirmedAt < overwrittenAt);
   assert.match(app, /wouldDiscardLocalAnswers\(previous\.answers, session\.answers\)/);
-  assert.match(app, /if \(!confirmed\) \{[\s\S]*?return;[\s\S]*?\}\s*\}\s*saved\.set\(/);
+  assert.match(app, /if \(!window\.confirm\([\s\S]*?return;[\s\S]*?saved\.set\(session\.season/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
 });
 
@@ -79,7 +80,7 @@ test('sparse resume at final question must redirect to the first unanswered ques
   assert.ok(finish, 'finish handler exists');
   const findAt = finish.indexOf('questions.findIndex(q => !Object.hasOwn(active.answers, q.id))');
   const renderAt = finish.indexOf('render()');
-  const summaryAt = finish.indexOf('summarizeUnscoredAnswers(pack, active.season, active.answers)');
+  const summaryAt = finish.indexOf('summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions)');
   assert.ok(findAt >= 0 && findAt < renderAt && renderAt < summaryAt,
     'finish checks completeness before creating a receipt');
   assert.match(finish, /active\.index = firstMissing/);

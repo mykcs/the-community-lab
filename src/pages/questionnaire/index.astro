@@ -96,7 +96,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
             <button type="button" class="full-season" data-start-season="2"><small>SEASON 02 / 37 QUESTIONS</small><strong>第二季 · 看不见的手</strong><span>37 道双选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="2">开始完整试填 ↗</b></button>
             <button type="button" class="full-season" data-start-season="1"><small>SEASON 01 / 87 QUESTIONS</small><strong>第一季 · 价值观探索</strong><span>87 道四选／六选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="1">开始完整试填 ↗</b></button>
           </div>
-          <div class="full-resume"><button id="full-import" class="button button-outline" type="button">从本机 JSON 恢复答题进度 ↑</button><input id="full-import-file" type="file" accept=".json,application/json" hidden /><p>做题途中可以主动下载进度文件，刷新后再从这里恢复。也兼容本网站之前下载的完整答题记录。如导入会删除或覆盖本页已答选择，系统会先要求确认。文件不会上传，但包含你的私人观点，切勿公开分享。</p><p id="full-import-status" class="full-feedback" role="status" aria-live="polite"></p></div>
+          <div class="full-resume"><button id="full-import" class="button button-outline" type="button">从本机 JSON 恢复答题进度 ↑</button><input id="full-import-file" type="file" accept=".json,application/json" hidden /><p>做题途中可以主动下载进度文件，刷新后再从这里恢复。也兼容本网站之前下载的完整答题记录。如导入会删除或覆盖本页已答选择，系统会先要求确认；若 AI 中文译文已更新，会保留原答案版本并要求你重新阅读题目、逐题确认。文件不会上传，但包含你的私人观点，切勿公开分享。</p><p id="full-import-status" class="full-feedback" role="status" aria-live="polite"></p></div>
           <p class="full-local">隐私：答案默认只存在于当前页面内存，不上传服务器、不发给第三方、不自动持久保存。两季可在本页暂停和继续；刷新或关闭会清空内存进度。只有你主动下载本机 JSON 文件，才可以在以后手动恢复；请自行妥善保管。</p>
         </section>
 
