@@ -110,7 +110,12 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
 });
 
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
-  assert.doesNotMatch(html, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\b(?:href|rel)\s*=/i);
+  const htmlWithoutInlineFavicon = html.replace(
+    /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,[^"]+">/,
+    ''
+  );
+  assert.doesNotMatch(htmlWithoutInlineFavicon, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\b(?:href|rel)\s*=/i);
+  assert.match(html, /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
   assert.match(html, /localStorage\.setItem/);
   assert.match(html, /localStorage\.getItem/);
   assert.match(html, /localStorage\.removeItem/);
