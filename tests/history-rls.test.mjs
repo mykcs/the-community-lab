@@ -25,8 +25,9 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
     let aId, bId;
 
     await t.test('catalog matches immutable quiz identities and every table has RLS', async () => {
-      const catalog = (await pg.query('SELECT * FROM community_private.test_versions ORDER BY season')).rows;
-      assert.deepEqual(catalog, [...HISTORY_TEST_VERSIONS].sort((a, b) => a.season - b.season));
+      const catalog = (await pg.query('SELECT * FROM community_private.test_versions ORDER BY season, question_version')).rows;
+      assert.deepEqual(catalog, [...HISTORY_TEST_VERSIONS].sort((a, b) =>
+        a.season - b.season || a.question_version.localeCompare(b.question_version)));
       const tables = (await pg.query("SELECT relname,relrowsecurity FROM pg_class WHERE oid IN ('public.test_runs'::regclass,'community_private.test_versions'::regclass,'community_private.history_capture_settings'::regclass)")).rows;
       assert.equal(tables.length, 3); assert.ok(tables.every(x => x.relrowsecurity));
       const rpcSecurity = (await pg.query(`SELECT namespace.nspname, procedure.prosecdef
