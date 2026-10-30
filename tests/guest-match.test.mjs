@@ -201,3 +201,44 @@ test('one malformed guest axis cannot crash matching for the other verified cand
     }, [guest('valid', [40, -30, 0])]), /用户维度不完整或重复/);
   }
 });
+
+test('ranking navigation rejects non-profile paths, tracking parameters and fragments', () => {
+  const evidence = 'https://example.org/identity';
+  const suspicious = [
+    ['X', 'https://x.com/login'],
+    ['X', 'https://x.com/settings'],
+    ['X', 'https://x.com/notifications'],
+    ['Instagram', 'https://instagram.com/settings'],
+    ['Instagram', 'https://instagram.com/accounts'],
+    ['YouTube', 'https://youtube.com/@synthetic?tracking=yes'],
+    ['X', 'https://x.com/synthetic#personal-results'],
+    ['Instagram', 'https://instagram.com/synthetic?utm_source=unknown'],
+  ];
+  const ranked = rankComparableGuests(user, [guest('links', [40, -30, 0], {
+    social_accounts: suspicious.map(([platform, profile_url]) => ({
+      platform, profile_url, identity_source_url: evidence, verified_at: '2026-10-29',
+    })),
+  })]);
+  assert.equal(ranked.status, 'ready');
+  assert.deepEqual(ranked.matches[0].social_accounts, []);
+});
+
+test('private-network or single-label provenance URLs cannot validate official guest scores', () => {
+  for (const url of ['https://staff.internal/synthetic', 'https://intranet/synthetic']) {
+    const ranked = rankComparableGuests(user, [guest('no-public-evidence', [40, -30, 0], {
+      score_source_url: url,
+    })]);
+    assert.equal(ranked.status, 'no_verified_comparables', url);
+    assert.deepEqual(ranked.matches, []);
+  }
+
+  const ranked = rankComparableGuests(user, [guest('social-source', [40, -30, 0], {
+    social_accounts: [{
+      platform: 'X', profile_url: 'https://x.com/synthetic',
+      identity_source_url: 'https://staff.internal/person',
+      verified_at: '2026-10-29',
+    }],
+  })]);
+  assert.equal(ranked.status, 'ready');
+  assert.deepEqual(ranked.matches[0].social_accounts, []);
+});
