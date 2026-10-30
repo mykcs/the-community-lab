@@ -97,3 +97,55 @@ test('page keeps review edits in browser storage without network or HTML injecti
   assert.match(html, /不会上传审校内容/);
   assert.doesNotMatch(html, /\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|\bsendBeacon\s*\(|\.innerHTML\s*=/);
 });
+
+test('exported review JSON can be safely restored without changing source evidence', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(source, 'the full source/version guard must be testable');
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const exported = structuredClone(data);
+  const q = exported.questions[0];
+  q.translation_zh_cn = '重新编辑的中文草稿';
+  q.options[0].zh_cn = '重新编辑的中文选项';
+  q.human_review_status = 'pass';
+  q.human_review_note = '复核者甲 · 双语能力说明 · 2026-10-30';
+  q.human_review_note_stale = false;
+  const edits = restore(exported, data);
+  assert.equal(Object.keys(edits).length, 1);
+  assert.deepEqual(edits[q.id], {
+    translation: '重新编辑的中文草稿',
+    options: q.options.map(o => o.zh_cn),
+    review: 'pass',
+    note: q.human_review_note,
+    reviewNoteStale: false
+  });
+  assert.match(html, /localStorage\.setItem\(key,JSON\.stringify\(imported\)\)/);
+  assert.match(html, /id="import-file" type="file"/);
+  assert.match(html, /human_review_note_stale=e\.reviewNoteStale===true/);
+});
+
+test('reject forged, incompatible or incomplete imported evidence without changing edits', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const invalid = (mutate) => {
+    const json = structuredClone(data);
+    mutate(json);
+    assert.throws(() => restore(json, data));
+  };
+  invalid(json => { json.source.asset_sha256 = 'fake'; });
+  invalid(json => { json.questions[0].source_text_ko = 'fake'; });
+  invalid(json => { json.questions[0].options[0].ko = 'fake'; });
+  invalid(json => { json.questions[0].rights_status = 'fake'; });
+  invalid(json => { json.questions[0].review_status = 'bilingual_reviewed'; });
+  invalid(json => { json.questions.reverse(); });
+  invalid(json => { json.questions.pop(); });
+  invalid(json => { json.questions[0].human_review_status = 'bilingual_reviewed'; });
+  invalid(json => { json.questions[0].human_review_status = 'pass'; });
+  invalid(json => { json.questions[0].human_review_status = 'pass'; json.questions[0].human_review_note = 'note'; json.questions[0].human_review_note_stale = true; });
+  const oldExport = structuredClone(data);
+  oldExport.questions[0].translation_zh_cn = '改动后等待复核';
+  oldExport.questions[0].human_review_status = 'pending';
+  oldExport.questions[0].human_review_note = '之前的备注';
+  assert.equal(restore(oldExport,data)[oldExport.questions[0].id].reviewNoteStale,true);
+  assert.match(html, /文件超过 1 MiB 上限/);
+  assert.match(html, /原有草稿未被覆盖/);
+});
