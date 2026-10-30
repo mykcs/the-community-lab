@@ -3,9 +3,9 @@
 ## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
-- **最新 Pages 发布证据：** [PR #92](https://github.com/mykcs/the-community-lab/pull/92) 已合并为 `main` SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e`；[Astro 验证 #41104034687](https://github.com/mykcs/the-community-lab/actions/runs/41104034687) 与 [Pages 发布 #41104034849](https://github.com/mykcs/the-community-lab/actions/runs/41104034849) 均成功，build 与 deploy job 均完成。
-- **线上访问验收：** 最新主线发布后，对首页、`/translation-review/`、`/original-question-translation-review/` 与 `/questionnaire/` 的实时 GET 均返回 HTTP 200。两个译审页都读回 S2 `ms07` 修订句“比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。”，版本 `draft-0.1.1`、`review_status: draft`；这仍是 AI 草稿，不可作为正式译文。PR #92 补充了直接进入季别答题页时的试点局限说明。已记录的 440×956 与 1440×900 CSS px 浏览器视口验收仍属模拟，不是实体 iPhone 验收。
-- **Vercel 配额收口：** `vercel.json` 通过 `"git":{"deploymentEnabled":false}` 禁用所有分支的 Git 自动部署；在当前 Vercel 项目对 main SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e` 的精确查询返回 0 条部署。旧 Vercel 已发布版本保留作回退快照。
+- **当前 Pages 发布身份：** [PR #97](https://github.com/mykcs/the-community-lab/pull/97) 已合并；当前 `main` SHA `7e6b4249f47d3f3700bc65fbe5e03c1e54ac8627` 的 [Pages 发布 #41112944130](https://github.com/mykcs/the-community-lab/actions/runs/41112944130) 为 `success`，run head 与当前 main 精确一致，`build` 和 `deploy` 两个 job 均成功。
+- **线上访问验收：** 本轮对首页、`/questionnaire/?season=2`、`/translation-review/` 与 `/original-question-translation-review/` 做实时 GET，四个路径均返回 HTTP 200。原题复核页为 135,762 字节，线上内容与当前 main 源文件逐字节一致，SHA-256 为 `0b99afc4682c2f5b4a32c5a3418220e9b9560d3bb11b87c78924c7c5d0ffa24e`。当前入口仍将 124 道原题列为 AI 草稿，独立韩中人工复核为 `0/124`；不表示正式译文或官方评分。440×956 与 1440×900 CSS px 浏览器验收记录见 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1#issuecomment-6529806750)；这是浏览器视口模拟，不是实体 iPhone 验收。
+- **Vercel 回退快照：** 当前 `vercel.json` 已禁用 Git 自动部署。Vercel 项目当前读回的 Production 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA` 为 `READY`，`source=git`、branch 为 `main`，对应 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`，alias 仍包含 `the-community-lab.vercel.app`。该 SHA 早于当前 Pages 主线 `7e6b4249…`；Vercel 域名保留作回退快照，不代表当前正式站发布身份。
 - **尚未完成的产品目标：** 两季原题的正式复刻仍未验收；独立韩中人工复核为 `0/124`，官方评分与同季可比嘉宾成绩仍为 `UNKNOWN`。PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
 
 ## 历史迁移计划快照（已被上述正式验收取代）
