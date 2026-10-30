@@ -193,7 +193,14 @@ $('full-import-file').addEventListener('change', event => {
   event.target.value = '';
   void importProgress(file);
 });
-$('full-restart').addEventListener('click', () => begin(active.season, true));
+$('full-restart').addEventListener('click', () => {
+  if (!active) return;
+  const answered = Object.keys(active.answers).length;
+  if (answered > 0 && !window.confirm(
+    `第 ${active.season} 季已经回答了 ${answered} 道题。重新开始会清空本页该季的全部答案，无法撤销。建议先下载 JSON 备份。确定重新开始？`,
+  )) return;
+  begin(active.season, true);
+});
 $('full-back').addEventListener('click', selectSeason);
 
 const fromUrl = new URLSearchParams(window.location.search).get('season');
