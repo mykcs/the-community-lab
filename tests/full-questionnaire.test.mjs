@@ -159,7 +159,7 @@ test('private resume refuses version drift, unknown/duplicate answers, falsified
   reject(r => { r.season = 1; });
   reject(r => { r.questionCount = 36; });
   reject(r => { r.sourceSha256 = 'a'.repeat(64); });
-  reject(r => { r.translationVersion = 'draft-99.99.99'; });
+  reject(r => { r.translationVersion = 'official-99.99.99'; });
   reject(r => { r.scoringVersion = 'season-2-score@2'; });
   reject(r => { r.status = 'OFFICIAL_RESULT'; });
   reject(r => { r.format = 'unknown'; });
@@ -167,7 +167,7 @@ test('private resume refuses version drift, unknown/duplicate answers, falsified
   reject(r => { r.selections.push(structuredClone(r.selections[0])); });
   reject(r => { r.selections[0].questionId = '__proto__'; });
   reject(r => { r.selections[0].selectedValue = 'NO_SUCH_OPTION'; });
-  reject(r => { r.selections[0].translationVersion = 'draft-99.99.99'; });
+  reject(r => { r.selections[0].translationVersion = 'official-99.99.99'; });
   reject(r => { r.selections = Array.from({ length: 38 }, () => r.selections[0]); });
   assert.throws(() => restorePrivateProgressReceipt(pack, null));
   assert.throws(() => createPrivateProgressReceipt(pack, 2, { __proto__: null, bad: 'x' }, 1));
@@ -175,4 +175,49 @@ test('private resume refuses version drift, unknown/duplicate answers, falsified
   const legacyIncomplete = summarizeUnscoredAnswers(pack, 2, Object.fromEntries(questions.map(q => [q.id, q.options[0].value])));
   legacyIncomplete.selections.pop();
   assert.throws(() => restorePrivateProgressReceipt(pack, legacyIncomplete));
+});
+test('translation-only draft updates allow safe opt-in resume while retaining each answer’s original version until reconfirmed', () => {
+  for (const season of [1, 2]) {
+    const questions = pack.seasons[season];
+    const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+    const receipt = createPrivateProgressReceipt(pack, season, answers, questions.length - 1);
+    const oldVersion = 'draft-0.0.1';
+    receipt.translationVersion = oldVersion;
+    receipt.selections[0].translationVersion = oldVersion;
+    const restored = restorePrivateProgressReceipt(pack, receipt);
+    assert.deepEqual(restored.changedQuestionIds, [questions[0].id]);
+    assert.equal(restored.complete, true);
+    assert.equal(restored.answerVersions[questions[0].id], oldVersion);
+    assert.equal(restored.answers[questions[0].id], questions[0].options[0].value);
+    const reexported = createPrivateProgressReceipt(
+      pack, season, restored.answers, restored.index, restored.answerVersions,
+    );
+    assert.equal(reexported.selections[0].translationVersion, oldVersion);
+    const summary = summarizeUnscoredAnswers(pack, season, restored.answers, restored.answerVersions);
+    assert.equal(summary.selections[0].translationVersion, oldVersion);
+    // Actually reselecting that answer under the current wording updates provenance.
+    restored.answerVersions[questions[0].id] = questions[0].translationVersion;
+    assert.equal(createPrivateProgressReceipt(pack, season, restored.answers, 0, restored.answerVersions)
+      .selections[0].translationVersion, questions[0].translationVersion);
+    assert.throws(() => restorePrivateProgressReceipt(pack, {
+      ...receipt, sourceSha256: 'x'.repeat(64),
+    }), /来源或版本不匹配/);
+    assert.throws(() => restorePrivateProgressReceipt(pack, {
+      ...receipt, selections: [{ ...receipt.selections[0], translationVersion: 'official-1.0' }],
+    }), /不同版本的答案/);
+  }
+});
+
+test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
+  const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
+  assert.match(app, /const changed = session\.changedQuestionIds\.length/);
+  assert.match(app, /if \(discardsLocal \|\| changed\)/);
+  assert.match(app, /window\.confirm/);
+  assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
+  assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);
+  assert.match(app, /active\.needsReview\?\.delete\(q\.id\)/);
+  assert.match(app, /active\.needsReview\?\.has\(q\.id\)/);
+  assert.match(app, /if \(session\.complete && !changed\) finish\(\)/);
+  assert.match(app, /summarizeUnscoredAnswers\(pack, active\.season, active\.answers, active\.answerVersions\)/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions\)/);
 });
