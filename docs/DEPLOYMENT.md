@@ -62,3 +62,11 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - PR #35 head `2b355d9af854c576ae54d00b33661fdf71a82103` 的 GitHub Actions run [#40997558072](https://github.com/mykcs/the-community-lab/actions/runs/40997558072) 成功；Vercel Git Preview `dpl_FpWobo8dsYvpfVmG5AfiNa5sM69h` 为 `READY`、`source=git`，SHA 与 head 精确一致。
 - PR #35 已合并为 main `4a2eed51552a6894e60bcaa0dd74dd55ad61c93b`；Vercel Git Production `dpl_CBjmj7e9oxcuNHxsZqoMsnrMPqeY` 为 `READY`、`target=production`、`source=git`，SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式站浏览器已确认页面可打开；本次代码仅加强嘉宾匹配输入校验，不改变页面交互。
 - 此部署前 PR #35 的旧 head 曾被 Vercel `api-deployments-free-per-day` 拒绝。更新到最新 main 后的 Preview 和合并后 Production 均成功，故 Issue #30 已关闭。这个成功结果不等于读取到部署额度余额；剩余额度仍未知，未来仍需观察平台状态。未升级计划、未加收费服务、未使用 Ignore Build Step。
+
+
+## 2026-10-30 PR #39 / #40 合并与精确 Production 刷新
+
+- [PR #40](https://github.com/mykcs/the-community-lab/pull/40) 的 Vercel 分支策略仅对 `docs/**` 与 `research/**` 关闭 Git 自动部署；未列出的 `main`、`fix/**`、`feat/**`、`ops/**` 仍保持默认行为。PR #40 的 `ops/**` 验收分支有真实 Preview，但这**不验证** `docs/**` 的抑制效果。
+- [PR #39](https://github.com/mykcs/the-community-lab/pull/39) 修复缺少题库／计分版本时演示结果丢失版本来源的问题。其精确 head 的 GitHub Actions run [#41001092175](https://github.com/mykcs/the-community-lab/actions/runs/41001092175) 成功，PR 已合入。
+- 当前 main merge commit `4b2e3ee0926411c229c9ba1d494bf7c83cf0b80f` 的 GitHub Vercel status 为 `success`。Production deployment [dpl_CwsfwhXP8DfWeVthm5zzRCvM99Zd](https://vercel.com/wangrui92-team/the-community-lab/CwsfwhXP8DfWeVthm5zzRCvM99Zd) 为 `READY`、`source=git`、`target=production`，Git SHA 与 main 精确一致，并带正式域名 `the-community-lab.vercel.app` alias。正式域名可加载新首页和当前核验状态。
+- `docs/**` 是否确实不创建 Vercel Preview、以及这项策略对 24 小时部署计数的实际影响，仍待一个真实文档分支的验收；Vercel 面板未提供该计数余额。Issue #30 保持开放，不能把配置存在误报为配额已下降。
