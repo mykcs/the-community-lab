@@ -39,6 +39,17 @@ test('the homepage makes the public translation review route discoverable and la
   assert.match(homepage, /尚无独立人工韩中复核，不能作为正式测试/);
 });
 
+test('the homepage value-axis figure is illustrative, Chinese-readable, and not a personal result', () => {
+  const figure = homepage.match(/<figure class="hero-art"[^>]*>([\s\S]*?)<\/figure>/)?.[1];
+  assert.ok(figure, 'the hero diagram must use a semantic figure');
+  assert.match(figure, /figcaption class="hero-axis-caption" id="hero-axis-caption"/);
+  assert.match(figure, /第二季的三个价值维度/);
+  assert.match(figure, /示意图 · 不代表个人结果/);
+  for (const axis of ['01', '原则', '结果', '02', '结构', '能力', '03', '意义', '实利']) assert.ok(figure.includes(axis), axis);
+  assert.match(figure, /aria-hidden="true"/);
+  assert.doesNotMatch(figure, /YOUR POSITION|당신의 좌표/);
+});
+
 test('Astro keeps Vercel rollback origin and uses GitHub project subpath only for Pages', () => {
   assert.match(astro, /output:\s*'static'/);
   assert.match(astro, /process\.env\.COMMUNITY_DEPLOY_TARGET === 'github-pages'/);
