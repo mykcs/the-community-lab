@@ -44,6 +44,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-resume button{font-size:12px}
       .full-quiz-top{display:flex;gap:14px;justify-content:space-between;align-items:center;margin:20px 0 42px}
       .full-quiz-backup{display:flex;flex-wrap:wrap;gap:5px 16px;align-items:center;justify-content:flex-end}
+      .full-quiz-disclosure{border-left:3px solid #ff7468;background:#2d252c;color:#ead3d0;padding:12px 16px;margin:0 0 26px;font-size:12px;line-height:1.8}
       .full-muted-button{background:none;border:0;color:#c1c7cf;font-size:13px;padding:11px 0}
       .full-muted-button:hover{color:var(--red)}
       .full-muted-button:disabled{opacity:.5;cursor:not-allowed}
@@ -100,6 +101,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
         </section>
 
         <section id="full-quiz" class="full-pane" hidden aria-labelledby="full-ko">
+          <p class="full-quiz-disclosure" role="note">非官方试填 · 韩文原题与中文 AI 初译（未经真人双语审校）；用户报告的非营利翻译许可原件未独立核验。这里没有官方计分或嘉宾匹配。作答只保留在本页内存，不自动上传；需要保留请主动下载本机进度 JSON。</p>
           <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span><div class="full-quiz-backup"><button id="full-save" class="full-muted-button" type="button" disabled>↓ 下载本机进度 JSON</button><span id="full-save-status" class="full-feedback" role="status" aria-live="polite"></span></div></div>
           <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
           <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>

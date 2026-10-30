@@ -86,3 +86,13 @@ test('sparse resume at final question must redirect to the first unanswered ques
   assert.match(finish, /full-save-status/);
   assert.match(finish, /return;/);
 });
+
+test("deep links entering a season directly retain disclosures inside the quiz pane", () => {
+  assert.match(app, /if \(fromUrl ===/);
+  const quiz = page.match(/<section id="full-quiz"[\s\S]*?<\/section>/)?.[0];
+  assert.ok(quiz, "direct-entry quiz pane must exist");
+  for (const disclosure of ["非官方试填", "AI 初译", "未经真人双语审校", "许可原件未独立核验", "没有官方计分", "不自动上传"]) {
+    assert.ok(quiz.includes(disclosure), "direct entry must show: " + disclosure);
+  }
+  assert.match(quiz, /class="full-quiz-disclosure" role="note"/);
+});
