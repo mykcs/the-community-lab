@@ -1,6 +1,14 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-10-30 · GitHub Pages 正式主站（PR #126 最新发布）
+## 2026-10-30 · GitHub Pages 正式主站（PR #128 最新发布）
+
+- **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。
+- **当前发布身份：** PR #128 合并提交 `587ba04a8105516d0a86443305c38f54b44ba1da`。Pages run [#41145316397](https://github.com/mykcs/the-community-lab/actions/runs/41145316397) 在该 SHA 上 build 与 deploy 均成功；PR head 的 Astro 验证 run [#41145116128](https://github.com/mykcs/the-community-lab/actions/runs/41145116128) 和译审页验证 run [#41145115772](https://github.com/mykcs/the-community-lab/actions/runs/41145115772) 也成功。Pages 构建执行 `npm ci`、`npm run check`、`npm run build` 并复制两个独立复核页面。
+- **本次产品改动：** S1 `s1-class-23` 的韩文 `적어도 스무 권 넘게` 表示至少多于二十本；中文 AI 草稿现为“我小时候，书架上至少有二十一本父母读的书”，版本 `draft-0.1.2`。两份公开复核页已同步，并保留 `AI_DRAFT_UNREVIEWED` 与 `review_status=draft`。
+- **发布后读回：** 原题复核页返回 HTTP 200；线上 HTML 为 109,576 字节，包含“至少有二十一本”且不再包含旧的“至少有二十本”。124 题仍是 AI 初译，独立韩中人工复核仍为 **0/124**；官方评分公式仍为 `UNKNOWN`。
+- **仍未验收：** 两季完整原站路径、官方评分等价、独立人工翻译审校与同季同版本嘉宾分数。此发布只修正一条 AI 草稿，不推进这些门槛。
+
+### 上一版发布记录：PR #126（保留历史读回）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
 - **当前发布身份：** PR #126 合并提交 `79669a1fadce7ab5f0f49edf1192637423e12dae`。Pages push run [#41142960187](https://github.com/mykcs/the-community-lab/actions/runs/41142960187)（workflow run 53）在该 SHA 上 build 与 deploy 均成功；PR head `7994496478d2dc4a0cc6fe07823ac9fca970b4c3` 的 Astro 验证 run [#41142886709](https://github.com/mykcs/the-community-lab/actions/runs/41142886709) 也成功。构建完成 `npm ci`、`npm run check`、`npm run build`，并将 124 题 AI 草稿与独立原题复核页纳入 Pages artifact。
