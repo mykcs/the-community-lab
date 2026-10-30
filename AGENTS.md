@@ -25,7 +25,7 @@
 
 ## 工程与发布
 
-- 此站工程使用 **Astro + Tailwind CSS** 输出静态文件。GitHub Pages 迁移候选通过 GitHub Actions 检查后发布；在新站精确验收前，Vercel 现有生产站继续保留。运行测试、复刻审计与 Astro 检查，并验证实际生产域名及提交 SHA，不得把老站、构建成功或 PR 当成新站已发布。Pages 不提供服务端 API；未经隐私与双账号隔离验收不得把草稿账号功能一并上线。
+- 此站工程使用 **Astro + Tailwind CSS** 输出静态文件。自 2026-10-30 的 [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 起，**GitHub Pages 是主站**；`.github/workflows/pages.yml` 是唯一 Pages 发布工作流，运行检查后部署 `main`，公开译审草稿只能置于 `/translation-review/`。Vercel 保留旧生产快照作回退，不再通过 Git 自动部署（`vercel.json` 中 `git.deploymentEnabled=false`）。每次发布仍需验证工作流、真实 URL、资源与必要浏览器交互，不得把仅构建成功或 PR 视为已上线。Pages 不提供服务端 API；未经隐私与双账号隔离验收不得把草稿账号功能一并上线。
 
 - 优先复用既有组件、认证和数据库权限机制；避免自己写 OAuth token 交换、密码存储或会话协议。
 - 任何写入测试结果的 API 必须在服务端验证用户身份及数据归属；所有表启用 RLS，自动测试跨用户拒绝访问。
