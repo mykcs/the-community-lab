@@ -1,4 +1,8 @@
-import { summarizeUnscoredAnswers } from './lib/full-questionnaire.mjs';
+import {
+  summarizeUnscoredAnswers,
+  createPrivateProgressReceipt,
+  restorePrivateProgressReceipt,
+} from './lib/full-questionnaire.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
 const $ = id => document.getElementById(id);
@@ -77,12 +81,16 @@ function render() {
       $('full-next').disabled = false;
       $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题`;
       $('full-progress').value = Object.keys(active.answers).length;
+      $('full-save').disabled = false;
+      $('full-save-status').textContent = '';
     });
     list.append(btn);
   }
   $('full-prev').disabled = active.index === 0;
   $('full-next').disabled = !Object.hasOwn(active.answers, q.id);
   $('full-next').textContent = active.index === questions.length - 1 ? '完成本季答题 →' : '确认，继续 →';
+  $('full-save').disabled = answered === 0;
+  $('full-save-status').textContent = '';
   if (!panes.quiz.hidden) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     $('full-ko').focus({ preventScroll: true });
@@ -103,16 +111,54 @@ function finish() {
   view('done');
 }
 
-function download() {
-  if (!active?.receipt) return;
-  const record = { ...active.receipt,
-    notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
-  };
+function downloadJson(record, filename) {
   const blob = new Blob([JSON.stringify(record, null, 2) + '\n'], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = make('a'); a.href = url; a.download = `community-source-draft-season-${active.season}-answers.json`;
+  const a = make('a'); a.href = url; a.download = filename;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function download() {
+  if (!active?.receipt) return;
+  downloadJson({
+    ...active.receipt,
+    notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
+  }, `community-source-draft-season-${active.season}-answers.json`);
+}
+
+function saveProgress() {
+  if (!active || Object.keys(active.answers).length === 0) return;
+  const record = createPrivateProgressReceipt(pack, active.season, active.answers, active.index);
+  downloadJson({
+    ...record,
+    notice: '此 JSON 含个人敏感观点，仅供本人恢复本机试填；非官方成绩，请勿上传公开仓库。',
+  }, `community-private-season-${active.season}-progress.json`);
+  $('full-save-status').textContent = '已生成本机进度文件 · 请妥善保管';
+}
+
+async function importProgress(file) {
+  const status = $('full-import-status');
+  if (!file) return;
+  if (file.size > 128 * 1024) {
+    status.textContent = '文件过大；只接受本站导出的 128 KB 以内 JSON。';
+    return;
+  }
+  try {
+    const record = JSON.parse(await file.text());
+    const session = restorePrivateProgressReceipt(pack, record);
+    saved.set(session.season, { season: session.season, index: session.index, answers: session.answers });
+    active = saved.get(session.season);
+    if (session.complete) finish();
+    else {
+      render();
+      view('quiz');
+      $('full-save-status').textContent = `已恢复第 ${session.season} 季 ${session.answeredCount} 道答案`;
+    }
+    status.textContent = '';
+  } catch {
+    status.textContent = '恢复失败：文件可能损坏，或题库／译文版本与当前网站不同。原有进度未改动。';
+  }
 }
 
 document.querySelectorAll('[data-start-season]').forEach(button => {
@@ -129,6 +175,13 @@ $('full-next').addEventListener('click', () => {
   else finish();
 });
 $('full-download').addEventListener('click', download);
+$('full-save').addEventListener('click', saveProgress);
+$('full-import').addEventListener('click', () => $('full-import-file').click());
+$('full-import-file').addEventListener('change', event => {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  void importProgress(file);
+});
 $('full-restart').addEventListener('click', () => begin(active.season, true));
 $('full-back').addEventListener('click', selectSeason);
 
