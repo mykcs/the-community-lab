@@ -97,3 +97,20 @@ test('S1 demo translation preserves the original speed condition and versions th
   assert.equal(second.version, 'independent-s2-demo-0.1.0');
   assert.ok(second.questions.every(q => q.translation_version === 'demo-0.1.0'));
 });
+
+test('a demo result must never lose its questionnaire or scoring provenance version', () => {
+  for (const season of Object.values(SEASONS)) {
+    const answers = Object.fromEntries(season.questions.map(q => [q.id, q.options[0].value]));
+    const validResult = scoreAnswers(season, answers);
+    assert.equal(validResult.question_version, season.version);
+    assert.equal(validResult.scoring_version, season.scoringVersion);
+    for (const field of ['version', 'scoringVersion']) {
+      for (const invalid of [undefined, null, '', '   ', 123]) {
+        const malformed = structuredClone(season);
+        malformed[field] = invalid;
+        assert.throws(() => validateSeason(malformed), /题库或计分版本缺失/);
+        assert.throws(() => scoreAnswers(malformed, answers), /题库或计分版本缺失/);
+      }
+    }
+  }
+});
