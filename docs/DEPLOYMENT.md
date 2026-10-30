@@ -10,8 +10,6 @@
 
 ### 上一版发布记录：PR #126（保留历史读回）
 
-### 上一版发布记录：PR #126（保留历史读回）
-
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
 - **当前发布身份：** PR #126 合并提交 `79669a1fadce7ab5f0f49edf1192637423e12dae`。Pages push run [#41142960187](https://github.com/mykcs/the-community-lab/actions/runs/41142960187)（workflow run 53）在该 SHA 上 build 与 deploy 均成功；PR head `7994496478d2dc4a0cc6fe07823ac9fca970b4c3` 的 Astro 验证 run [#41142886709](https://github.com/mykcs/the-community-lab/actions/runs/41142886709) 也成功。构建完成 `npm ci`、`npm run check`、`npm run build`，并将 124 题 AI 草稿与独立原题复核页纳入 Pages artifact。
 - **本次产品改动：** PR #126 为本机下载的试填进度增加译文内容指纹。恢复旧备份时，即使译文版本号意外未改，只要中文题干或选项文字变动，也要求重新确认答案；指纹不证明翻译正确，答案不上传。原题仍是 AI 初译，真人韩中复核仍为 `0/124`，官方评分仍为 `UNKNOWN`。
