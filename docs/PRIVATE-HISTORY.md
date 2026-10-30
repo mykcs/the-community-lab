@@ -12,7 +12,7 @@
 | 明确同意、15 分钟同标签页交接 | `lib/history-save.mjs`、`lib/history-handoff.mjs` |
 | SDK PKCE、会话存储和返回 | `lib/history-browser.mjs`、`history-auth-storage.mjs`、`history-callback.mjs` |
 | 本人列表、完整分页导出、删除读回 | `lib/history-service.mjs`、`history-page.mjs` |
-| 服务端账号注销及两项独立读回 | `api/account-delete.js` |
+| 服务端账号注销及两项独立读回 | `supabase/functions/_shared/account-delete.mjs` 唯一核验核心；`supabase/functions/account-delete/` 为 Pages 所需 Edge 服务入口；`api/account-delete.js` 仅作旧 Vercel 回退入口 |
 | 数据库约束、授权、RLS 与新增保存开关 | `supabase/migrations/202610290001_private_history.sql` |
 
 `public.test_runs` 只接收季别、题库／评分／译文版本、原创示例标识、精确维度分数、同意版本与防重复请求 UUID。账号、主键与时间由数据库生成。逐题答案、任意 JSON、客户端提供的 owner/time、UPDATE 均不允许。历史不是官方成绩，也不用于真实嘉宾排名。
@@ -43,13 +43,15 @@ GitHub 登录目前默认涉及提供给 Supabase 的账号标识／资料／邮
 
 单条删除先确认本人可见记录，删除后再读服务器，只有仍为同一有效会话且结果为空才显示成功。身份改变、服务错误或读回仍有记录时，不从列表移除该条。
 
-账号注销使用同源 POST JSON，要求单独确认和 Bearer 会话。服务端验证调用者及活动会话，自己派生 user ID；请求不能提供目标 ID。用户数据的常规操作仍走用户 JWT，不走管理 secret。
+GitHub Pages 不执行 `/api`。账号注销从浏览器以已登录用户 JWT 调用 Supabase `functions.invoke('account-delete')`，仅允许精确配置的网站 Origin，通过 CORS 预检后处理 POST JSON；要求单独确认和 Bearer 会话。Edge Functions 的 `verify_jwt` 明确保持 `true`，共享核心再验证调用者及活动会话，自己派生 user ID；请求不能提供目标 ID。用户数据的常规操作仍走用户 JWT，不走管理 secret。
+
+Edge 由托管 Supabase 注入 `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEYS` 和 `SUPABASE_SECRET_KEYS`，只读取映射中 `default` 键。后两个 key 映射绝不能给浏览器。服务端 `PUBLIC_HISTORY_AUTH_ENABLED`、`PUBLIC_HISTORY_SITE_ORIGIN` 和 `HISTORY_ACCOUNT_DELETE_ENABLED` 均须明确配置，删除功能默认关闭。前端 `PUBLIC_HISTORY_SITE_ORIGIN` 填纯 origin；Astro `BASE_URL` 决定 Pages `/the-community-lab/` 或 Vercel `/` 的固定登录回调和内部导航路径，不接受可控跳转目标。备用 Vercel 函数不会因为存在于仓库而在 Pages 上运行。
 
 服务端调用 GoTrue hard delete 后，必须同时证明 Auth 的 `404/user_not_found` 和该 owner 历史精确计数为 0。任一证据不足返回 `202/pendingVerification`，不能显示成功，也不能保证重复登录能修复已部分删除的身份。管理角色对 `test_runs` 仅有 `SELECT(id,owner_id)` 用于读回，没有分数读取或写权限。
 
 ## 已有本地证据与实际界限
 
-`npm run check` 包括最小载荷、默认关闭配置、同意与交接、会话切换、分页、SDK 注销端点，以及 canonical SQL 的真实 PostgreSQL 执行；`npm run build` 保持静态输出。测试命令的 `--no-wasm-async-compilation` 解决本机 Node 23 的 WASM 初始化停滞，不改变产品数据库语义。
+`npm run check` 包括最小载荷、默认关闭配置、同意与交接、会话切换、分页、SDK 注销核心、Edge CORS 和 Pages 路由，以及 canonical SQL 的真实 PostgreSQL 执行；`npm run build` 保持静态输出。测试命令的 `--no-wasm-async-compilation` 解决本机 Node 23 的 WASM 初始化停滞，不改变产品数据库语义。Edge 适配器的 Node 测试不等于实际部署到 Supabase runtime 或真实 JWT 验收。
 
 SQL 测试使用 PGlite 0.5.13 / PostgreSQL 18.6，实际 SET ROLE 为非超级用户、非 BYPASSRLS 的普通角色；管理读回角色单独测试。Auth users/sessions/JWT 为合成夹具，证据标记 `PG_RULES_WITH_SYNTHETIC_AUTH`。服务端测试使用真正 Supabase SDK 加受控 HTTP 返回，标记 `TRANSPORT_FIXTURE`。两者都不证明真实 Supabase 或 GitHub 已通过。
 
@@ -59,6 +61,6 @@ SQL 测试使用 PGlite 0.5.13 / PostgreSQL 18.6，实际 SET ROLE 为非超级�
 2. 依当前目标的 Postgres/Auth schema 实际验证同一 migration，确认 `auth.sessions` 和 API schema 暴露范围；`community_private` 不能加入 Data API exposed schemas。未知或已有同名对象必须先调查，不自动覆盖。
 3. 控制端配置 GitHub OAuth 与精确的 Supabase、网站返回地址；读取实际权限，不要求仓库范围。服务端 secret 只由服务端消费者使用。
 4. 两个真实 GitHub 测试账号仅写入虚构分数：直接 Data API 交叉读取、猜 ID、owner 冒充、拒绝写入后原记录完好；退出及注销后旧 access JWT 的读写重放均被拒绝；单条删除与账号注销取得真实服务器读回。
-5. 在精确 Preview head 上通过游客／同意／取消／PKCE／导出／删除／退出／注销的 440×956 和桌面验收，检查 URL、网络、存储、日志。随后在拟用生产目标保持采集关闭，核对权限及隐私；全部证据与独立审查通过后才讨论开放。
+5. 在精确 Preview head 上通过游客／同意／取消／PKCE／导出／删除／退出／注销的 440×956 和桌面验收，检查 URL、网络、存储、日志。对 Pages 固定校验 `/the-community-lab/auth/callback/` 和 `/the-community-lab/history/`，以及跨域 `OPTIONS` 预检。随后在拟用生产目标保持采集关闭，核对权限及隐私；全部证据与独立审查通过后才讨论开放。
 
-官方依据：[Supabase PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow)、[GitHub 登录](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)、[signOut 与 JWT 生命周期](https://supabase.com/docs/reference/javascript/auth-signout)、[deleteUser](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser)、[RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)、[Vercel 根目录 api 函数](https://vercel.com/docs/functions/quickstart)。这些说明不代替目标服务的实测。
+官方依据：[Supabase PKCE](https://supabase.com/docs/guides/auth/sessions/pkce-flow)、[GitHub 登录](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)、[signOut 与 JWT 生命周期](https://supabase.com/docs/reference/javascript/auth-signout)、[deleteUser](https://supabase.com/docs/reference/javascript/auth-admin-deleteuser)、[RLS](https://supabase.com/docs/guides/database/postgres/row-level-security)、[Edge Functions Auth](https://supabase.com/docs/guides/functions/auth)、[跨域调用](https://supabase.com/docs/guides/functions/cors)、[注入环境变量](https://supabase.com/docs/guides/functions/secrets)、[Vercel 根目录 api 函数](https://vercel.com/docs/functions/quickstart)。这些说明不代替目标服务的实测。

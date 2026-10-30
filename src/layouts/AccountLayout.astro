@@ -1,7 +1,10 @@
 ---
 import '../styles/global.css';
 import '../styles/history.css';
+import { siteRoutePath } from '../../lib/history-config.mjs';
 const { title } = Astro.props;
+const homeHref = siteRoutePath(import.meta.env.BASE_URL);
+const privacyHref = siteRoutePath(import.meta.env.BASE_URL, 'privacy/');
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -15,11 +18,11 @@ const { title } = Astro.props;
   <body>
     <div class="page-shell">
       <header class="site-header">
-        <a class="brand" href="/" aria-label="回到同频实验室"><span class="brand-name">THE COMMUNITY <strong>LAB.</strong><small>同频实验室 · 非官方</small></span></a>
-        <nav class="header-links" aria-label="主导航"><a href="/">返回测试</a><a href="/privacy">隐私说明</a></nav>
+        <a class="brand" href={homeHref} aria-label="回到同频实验室"><span class="brand-name">THE COMMUNITY <strong>LAB.</strong><small>同频实验室 · 非官方</small></span></a>
+        <nav class="header-links" aria-label="主导航"><a href={homeHref}>返回测试</a><a href={privacyHref}>隐私说明</a></nav>
       </header>
       <main class="account-page" id="main-content"><slot /></main>
-      <footer class="site-footer"><div class="footer-bottom"><span>独立粉丝项目 · 示例成绩不代表节目官方结果</span><a href="/privacy">隐私与数据选择</a></div></footer>
+      <footer class="site-footer"><div class="footer-bottom"><span>独立粉丝项目 · 示例成绩不代表节目官方结果</span><a href={privacyHref}>隐私与数据选择</a></div></footer>
     </div>
   </body>
 </html>

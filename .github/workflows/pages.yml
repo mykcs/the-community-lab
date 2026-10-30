@@ -1,0 +1,67 @@
+name: Publish GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/pages.yml'
+      - 'astro.config.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'tsconfig.json'
+      - 'src/**'
+      - 'public/**'
+      - 'app.mjs'
+      - 'data/**'
+      - 'lib/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'docs/translation-review/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages-production
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      COMMUNITY_DEPLOY_TARGET: github-pages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run check
+      - run: npm run build
+      - name: Verify project-path navigation and private-history candidate is static-safe
+        run: node scripts/verify-pages-history.mjs
+      - name: Include the unreviewed bilingual translation draft on a separate route
+        run: |
+          mkdir -p dist/translation-review
+          cp docs/translation-review/index.html dist/translation-review/index.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publish verified static artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

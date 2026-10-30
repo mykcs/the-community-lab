@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getHistoryConfig } from '../lib/history-config.mjs';
+import { getHistoryConfig, siteRoutePath } from '../lib/history-config.mjs';
 
 const configured = { authEnabled: true, siteOrigin: 'https://app.example', supabaseUrl: 'https://project.supabase.co', publishableKey: 'sb_publishable_synthetic' };
 test('history defaults off and neither a save flag nor browser key can replace absent configuration', () => {
@@ -17,6 +17,22 @@ test('exact callback origin and publishable-only key reject open redirects or ac
   ]) assert.equal(getHistoryConfig({ ...configured, ...patch }, 'https://app.example').configured, false);
   assert.equal(getHistoryConfig(configured, 'https://another-preview.example').configured, false);
   assert.equal(getHistoryConfig({ ...configured, siteOrigin: 'http://127.0.0.1:4321' }, 'http://127.0.0.1:4321').configured, true);
+});
+test('GitHub Pages project base path and root-host rollback both use fixed local callback routes', () => {
+  const root = getHistoryConfig(configured, configured.siteOrigin);
+  assert.equal(root.callbackPath, '/auth/callback/');
+  assert.equal(siteRoutePath(root.basePath, 'history/'), '/history/');
+  const pages = getHistoryConfig({ ...configured, basePath: '/the-community-lab/' }, configured.siteOrigin);
+  assert.equal(pages.configured, true);
+  assert.equal(pages.callbackPath, '/the-community-lab/auth/callback/');
+  assert.equal(siteRoutePath(pages.basePath, 'history/'), '/the-community-lab/history/');
+  for (const badPath of ['/other/../admin/', '//attacker/', '/the-community-lab/?next=other',
+    'https://attacker.invalid/', '/the-community-lab']) {
+    assert.equal(getHistoryConfig({ ...configured, basePath: badPath }, configured.siteOrigin).configured, false);
+  }
+  for (const badRoute of ['../admin/', '//attacker/', 'history?code=x', 'https://attacker.invalid/']) {
+    assert.throws(() => siteRoutePath('/the-community-lab/', badRoute), TypeError);
+  }
 });
 test('undecided privacy/region/retention/deletion gates prevent new saves while configured account access remains possible', () => {
   const ready = { ...configured, saveEnabled: true, privacyApproved: true, deletionAvailable: true, regionLabel: 'synthetic region', retentionLabel: 'synthetic policy' };

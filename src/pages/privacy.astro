@@ -1,7 +1,10 @@
 ---
 import AccountLayout from '../layouts/AccountLayout.astro';
+import { siteRoutePath } from '../../lib/history-config.mjs';
 const region = import.meta.env.PUBLIC_HISTORY_REGION_LABEL || '尚未确定，保存保持关闭';
 const retention = import.meta.env.PUBLIC_HISTORY_RETENTION_LABEL || '尚未确定，保存保持关闭';
+const homeHref = siteRoutePath(import.meta.env.BASE_URL);
+const historyHref = siteRoutePath(import.meta.env.BASE_URL, 'history/');
 ---
 <AccountLayout title="隐私与数据选择">
   <article class="privacy-copy">
@@ -22,6 +25,6 @@ const retention = import.meta.env.PUBLIC_HISTORY_RETENTION_LABEL || '尚未确�
     <h2>查看、导出与删除</h2>
     <p>在私人历史中，可以查看和导出自己的全部记录。导出文件不含账号标识、邮箱或逐题答案。删除单条记录后，页面会再次从服务器读取并确认已无该条记录；未确认时不会显示成功。</p>
     <p>注销本站账号会永久删除本站登录身份及其历史记录，不会注销 GitHub 账号。注销需要单独确认，并以服务端身份验证和删除后读回为准。停止新增保存时，已有账号仍应能够导出、删除和注销。</p>
-    <div class="history-actions"><a class="button button-primary" href="/">回到游客测试 →</a><a class="button button-outline" href="/history">私人历史</a></div>
+    <div class="history-actions"><a class="button button-primary" href={homeHref}>回到游客测试 →</a><a class="button button-outline" href={historyHref}>私人历史</a></div>
   </article>
 </AccountLayout>

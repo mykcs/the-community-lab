@@ -1,0 +1,4 @@
+# Keep platform JWT verification on for the user-facing deletion endpoint.
+# The handler additionally verifies the caller identity and active session.
+[functions.account-delete]
+verify_jwt = true

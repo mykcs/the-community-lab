@@ -1,5 +1,7 @@
 ---
 import AccountLayout from '../layouts/AccountLayout.astro';
+import { siteRoutePath } from '../../lib/history-config.mjs';
+const homeHref = siteRoutePath(import.meta.env.BASE_URL);
 ---
 <AccountLayout title="私人历史">
   <h1 id="history-title" tabindex="-1">私人历史</h1>
@@ -8,7 +10,7 @@ import AccountLayout from '../layouts/AccountLayout.astro';
   <section id="account-unavailable" class="history-notice" aria-labelledby="unavailable-title">
     <h2 id="unavailable-title">登录与保存尚未开放</h2>
     <p>功能正在进行隐私、真实双账号权限和删除验收。目前没有通过这里收集测试结果。</p>
-    <a class="button button-primary" href="/">直接以游客测试 →</a>
+    <a class="button button-primary" href={homeHref}>直接以游客测试 →</a>
   </section>
   <section id="account-login" class="history-notice" hidden aria-labelledby="login-title">
     <h2 id="login-title">选择 GitHub 登录</h2>

@@ -1,10 +1,10 @@
 name: Verify Astro bilingual demo
 on:
   pull_request:
-    paths: ['app.mjs', 'api/**', 'supabase/**', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'api/**', 'supabase/**', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['app.mjs', 'api/**', 'supabase/**', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'api/**', 'supabase/**', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
 permissions:
   contents: read
 concurrency:
@@ -23,3 +23,9 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: Set up Deno for the optional Supabase Edge Function candidate
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.5.6
+      - name: Type-check the Supabase function without deploying
+        run: deno check --config supabase/functions/account-delete/deno.json supabase/functions/account-delete/index.ts
