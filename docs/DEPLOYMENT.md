@@ -56,3 +56,9 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 此前出现的 `api-deployments-free-per-day` 拒绝后，PR #32 已完成一次完整自动发布：GitHub Actions 和精确 head `526b8d1eafe04bad9b2f083b049343b803b573cd` 的 Vercel Preview `dpl_8sGgRfFsop5x67HNQJJ9ge9N4VqZ` 均成功；合并后，main `078a02213f26f129bbaf8c9a48d03ce9df8e42f7` 的 Vercel Git Production `dpl_7Tx4U1ZrwWXEeAo4j298EW8XHKhc` 为 `READY`，alias 包含 `the-community-lab.vercel.app`。这证明当前 GitHub Preview 与 main Production 自动链路可用；Issue #30 已据此关闭。
 
 此验收没有改变 Vercel Hobby 的每日限制，也没有读到该额度的剩余余额；之后的新部署仍须观察平台实际状态。没有升级付费计划或绕过限制。
+
+## 2026-10-30 PR #35 自动发布验收
+
+- PR #35 head `2b355d9af854c576ae54d00b33661fdf71a82103` 的 GitHub Actions run [#40997558072](https://github.com/mykcs/the-community-lab/actions/runs/40997558072) 成功；Vercel Git Preview `dpl_FpWobo8dsYvpfVmG5AfiNa5sM69h` 为 `READY`、`source=git`，SHA 与 head 精确一致。
+- PR #35 已合并为 main `4a2eed51552a6894e60bcaa0dd74dd55ad61c93b`；Vercel Git Production `dpl_CBjmj7e9oxcuNHxsZqoMsnrMPqeY` 为 `READY`、`target=production`、`source=git`，SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式站浏览器已确认页面可打开；本次代码仅加强嘉宾匹配输入校验，不改变页面交互。
+- 此部署前 PR #35 的旧 head 曾被 Vercel `api-deployments-free-per-day` 拒绝。更新到最新 main 后的 Preview 和合并后 Production 均成功，故 Issue #30 已关闭。这个成功结果不等于读取到部署额度余额；剩余额度仍未知，未来仍需观察平台状态。未升级计划、未加收费服务、未使用 Ignore Build Step。
