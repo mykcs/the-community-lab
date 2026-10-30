@@ -47,6 +47,14 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
   assert.equal(optionCount, 550);
 });
 
+test('a pass status requires a review note and remains self-reported', () => {
+  assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
+  assert.match(html, /note\.reportValidity\(\)/);
+  assert.match(html, /status\.value='pending'/);
+  assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)\{status\.value='pending'/);
+  assert.match(html, /此自述只作本地留痕，不证明审校者身份或能力/);
+});
+
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
   assert.doesNotMatch(html, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\b(?:href|rel)\s*=/i);
   assert.match(html, /localStorage\.setItem/);
