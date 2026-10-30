@@ -153,6 +153,21 @@ test('s1-class-15 says private tutoring rather than an after-school class', () =
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-class-23 preserves the source’s strict count threshold as an unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-class-23');
+  assert.ok(question, 's1-class-23 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '어릴 적 부모님이 읽는 책이 책꽂이에 적어도 스무 권 넘게 있었다');
+  assert.equal(question.translation_zh_cn, '我小时候，书架上至少有二十一本父母读的书。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.match(question.translator_note, /超过二十本.*二十一本/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-class-23.*draft-0\.1\.2/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('ms07 keeps the Korean comparison and teaching priority without implying exclusion', () => {
   const question = data.questions.find(item => item.id === 'ms07');
   assert.ok(question, 'ms07 must remain in the source dataset');
