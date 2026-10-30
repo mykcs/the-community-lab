@@ -143,8 +143,8 @@ function renderResult() {
   }
 
   const guestPanel = node('aside', 'guest-panel');
-  guestPanel.append(node('span', 'status-label', '需要真实且可比的数据'), node('h2', '', '与你最像的节目嘉宾？'),
-    node('p', '', '这里是未来最重要的功能：同季嘉宾 Top 3–5、每个维度的差异、本人公开确认的 X／Instagram／YouTube 链接。现在使用原创示例题，不能与嘉宾在节目里的真实测量结果比较，所以暂不显示人名和虚构匹配率。'));
+  guestPanel.append(node('span', 'status-label', '真实匹配尚未开放'), node('h2', '', '目前没有可比的嘉宾成绩'),
+    node('p', '', '这次结果来自本站原创示例题，不能与节目嘉宾的真实成绩比较，所以不会显示相似度或排名。嘉宾公开主页目录已在首页开放；目录只供导航，成绩和匹配资格仍待核实。'));
   const steps = node('div', 'guest-steps');
   for (const [index, label] of ['核验节目原题与重用权限', '复核韩中双语及官方计分', '验证同季嘉宾成绩与公开社媒'].entries()) {
     const step = node('div', 'guest-step');

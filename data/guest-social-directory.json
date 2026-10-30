@@ -189,28 +189,31 @@
       "accounts": [
         {
           "platform": "YouTube",
-          "url": "https://www.youtube.com/channel/UCnakFImHHLAK7LRfIWtbovA",
-          "relationship": "co_hosted_channel",
-          "evidence_url": "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+          "url": "https://www.youtube.com/@cheol.9",
+          "relationship": "personal_channel",
+          "evidence_url": "https://www.youtube.com/@cheol.9/about",
           "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
           "checked_at": "2026-10-29",
           "profile_directly_checked": false,
-          "evidence_scope": "Published video author channel ID and/or owner About metadata, not an assertion of legal ownership.",
+          "evidence_scope": "The participant's About page identifies the channel as 농담천재 박철현; his public uploads support the creator profile, and Wavve's official clip links Dongki with Park Cheol-hyun.",
           "source_urls": [
-            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+            "https://www.youtube.com/@cheol.9/about",
+            "https://www.youtube.com/watch?v=tGNppA6wMnE",
+            "https://www.youtube.com/watch?v=IVNE4qIccWI"
           ]
         },
         {
           "platform": "Instagram",
           "url": "https://www.instagram.com/cheol.9/",
           "relationship": "personal_account",
-          "evidence_url": "https://www.youtube.com/watch?v=RU5B3jIlLLg",
+          "evidence_url": "https://www.youtube.com/@cheol.9/about",
           "source_review": "TWO_INDEPENDENT_AGENT_PRIMARY_SOURCE_CHECKS",
           "checked_at": "2026-10-29",
           "profile_directly_checked": false,
-          "evidence_scope": "Participant-published cross-link, not a direct Instagram profile read.",
+          "evidence_scope": "The participant's personal YouTube About page links this exact Instagram profile; the Instagram page itself was not directly read.",
           "source_urls": [
-            "https://www.youtube.com/watch?v=RU5B3jIlLLg"
+            "https://www.youtube.com/@cheol.9/about",
+            "https://www.youtube.com/watch?v=IVNE4qIccWI"
           ]
         }
       ],

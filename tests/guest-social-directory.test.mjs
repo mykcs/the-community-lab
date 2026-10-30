@@ -30,5 +30,6 @@ test('social directory contains only the approved public navigation scope', () =
 test('shared channels are explicitly distinguishable and do not become personal-account claims', () => {
   const shared = GUEST_SOCIAL_DIRECTORY.flatMap(person => person.accounts)
     .filter(account => account.relationship === 'co_hosted_channel');
-  assert.equal(shared.length, 2);
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].url, 'https://www.youtube.com/channel/UCipPJH21NhG02pClcnfQOsg');
 });
