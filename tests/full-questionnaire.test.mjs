@@ -107,7 +107,7 @@ test('mixed per-question draft versions are preserved honestly in both season re
   // receipt must follow per-question source versions without a test edit.
   const nextDraft = structuredClone(raw);
   const revised = nextDraft.questions.find(q => q.id === 'sa06');
-  const versionParts = revised.translation_version.match(/^draft-(\\d+)\\.(\\d+)\\.(\\d+)$/);
+  const versionParts = revised.translation_version.match(/^draft-(\d+)\.(\d+)\.(\d+)$/);
   assert.ok(versionParts);
   revised.translation_version = `draft-${versionParts[1]}.${versionParts[2]}.${Number(versionParts[3]) + 1}`;
   const nextPack = buildFullQuestionnaire(nextDraft, index);
