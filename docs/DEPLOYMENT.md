@@ -3,9 +3,9 @@
 ## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
-- **最新 Pages 发布证据：** [PR #88](https://github.com/mykcs/the-community-lab/pull/88) 已合并为 `main` SHA `ce18cff293e644c7f15c2a99e07fe70ca474e856`；对应 [Pages 发布 #41096983976](https://github.com/mykcs/the-community-lab/actions/runs/41096983976)、[Astro 验证 #41096984027](https://github.com/mykcs/the-community-lab/actions/runs/41096984027) 与[译审草稿验证 #41096983934](https://github.com/mykcs/the-community-lab/actions/runs/41096983934) 均成功。
-- **线上访问验收：** 对主站首页、`/translation-review/`、`/original-question-translation-review/` 与 `/questionnaire/` 的实时 GET 均返回 HTTP 200。两份译审页内嵌数据均确认 `s1-politics-14` 和 `s1-class-15` 已使用修订措辞，版本 `draft-0.1.1`，状态仍为 `AI_DRAFT_UNREVIEWED`。PR #88 的独立浏览器验收使用 440×956 与 1440×900 CSS px 视口；这是浏览器模拟，不是实体 iPhone 验收。所有页面仍标注非官方和 AI 初译状态，不伪造官方评分或嘉宾匹配。
-- **Vercel 配额收口：** `vercel.json` 通过 `"git":{"deploymentEnabled":false}` 禁用所有分支的 Git 自动部署；按现有 Vercel 项目精确查询 main SHA `ce18cff293e644c7f15c2a99e07fe70ca474e856`，返回 0 条部署。旧 Vercel 已发布版本不删除。此证据只覆盖该 SHA 的 Git 部署记录，不代表手动部署或未来每次发布都已检查。
+- **最新 Pages 发布证据：** [PR #92](https://github.com/mykcs/the-community-lab/pull/92) 已合并为 `main` SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e`；[Astro 验证 #41104034687](https://github.com/mykcs/the-community-lab/actions/runs/41104034687) 与 [Pages 发布 #41104034849](https://github.com/mykcs/the-community-lab/actions/runs/41104034849) 均成功，build 与 deploy job 均完成。
+- **线上访问验收：** 最新主线发布后，对首页、`/translation-review/`、`/original-question-translation-review/` 与 `/questionnaire/` 的实时 GET 均返回 HTTP 200。两个译审页都读回 S2 `ms07` 修订句“比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。”，版本 `draft-0.1.1`、`review_status: draft`；这仍是 AI 草稿，不可作为正式译文。PR #92 补充了直接进入季别答题页时的试点局限说明。已记录的 440×956 与 1440×900 CSS px 浏览器视口验收仍属模拟，不是实体 iPhone 验收。
+- **Vercel 配额收口：** `vercel.json` 通过 `"git":{"deploymentEnabled":false}` 禁用所有分支的 Git 自动部署；在当前 Vercel 项目对 main SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e` 的精确查询返回 0 条部署。旧 Vercel 已发布版本保留作回退快照。
 - **尚未完成的产品目标：** 两季原题的正式复刻仍未验收；独立韩中人工复核为 `0/124`，官方评分与同季可比嘉宾成绩仍为 `UNKNOWN`。PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
 
 ## 历史迁移计划快照（已被上述正式验收取代）
