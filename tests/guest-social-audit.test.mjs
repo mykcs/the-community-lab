@@ -87,8 +87,10 @@ test('shared channels may appear twice only if both accounts explicitly say co-h
   const first = shared.people[4].accounts[0];
   const second = shared.people[5].accounts[0];
   assert.equal(first.relationship, 'co_hosted_channel');
-  assert.equal(second.relationship, 'co_hosted_channel');
+  assert.equal(second.relationship, 'personal_channel');
   second.url = first.url;
+  assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, false);
+  second.relationship = 'co_hosted_channel';
   assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, true);
   second.relationship = 'personal_channel';
   assert.equal(auditGuestSocialDirectory(shared, { today: '2026-10-29' }).valid, false);

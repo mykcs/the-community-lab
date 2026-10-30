@@ -2,7 +2,12 @@
 import '../styles/global.css';
 import { SEASONS } from '../../data/questions.mjs';
 import { ORIGINAL_SITE_AUDIT } from '../../data/original-site-audit.mjs';
+import { GUEST_SOCIAL_DIRECTORY } from '../../data/guest-social-directory.mjs';
 import { buildReproductionAudit } from '../../lib/reproduction-audit.mjs';
+type GuestSocialAccount = { platform: string; url: string; evidence_url: string; relationship: string };
+type GuestSocialPerson = { season: number; stage_name_ko: string; accounts: ReadonlyArray<GuestSocialAccount> };
+const socialPeople = GUEST_SOCIAL_DIRECTORY as unknown as ReadonlyArray<GuestSocialPerson>;
+const socialLinkCount = socialPeople.reduce((total, person) => total + person.accounts.length, 0);
 const audit = buildReproductionAudit();
 ---
 <!doctype html>
@@ -23,6 +28,14 @@ const audit = buildReproductionAudit();
       .guest-social-links a{color:#ffb4a5;text-decoration:underline;text-underline-offset:3px;padding:8px 4px}
       .guest-social-links .guest-social-source{color:#c1c5ce;font-size:13px}
       .guest-social-person small{display:block;color:#aaaeb8;line-height:1.7}
+      .guest-social-caveat{border-left:2px solid #ff776c;padding:2px 0 2px 18px;margin:0 0 28px;color:#c8cbd1}
+      .guest-social-caveat strong{color:#f4f0e7;font-size:14px}
+      .guest-social-caveat p{font-size:13px;line-height:1.8;margin:8px 0 0}
+      .guest-social-seasons{display:grid;grid-template-columns:1fr 1fr;gap:34px}
+      .guest-social-season h3{font-size:20px;margin:0;color:#f4f0e7}
+      .guest-social-season .guest-social-directory{margin-top:12px}
+      .guest-social-account{display:inline-flex;align-items:center;gap:10px}
+      @media(max-width:760px){.guest-social-seasons{grid-template-columns:1fr;gap:30px}}
     </style>
   </head>
   <body>
@@ -36,6 +49,7 @@ const audit = buildReproductionAudit();
         <nav aria-label="主导航" class="header-links">
           <a href="#experiments">双季测试</a>
           <a href="#how-it-works">我们的标准</a>
+          <a href="#guest-social">嘉宾社媒</a>
           <a class="nav-github" href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
       </header>
@@ -48,7 +62,7 @@ const audit = buildReproductionAudit();
               <div class="eyebrow"><span>01 / ABOUT YOUR VALUES</span><span class="eyebrow-line"></span></div>
               <p class="hero-korean" lang="ko">당신은 누구와 가장 닮았을까요?</p>
               <h1 id="hero-title" tabindex="-1">立场不同，<br /><em>也能找到同频。</em></h1>
-              <p class="hero-description">灵感来自韩国综艺《The Community》。以<span class="highlight-text">韩文原文在前、信达雅中文译文在后</span>的方式，重新体验价值选择。先了解自己，再寻找与你观点相近的节目嘉宾。</p>
+              <p class="hero-description">灵感来自韩国综艺《The Community》。以<span class="highlight-text">韩文原文在前、信达雅中文译文在后</span>的方式，体验本站原创示例。你也可以浏览有公开来源的嘉宾社媒主页；真实嘉宾成绩尚无可比证据，本站暂不提供嘉宾匹配。</p>
               <div class="hero-actions">
                 <button id="hero-start" class="button button-primary" type="button">开始第二季示例测试 <span aria-hidden="true">↗</span></button>
                 <a href="#experiments" class="button button-text">先看看两季有什么不同 <span aria-hidden="true">↓</span></a>
@@ -103,13 +117,49 @@ const audit = buildReproductionAudit();
             </section>
           </section>
 
+          <section class="section guest-social-section" id="guest-social" aria-labelledby="guest-social-title">
+            <div class="section-topline"><span>02 — PUBLIC SOCIAL LINKS</span><span>公开来源 · 仅供导航</span></div>
+            <div class="section-heading"><div><h2 id="guest-social-title">嘉宾公开来源中的社媒链接</h2><p>无需完成测试即可查看。以下 {socialPeople.length} 位嘉宾、{socialLinkCount} 条链接按季整理；两名独立 Agent 逐条核对了公开来源，尚未经真人逐条复核。</p></div><span class="section-count">{socialLinkCount} <small>LINKS</small></span></div>
+            <aside class="guest-social-caveat" aria-label="社媒目录核查范围">
+              <strong>核查范围与限制</strong>
+              <p>这些链接只供导航，不代表嘉宾成绩、匹配、排名或近期活跃度已核实，也不构成法律身份认证。Instagram 页面未直接读取；只核对了公开来源中发布的链接。共同频道会单独标明。</p>
+            </aside>
+            <div class="guest-social-seasons">
+              {[1, 2].map(seasonId => (
+                <section class="guest-social-season" aria-labelledby={`guest-social-season-${seasonId}`}>
+                  <h3 id={`guest-social-season-${seasonId}`}>第 {seasonId} 季</h3>
+                  <ul class="guest-social-directory">
+                    {socialPeople.filter(person => person.season === seasonId).map(person => (
+                      <li class="guest-social-person">
+                        <strong>{person.stage_name_ko}</strong>
+                        <div class="guest-social-links">
+                          {person.accounts.map(account => (
+                            <span class="guest-social-account">
+                              <a href={account.url} target="_blank" rel="noopener noreferrer" aria-label={`${person.stage_name_ko} 的公开 ${account.platform}${account.relationship === 'co_hosted_channel' ? '共同频道' : '主页'}链接`}>
+                                {account.platform}{account.relationship === 'co_hosted_channel' ? '（共同频道）' : ''} <span aria-hidden="true">↗</span>
+                              </a>
+                              <a class="guest-social-source" href={account.evidence_url} target="_blank" rel="noopener noreferrer" aria-label={`${person.stage_name_ko} 的 ${account.platform} 链接核查来源`}>
+                                核查来源
+                              </a>
+                            </span>
+                          ))}
+                        </div>
+                        <small>两名独立 Agent 核对公开原始来源 · 2026-10-29 · 待真人逐条复核</small>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+          </section>
+
           <section class="section principle-section" id="how-it-works" aria-labelledby="principles-title">
-            <div class="section-topline"><span>02 — OUR APPROACH</span><span>한글 × 中文</span></div>
+            <div class="section-topline"><span>03 — OUR APPROACH</span><span>한글 × 中文</span></div>
             <h2 id="principles-title">一份好翻译，<br />让立场被真正听见。</h2>
             <div class="principle-grid"><div class="principle-item"><span class="principle-index">01 / 原文</span><strong lang="ko">한국어 원문</strong><p>每道题先放韩文，保留关键条件、否定和语气，方便懂韩语的人逐句核对。</p></div><div class="principle-item"><span class="principle-index">02 / 中文</span><strong>信 · 达 · 雅</strong><p>先忠于原义，再清楚自然。中文译文不是替题目改立场，而是帮助更多人理解。</p></div><div class="principle-item"><span class="principle-index">03 / 证据</span><strong>来源可核验</strong><p>区分本站原创题与节目原题；嘉宾成绩、社媒链接也必须有可靠的公开证据。</p></div></div>
           </section>
 
-          <section class="vision-banner"><div><span class="eyebrow-plain">COMING WHEN VERIFIED / 资料核实后开放</span><h2>做完测试，找到与你<br />想法最接近的嘉宾。</h2><p>未来将展示 3–5 位同季嘉宾、相似与不同的价值轴，以及本人确认的 X、Instagram、YouTube 等公开主页。不会编造匹配分数或账号。</p></div><div class="vision-symbol" aria-hidden="true">≋<span>YOU × CAST</span></div></section>
+          <section class="vision-banner"><div><span class="eyebrow-plain">MATCHING / 等待成绩核验</span><h2>公开社媒链接已开放，<br />真实匹配仍待核验。</h2><p>节目原题、计分方式与嘉宾成绩达到同版本核验标准后，才会开放 3–5 位同季嘉宾匹配。当前目录只作导航，不会把原创演示结果与嘉宾成绩比较。</p></div><div class="vision-symbol" aria-hidden="true">≋<span>YOU × CAST</span></div></section>
         </section>
 
         <section id="quiz-view" class="view quiz-view" hidden aria-labelledby="quiz-heading">
