@@ -70,6 +70,25 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
   assert.equal(optionCount, 550);
 });
 
+test('identical Korean answer labels keep a consistent Chinese draft', () => {
+  const translations = new Map();
+  for (const question of data.questions) {
+    for (const option of question.options) {
+      const source = option.ko.normalize('NFC').trim();
+      const translation = option.zh_cn.normalize('NFC').trim();
+      const existing = translations.get(source);
+      assert.ok(
+        existing === undefined || existing === translation,
+        `the same Korean answer label has conflicting Chinese drafts: ${source}`
+      );
+      translations.set(source, translation);
+    }
+  }
+  assert.ok(translations.size > 0);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('second-season AI wording revisions preserve degree, referent, and priority', () => {
   const expected = new Map([
     ['rp08', '自动驾驶汽车若面临撞上多名行人的局面，应以挽救多数人为方向进行设计，即使这意味着牺牲驾驶者。'],
