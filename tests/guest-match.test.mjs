@@ -177,3 +177,27 @@ test('a complete first-season four-axis synthetic score is structurally eligible
     ...s1, dimensions: s1.dimensions.slice(0, 3),
   }, [s1Guest]), /无效的匹配输入/);
 });
+
+test('one malformed guest axis cannot crash matching for the other verified candidates', () => {
+  const malformed = [
+    guest('null-axis', [40, -30, 0], {
+      dimensions: [null, { id: 'b', score: -30 }, { id: 'c', score: 0 }],
+    }),
+    guest('undefined-axis', [40, -30, 0], {
+      dimensions: [{ id: 'a', score: 40 }, undefined, { id: 'c', score: 0 }],
+    }),
+    guest('valid', [40, -30, 0]),
+  ];
+  const ranked = rankComparableGuests(user, malformed);
+  assert.equal(ranked.status, 'ready');
+  assert.deepEqual(ranked.matches.map(x => x.guest_id), ['valid']);
+  assert.equal(ranked.excluded, 2);
+
+  // Bad user data is not silently skipped: a purported official result
+  // must be complete and well-formed before the ranking begins.
+  for (const invalid of [null, undefined]) {
+    assert.throws(() => rankComparableGuests({
+      ...user, dimensions: [invalid, ...user.dimensions.slice(1)],
+    }, [guest('valid', [40, -30, 0])]), /用户维度不完整或重复/);
+  }
+});
