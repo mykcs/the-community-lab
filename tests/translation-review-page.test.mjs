@@ -21,6 +21,10 @@ test('standalone original-question page is published only as an unreviewed draft
   assert.equal(standaloneData.translation_review.publishable, false);
   assert.match(standaloneHtml, /草稿，禁止作为正式译文发布/);
   assert.match(standaloneHtml, /授权原件因隐私未分享，本站未能独立核验/);
+  assert.match(standaloneHtml, /审校者自报通过（待核验）/);
+  assert.doesNotMatch(standaloneHtml, /独立人工复核通过/);
+  assert.match(standaloneHtml, /项目核对来源版本、双语能力依据与独立性后才会计入正式复核/);
+  assert.match(standaloneHtml, /github\.com\/mykcs\/the-community-lab\/issues\/new/);
   assert.match(standaloneHtml, /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
   assert.doesNotMatch(standaloneHtml, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\bhref\s*=\s*"https?:/i);
   assert.doesNotMatch(standaloneHtml, /LOCAL_RESEARCH_CANDIDATE_NOT_FOR_PUBLICATION/);
