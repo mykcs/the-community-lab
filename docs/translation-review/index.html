@@ -13,8 +13,8 @@
 <p>公开审阅草稿：逐题对照韩文原文、中文 AI 初译和答案选项；请由独立韩中双语审校者检查，并记录资格和日期。</p>
 <div class="notice"><strong>公开复核草稿 · 非官方 · 不是可用于答题的正式译文或测试</strong>124 题和 550 个答案选项目前均为 AI 初译，尚无独立韩中双语人工复核。用户确认已获官方许可，可非营利翻译当前公开材料，且无期限；原件因隐私未分享。本页公开用于复核的仍是 AI 草译；独立人工双语复核完成前，不得作为正式译文或测试使用。</div>
 <p class="source">来源资源 SHA-256：<code>59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e</code> · 当前核对版本 · 源题数量 87 + 37</p>
-<p class="source">此页不会上传审校内容。修改和标记仅保存在你当前浏览器的本地存储；可导出 JSON。此 Pages 页面公开可访问，请勿在备注中写入私人信息。</p>
-<div class="toolbar"><input id="search" type="search" placeholder="搜索题号、韩文或中文"><select id="season"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group"><option value="all">全部维度</option></select><select id="reviewFilter"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
+<p class="source">此页不会上传审校内容。修改和标记仅保存在你当前浏览器的本地存储；可导出或重新导入同一来源版本的 JSON，导入前需确认覆盖本机草稿。此 Pages 页面公开可访问，请勿在备注中写入私人信息。</p>
+<div class="toolbar"><input id="search" type="search" placeholder="搜索题号、韩文或中文"><select id="season"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group"><option value="all">全部维度</option></select><select id="reviewFilter"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="import" type="button">导入审校 JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
 </header>
 <main class="wrap" id="list"></main>
 <footer>项目维护者确认已获当前公开材料的官方非营利翻译许可；许可原件因隐私未公开，读者无法在此独立核验。独立人工双语复核、译文版本和题库版本核对仍未完成。评分公式仍为 UNKNOWN；本页面不是官方测试，也不解释题目计分结果。</footer>
@@ -37,6 +37,47 @@ function recordTranslationEdit(id,patch,select){
  if(hadPass)select.value='pending';
  save();
 }
+function validateReviewImport(incoming,baseline){
+ if(!incoming||typeof incoming!=='object'||Array.isArray(incoming)||!Array.isArray(incoming.questions)||incoming.questions.length!==baseline.questions.length)throw new Error('题量或文件格式不匹配');
+ // Fail closed: the exported file may edit Chinese drafts and self-reported notes,
+ // but may not change Korean source text, provenance, rights or official status.
+ function immutableSnapshot(pack){
+  const copy=structuredClone(pack);
+  for(const q of copy.questions){
+   if(!q||!Array.isArray(q.options))throw new Error('源题结构不完整');
+   delete q.translation_zh_cn;delete q.human_review_status;delete q.human_review_note;delete q.human_review_note_stale;
+   for(const option of q.options){if(!option||typeof option!=='object')throw new Error('源选项结构不完整');delete option.zh_cn}
+  }
+  return JSON.stringify(copy);
+ }
+ if(immutableSnapshot(incoming)!==immutableSnapshot(baseline))throw new Error('韩文原文、来源指纹、许可记录或题库元数据已变化，拒绝覆盖');
+ const imported={};
+ for(let i=0;i<baseline.questions.length;i++){
+  const q=incoming.questions[i],original=baseline.questions[i];
+  const status=q.human_review_status??'pending',note=q.human_review_note??'';
+  if(!['pending','pass','revise'].includes(status)||typeof note!=='string'||note.length>4000||
+     typeof q.translation_zh_cn!=='string'||q.translation_zh_cn.length>20000||
+     q.options.some(o=>typeof o.zh_cn!=='string'||o.zh_cn.length>4000)||
+     (q.human_review_note_stale!==undefined&&typeof q.human_review_note_stale!=='boolean')){
+   throw new Error('审校状态、备注或中文译文格式不合法：'+original.id);
+  }
+  const optionTexts=q.options.map(o=>o.zh_cn);
+  const optionChanged=optionTexts.some((value,j)=>value!==original.options[j].zh_cn);
+  const textChanged=q.translation_zh_cn!==original.translation_zh_cn;
+  // Older exports did not include the stale flag; conservatively require
+  // a fresh note when a changed translation is restored as pending.
+  const stale=q.human_review_note_stale??(status==='pending'&&Boolean(note.trim())&&(textChanged||optionChanged));
+  if(status==='pass'&&(!note.trim()||stale||!q.translation_zh_cn.trim()||optionTexts.some(v=>!v.trim()))){
+   throw new Error('通过状态缺少有效备注、译文或选项：'+original.id);
+  }
+  const edit={};
+  if(textChanged)edit.translation=q.translation_zh_cn;
+  if(optionChanged)edit.options=optionTexts;
+  if(status!=='pending'||note||stale)Object.assign(edit,{review:status,note,reviewNoteStale:stale});
+  if(Object.keys(edit).length)imported[original.id]=edit;
+ }
+ return imported;
+}
 function render(){
  const term=search.value.trim().toLowerCase();const wantedSeason=season.value,wantedGroup=group.value,wantedReview=reviewFilter.value;
  const rows=data.questions.filter(q=>{
@@ -57,7 +98,23 @@ function render(){
  }
 }
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
-document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||''}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='original-question-translation-review.json';a.click();URL.revokeObjectURL(a.href)});
+document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='original-question-translation-review.json';a.click();URL.revokeObjectURL(a.href)});
+const importFile=document.querySelector('#import-file');
+document.querySelector('#import').addEventListener('click',()=>importFile.click());
+importFile.addEventListener('change',async()=>{
+ const file=importFile.files?.[0];if(!file)return;
+ try{
+  if(file.size>1024*1024)throw new Error('文件超过 1 MiB 上限');
+  const imported=validateReviewImport(JSON.parse(await file.text()),data);
+  const total=Object.keys(imported).length;
+  if(!confirm('将导入 '+total+' 道题的审校草稿，覆盖此设备现有的 '+Object.keys(edits).length+' 道编辑。不会上传至服务器。是否继续？'))return;
+  // Persist before changing the in-memory editor; failure keeps the old draft intact.
+  localStorage.setItem(key,JSON.stringify(imported));
+  edits=imported;render();
+  document.querySelector('.statusline').textContent='已从同一来源版本恢复 '+total+' 道本机审校草稿（自报状态，未独立核验）';
+ }catch(error){alert('导入失败，原有草稿未被覆盖：'+(error instanceof Error?error.message:'文件无效'))}
+ finally{importFile.value=''}
+});
 document.querySelector('#clear').addEventListener('click',()=>{if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;localStorage.removeItem(key);edits={};render()});
 render();
 </script>
