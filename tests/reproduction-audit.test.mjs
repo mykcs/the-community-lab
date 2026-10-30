@@ -79,6 +79,49 @@ test('optional official readback uses only GET and never prints or compares priv
   assert.doesNotMatch(JSON.stringify(result), /DO_NOT_COPY|referralCode|answers|nickname/);
 });
 
+test('official readback compares named axes and fields, ignoring harmless API ordering', async () => {
+  const fetchMock = async () => ({ ok: true, json: async () => {
+    const original = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[0].output);
+    return {
+      axes: [...original.axes].reverse().map(axis => ({
+        intensity: axis.intensity, dominant: axis.dominant,
+        rightPercent: axis.rightPercent, leftPercent: axis.leftPercent, id: axis.id,
+      })),
+      resultType: original.resultType,
+      scoringVersion: original.scoringVersion,
+      questionSetHash: original.questionSetHash,
+      questionnaireVersion: original.questionnaireVersion,
+      season: original.season,
+    };
+  } });
+  const result = await verifyOfficialSyntheticScoreReadbacks(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, fetchMock);
+  assert.equal(result.allMatch, true, 'JSON property order and axes array order are not score changes');
+  assert.deepEqual(result.checked.map(row => row.matchesRecordedReadback), [true, true]);
+});
+
+test('official readback rejects an axis drift even when all other axes agree', async () => {
+  const fetchMock = async () => ({ ok: true, json: async () => {
+    const original = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[0].output);
+    original.axes[0].leftPercent = 49;
+    original.axes[0].rightPercent = 51;
+    return original;
+  } });
+  const result = await verifyOfficialSyntheticScoreReadbacks(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, fetchMock);
+  assert.equal(result.allMatch, false);
+});
+
+test('official readback rejects duplicate or missing axis identities', async () => {
+  const originals = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[0].output);
+  for (const axes of [
+    [originals.axes[0], originals.axes[0], originals.axes[2]],
+    originals.axes.slice(0, 2),
+  ]) {
+    const fetchMock = async () => ({ ok: true, json: async () => ({ ...originals, axes }) });
+    const result = await verifyOfficialSyntheticScoreReadbacks(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, fetchMock);
+    assert.equal(result.allMatch, false);
+  }
+});
+
 test('optional official readback detects scoring-version drift without updating stored evidence', async () => {
   const fetchMock = async () => ({ ok: true, json: async () => ({
     ...structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[0].output),
