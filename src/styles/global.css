@@ -11,3 +11,17 @@
 .source-site{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;margin-top:15px;padding-top:12px;border-top:1px dashed #ffffff24;color:#f3cbc3;font-size:12px;letter-spacing:.015em;transition:color .15s}.source-site:hover{color:#fff}.source-site span{font-size:17px}.season-one .source-site{color:#c7dce5}.season-card{min-height:451px}@media(max-width:760px){.season-card{min-height:425px}}@media(max-width:470px){.season-card{min-height:418px}}
 
 .session-note{margin:12px 0 0;color:#ddd4c9;font-size:12px;line-height:1.8}.session-note[hidden]{display:none}
+
+
+/* Homepage axis diagram: the caption carries the value pairs and the boundary. */
+.hero-art{display:flex;flex-direction:column;margin:0;background:#141921}
+.hero-art-visual{position:relative;flex:1 1 auto;min-height:520px;overflow:hidden;background:radial-gradient(ellipse at 58% 47%,#493e4b 0,#262a33 29%,#181d25 54%,#11161d 82%)}
+.hero-axis-caption{padding:16px clamp(18px,3vw,30px) 20px;border-top:1px solid #ffffff18;background:#171c23;color:#c8c9cf;font-size:12px;line-height:1.6}
+.hero-axis-caption p{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:0;color:#f0ebe3}
+.hero-axis-caption p span{color:#aab0ba;font-size:11px}
+.hero-axis-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;list-style:none;margin:12px 0 0;padding:0}
+.hero-axis-list li{display:flex;justify-content:center;align-items:center;gap:6px;min-width:0;padding-top:8px;border-top:1px solid #ffffff18;font-size:13px;color:#e3d8d0}
+.hero-axis-list li span{color:var(--red2)}
+.hero-axis-list .axis-number{font-size:10px;letter-spacing:.08em;color:#ffb4a5}
+@media(max-width:760px){.hero-art{min-height:360px;border-left:0}.hero-art-visual{min-height:250px}}
+@media(max-width:470px){.hero-art{min-height:365px}.hero-axis-caption{padding:12px 18px 16px}}
