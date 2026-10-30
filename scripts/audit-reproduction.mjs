@@ -1,5 +1,6 @@
 import { buildReproductionAudit, summarizeOfficialSyntheticScoreObservations, verifyOfficialSyntheticScoreReadbacks } from '../lib/reproduction-audit.mjs';
 
+console.log('最终愿望：不懂韩文也能忠实理解同一套官方题目，且同季、同版本、同一份实际答卷得到与官网逐字段相同的结果。');
 const result = buildReproductionAudit();
 for (const row of result.rows) {
   console.log('S' + row.season + ': 原站观察 ' + row.sourceObservedQuestionCount + ' 题；本站原创演示 ' + row.independentDemoQuestionCount + ' 题；官方复刻资格 ' + (row.reproductionReady ? '已验证' : '未验证'));
