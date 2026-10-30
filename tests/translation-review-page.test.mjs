@@ -134,6 +134,22 @@ test('s1-class-15 says private tutoring rather than an after-school class', () =
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('ms07 keeps the Korean comparison and teaching priority without implying exclusion', () => {
+  const question = data.questions.find(item => item.id === 'ms07');
+  assert.ok(question, 'ms07 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '내 자식에게는 영리하게 돈 버는 법보다 양심에 따라 사는 법을 먼저 가르치겠다.');
+  assert.equal(question.translation_zh_cn, '比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /比较助词「보다」.*先后副词「먼저」/);
+  assert.match(question.translator_note, /korean\.go\.kr/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /ms07/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
