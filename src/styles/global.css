@@ -25,3 +25,4 @@
 .hero-axis-list .axis-number{font-size:10px;letter-spacing:.08em;color:#ffb4a5}
 @media(max-width:760px){.hero-art{min-height:360px;border-left:0}.hero-art-visual{min-height:250px}}
 @media(max-width:470px){.hero-art{min-height:365px}.hero-axis-caption{padding:12px 18px 16px}}
+.season-pilot{align-self:flex-start;max-width:100%;margin:0 0 15px}.season-arrow{background:transparent;border:1px solid #ffffff55;color:#e8e5e5}.season-one .season-arrow{background:transparent;border-color:#b4c1ca;color:#d8e2e8}
