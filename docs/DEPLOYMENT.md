@@ -81,5 +81,5 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 ## 私人历史候选与当前 main 同步
 
 - `feat/private-history-candidate` 已在本地合并到当前 main `e2b644f733e2986ebc54d2bee71566deff6ec8c3`，并完成版本目录兼容修复和本地回归。
-- 该同步尚未推送到 PR #11；因此新候选没有 GitHub Actions、Vercel Preview 或 Production 验收。上一精确 PR head 的 Vercel `build-rate-limit` 状态不证明此新 head 的结果，也不证明限制已经恢复。
+- 合并提交 `f88afaa91b94645a0985eaac26a52e6f0d28976d` 已快进推送到 Draft PR #11；GitHub Actions run `41011447548` 的 `npm ci`、`npm run check`、`npm run build` 均通过。Vercel 对精确 SHA 返回 `build-rate-limit`，且按 SHA 查询无 deployment；因此没有新的 Preview 或 Production 验收。
 - 不升级套餐或绕过限额。PR #11 保持 Draft；真实 OAuth、隐私/区域/保留期决定、双真实账号隔离、删除读回和精确 head Preview 仍是任何启用或合并私人保存之前的门槛。
