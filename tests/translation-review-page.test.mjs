@@ -109,6 +109,25 @@ test('second-season AI wording revisions preserve degree, referent, and priority
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
+  const expected = new Map([
+    ['rp06', '一座聚集数万人的综合体育场收到炸弹威胁。若唯一能查明炸弹确切位置的方法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，就应该对他们施以酷刑。'],
+    ['sa03', '即使企业或组织按能力选人，如果人员构成偏向特定出身地、学校或性别，也有必要作出调整。'],
+  ]);
+  for (const [id, translation] of expected) {
+    const question = data.questions.find(item => item.id === id);
+    assert.ok(question, `${id} must remain in the source dataset`);
+    assert.equal(question.translation_zh_cn, translation, id);
+    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
+    assert.equal(question.review_status, 'draft', id);
+  }
+  assert.match(data.translation_review.editorial_pass, /rp06.*sa03/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('rp03 preserves the source item’s absolute priority and both review pages stay in sync', () => {
   const question = data.questions.find(item => item.id === 'rp03');
   assert.ok(question, 'rp03 must remain in the source dataset');
