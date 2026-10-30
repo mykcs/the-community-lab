@@ -9,6 +9,7 @@ type GuestSocialPerson = { season: number; stage_name_ko: string; accounts: Read
 const socialPeople = GUEST_SOCIAL_DIRECTORY as unknown as ReadonlyArray<GuestSocialPerson>;
 const socialLinkCount = socialPeople.reduce((total, person) => total + person.accounts.length, 0);
 const audit = buildReproductionAudit();
+const base = import.meta.env.BASE_URL;
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -91,11 +92,21 @@ const audit = buildReproductionAudit();
 
           <section class="section experiments" id="experiments" aria-labelledby="experiments-title">
             <div class="section-topline"><span>01 — SELECT YOUR SEASON</span><span>두 개의 시즌 / 两季入口</span></div>
-            <div class="section-heading"><div><h2 id="experiments-title">从哪一季开始？</h2><p>先用少量原创题感受双语体验。两季进度分别暂存在本页，刷新或关闭页面会清空；正式原题仍待来源、版本与人工复核核对。</p></div><span class="section-count">02 <small>TESTS</small></span></div>
+            <div class="section-heading"><div><h2 id="experiments-title">从哪一季开始？</h2><p>可以先做本站原创的短篇演示，也可以试填两季共 124 道公开客户端原题。原题中文为未经真人复核的 AI 初译，不提供官方分数或嘉宾匹配。</p></div><span class="section-count">02 <small>TESTS</small></span></div>
             <div class="season-grid">
               <article class="season-card season-two"><div class="season-meta"><span class="chip chip-accent">优先开发</span><span>SEASON 02 / 2026</span></div><div class="season-number">02<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">보이지 않는 손</p><h3>第二季 · 看不见的手</h3><p>原则与结果，结构与能力，意义与实利。三个坐标，看看你如何取舍。</p></div><div class="season-footer"><span>3 组价值轴 <i>·</i> 6 道原创演示题</span><button id="start-s2" class="season-arrow" type="button" aria-label="开始第二季演示测试"><span>开始</span><span aria-hidden="true">↗</span></button></div><p id="s2-session-note" class="session-note" hidden></p><a class="source-site" href="https://the-community-survey.web.app/season/2" target="_blank" rel="noopener noreferrer">另去韩文原站完成 37 题 <span aria-hidden="true">↗</span></a></article>
               <article class="season-card season-one"><div class="season-meta"><span class="chip">同步预览</span><span>SEASON 01 / 2024</span></div><div class="season-number">01<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">더 커뮤니티</p><h3>第一季 · 价值观探索</h3><p>公共参与、性别观念、阶级分配与开放性。四个角度，看见差异。</p></div><div class="season-footer"><span>4 组价值轴 <i>·</i> 8 道原创演示题</span><button id="start-s1" class="season-arrow" type="button" aria-label="开始第一季演示测试"><span>开始</span><span aria-hidden="true">↗</span></button></div><p id="s1-session-note" class="session-note" hidden></p><a class="source-site" href="https://the-community-survey.web.app/season/1" target="_blank" rel="noopener noreferrer">另去韩文原站完成 87 题 <span aria-hidden="true">↗</span></a></article>
             </div>
+            <section aria-labelledby="source-pilot-heading" class="mt-8 border border-[#ff776c]/55 bg-[#261e22] p-6 md:p-9">
+              <div class="flex flex-wrap items-center gap-3 text-xs tracking-widest text-[#ffb4a5]"><span>NEW / 124 QUESTIONS</span><span class="rounded-full border border-[#ff776c]/55 px-3 py-1 tracking-normal">非官方原题试填 · AI 初译</span></div>
+              <h3 id="source-pilot-heading" class="mt-4 text-2xl font-semibold tracking-tight text-[#f4f0e7] md:text-3xl">想一次答完节目原题？现在就可以。</h3>
+              <p class="mt-3 max-w-3xl text-sm leading-8 text-[#c6c3c6]">我们将当前公开客户端中可见的第一季 87 题、第二季 37 题，按已观察到的题序接入了独立页面。每题韩文在上、中文初译在下，选项也逐一对应。用户报告的非营利翻译许可原件未由项目独立核验；译文尚未经过人工审校，官方服务端计分仍未知。完成后可下载自己的本机答题记录，但不会生成冒充官方的成绩。</p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <a href={`${base}questionnaire/?season=2`} class="button button-primary">试填第二季 37 题 <span aria-hidden="true">↗</span></a>
+                <a href={`${base}questionnaire/?season=1`} class="button button-outline">试填第一季 87 题 <span aria-hidden="true">↗</span></a>
+              </div>
+              <p class="mt-4 text-xs leading-6 text-[#c6c3c6]">无需注册 · 答案不上传 · 刷新即清空 · 不等同官方测试或正式译文</p>
+            </section>
             <section aria-labelledby="audit-heading" class="mt-10 border border-white/15 bg-[#171c23] p-5 md:p-7">
               <div class="flex flex-wrap items-center justify-between gap-3">
                 <h3 id="audit-heading" class="m-0 text-xl font-bold tracking-tight text-[#f4f0e7]">原题资料核验进度</h3>
@@ -123,7 +134,7 @@ const audit = buildReproductionAudit();
                 <a class="mt-3 inline-flex text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/data/original-question-index.json" target="_blank" rel="noopener noreferrer">逐题来源与缺口清单 ↗</a>
               </details>
               <a class="mt-5 inline-flex text-sm text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/docs/VERIFICATION-MATRIX.md" target="_blank" rel="noopener noreferrer">查看每一道验证关卡与证据 →</a>
-              <p class="mt-4 text-sm leading-6 text-[#b6bbc5]">想逐题查看韩文原文与中文 AI 初译？公开复核台包含 124 题和 550 个选项；目前尚无独立人工韩中复核，不能作为正式测试。</p>
+              <p class="mt-4 text-sm leading-6 text-[#b6bbc5]">逐题查看、修改草稿可使用公开译审台：124 题、550 个选项。想实际作答则可使用上方的独立原题试填页。两者都不是已经独立审校的正式测试。</p>
               <a class="mt-2 inline-flex text-sm font-semibold text-[#ffb4a5] underline underline-offset-4" href="https://mykcs.github.io/the-community-lab/translation-review/">打开 124 题韩中复核台 ↗</a>
             </section>
           </section>
