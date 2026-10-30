@@ -14,7 +14,7 @@ function guest(id, scores, override = {}) {
   return {
     id, stage_name: `合成嘉宾${id}`, season: 2,
     question_version: 'licensed-source-2026', scoring_version: 'licensed-official-v1',
-    score_source_url: `https://example.org/synthetic/${id}`, score_checked_at: '2026-10-29',
+    score_source_url: `https://www.rfc-editor.org/rfc/rfc6761.html`, score_checked_at: '2026-10-29',
     // Synthetic ONLY: exercise the future provenance contract; never publish as a real guest.
     score_review_status: 'human_reviewed_primary_source',
     score_reviewed_at: '2026-10-29',
@@ -55,9 +55,9 @@ test('ties are included at the cutoff rather than arbitrarily broken', () => {
 
 test('public social links require both identity evidence and review date', () => {
   const withAccounts = guest('a', [40, -30, 0], { social_accounts: [
-    { platform: 'X', profile_url: 'https://x.com/example', identity_source_url: 'https://example.org/identity', verified_at: '2026-10-29' },
+    { platform: 'X', profile_url: 'https://x.com/example', identity_source_url: 'https://www.rfc-editor.org/rfc/rfc6761.html', verified_at: '2026-10-29' },
     { platform: 'Instagram', profile_url: 'https://instagram.com/guess', identity_source_url: null, verified_at: '2026-10-29' },
-    { platform: 'other', profile_url: 'javascript:alert(1)', identity_source_url: 'https://example.org/identity', verified_at: '2026-10-29' },
+    { platform: 'other', profile_url: 'javascript:alert(1)', identity_source_url: 'https://www.rfc-editor.org/rfc/rfc6761.html', verified_at: '2026-10-29' },
   ] });
   const ranked = rankComparableGuests(user, [withAccounts]);
   assert.equal(ranked.matches[0].social_accounts.length, 1);
@@ -94,14 +94,14 @@ test('invalid calendar dates and future verification dates cannot authenticate r
   const ranked = rankComparableGuests(user, [guest('bad-social-date', [40, -30, 0], {
     social_accounts: [
       { platform: 'X', profile_url: 'https://x.com/synthetic',
-        identity_source_url: 'https://example.org/evidence', verified_at: '2026-02-30' },
+        identity_source_url: 'https://www.rfc-editor.org/rfc/rfc6761.html', verified_at: '2026-02-30' },
     ],
   })]);
   assert.equal(ranked.matches[0].social_accounts.length, 0);
 });
 
 test('public account navigation rejects misleading platforms, post links and credentialed URLs', () => {
-  const evidence = 'https://example.org/evidence';
+  const evidence = 'https://www.rfc-editor.org/rfc/rfc6761.html';
   const account = (platform, profile_url, identity_source_url = evidence) =>
     ({ platform, profile_url, identity_source_url, verified_at: '2026-10-29' });
   const ranked = rankComparableGuests(user, [guest('links', [40, -30, 0], {
@@ -203,7 +203,7 @@ test('one malformed guest axis cannot crash matching for the other verified cand
 });
 
 test('ranking navigation rejects non-profile paths, tracking parameters and fragments', () => {
-  const evidence = 'https://example.org/identity';
+  const evidence = 'https://www.rfc-editor.org/rfc/rfc6761.html';
   const suspicious = [
     ['X', 'https://x.com/login'],
     ['X', 'https://x.com/settings'],
@@ -223,8 +223,16 @@ test('ranking navigation rejects non-profile paths, tracking parameters and frag
   assert.deepEqual(ranked.matches[0].social_accounts, []);
 });
 
-test('private-network or single-label provenance URLs cannot validate official guest scores', () => {
-  for (const url of ['https://staff.internal/synthetic', 'https://intranet/synthetic']) {
+test('private-network, special-use and single-label provenance URLs cannot validate guest scores', () => {
+  const nonpublicUrls = [
+    'https://staff.internal/synthetic', 'https://intranet/synthetic',
+    'https://results.test/synthetic', 'https://results.invalid/synthetic',
+    'https://results.example/synthetic', 'https://results.example.com/synthetic',
+    'https://results.example.net/synthetic', 'https://results.example.org/synthetic',
+    'https://printer.home.arpa/synthetic', 'https://service.onion/synthetic',
+    'https://resolver.alt/synthetic', 'https://results.test./synthetic',
+  ];
+  for (const url of nonpublicUrls) {
     const ranked = rankComparableGuests(user, [guest('no-public-evidence', [40, -30, 0], {
       score_source_url: url,
     })]);
@@ -235,7 +243,7 @@ test('private-network or single-label provenance URLs cannot validate official g
   const ranked = rankComparableGuests(user, [guest('social-source', [40, -30, 0], {
     social_accounts: [{
       platform: 'X', profile_url: 'https://x.com/synthetic',
-      identity_source_url: 'https://staff.internal/person',
+      identity_source_url: 'https://printer.home.arpa/person',
       verified_at: '2026-10-29',
     }],
   })]);
