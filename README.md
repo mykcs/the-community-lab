@@ -4,9 +4,11 @@
 >
 > 当前状态：**双季原创韩中双语演示版已上线；还不是节目原题、官方计分或嘉宾实际匹配。登录、数据库、游戏尚未上线。**
 
-**[立即体验网站 · the-community-lab.vercel.app](https://the-community-lab.vercel.app/)**
+**[立即体验网站 · GitHub Pages 正式版](https://mykcs.github.io/the-community-lab/)**
 
-**[公开韩中译文复核草稿](https://mykcs.github.io/the-community-lab/translation-review/)**：含两季 124 道题的 AI 初译，仅供公开复核；非官方、不是正式译文或可答题测试，独立韩中人工复核尚未完成。审校修改只保存在当前浏览器，不会上传。迁移完成后它是 Pages 主站下的独立子页面，不与正式问卷题库混用。
+旧 [Vercel 生产站](https://the-community-lab.vercel.app/) 保留作为静态回退快照，已停止通过 Git 自动部署，后续 `main` 的正式更新由 GitHub Pages 发布。
+
+**[公开韩中译文复核草稿](https://mykcs.github.io/the-community-lab/translation-review/)**：含两季 124 道题的 AI 初译，仅供公开复核；非官方、不是正式译文或可答题测试，独立韩中人工复核尚未完成。审校修改只保存在当前浏览器，不会上传。它是 Pages 主站下的独立子页面，不与正式问卷题库混用。
 
 第一版已实现：第二季 6 道原创双语示例题、第一季 8 道原创双语示例题、逐题选择／返回／双季独立暂停继续及结果重看（限当前页面，刷新清空）、三轴／四轴结果、本机下载结果，以及明确的嘉宾匹配资料核验状态。另有 7 位嘉宾的 13 个公开社媒导航链接，由两名独立 Agent 逐条核对公开原始来源；尚未经真人逐条复核，Instagram 页面未直接读取，也不用于匹配、排名或活跃度判断。题目与评分从未声称等价于节目原版。浏览器不会向服务器上传选项或成绩。
 
@@ -47,9 +49,9 @@
 - 登录：可选 GitHub OAuth。访客无需登录即可体验；愿意长期保存才需要账号。
 - 结果：计划用 Supabase Auth + 私有 Postgres 表，配合行级权限（RLS）隔离每位用户。
 - 隐私：默认只在本地浏览器保留临时结果；明确同意后才上传。提供本人查看、下载和删除。
-- 费用：初期以 GitHub、Vercel Hobby、Supabase Free 的**免费额度**为目标；不擅自开通付费服务。
+- 费用：当前公开静态站由 GitHub Pages 与标准 GitHub-hosted Actions runner 发布；Vercel Hobby 仅作历史回退站，未来的可选私有后端需另行核价和验收；不擅自开通付费服务。
 
-**静态托管迁移（2026-10-30）：** 正在将当前不收集答卷的双语演示站迁往 GitHub Pages，候选首页地址为 `https://mykcs.github.io/the-community-lab/`，独立公开译审草稿路径为 `/the-community-lab/translation-review/`。在统一的 Actions 发布、两个地址可达及双季实际交互验收完成前，上方 Vercel 链接仍是正式问卷访问入口。GitHub Pages 免费托管公开仓库、公共标准 runner 的构建不扣计费计算额度，但有 1 GB 站点大小、约 100 GB/月软流量限制，不是无限资源。Pages 只提供静态文件；PR #11 的可选登录／私人历史记录仍未上线，不能直接迁入 Pages 当作有后端。发布切换及回退规则见 [部署证据与迁移计划](docs/DEPLOYMENT.md)。
+**静态托管迁移（2026-10-30，已发布）：** [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 合并后，`main` 提交 `7cbb659c5d16c6002767ee32a0bd062d516badbf` 的 [Pages 构建与发布](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 均成功。正式首页和独立译审页均返回 HTTP 200，主站 JS/CSS 也返回 200；实际浏览器走通了第二季 6 题、第一季 8 题、暂停续答和结果卡。440×956 CSS px 手机视口无横向溢出；它是浏览器模拟而非实体手机。Vercel Git 自动部署按官方 `git.deploymentEnabled=false` 关闭，保留旧生产快照用于回退。GitHub Pages 免费托管公开仓库、公共标准 runner 的构建不扣计费计算额度，但有 1 GB 站点大小、约 100 GB/月软流量限制，不是无限资源。Pages 只提供静态文件；PR #11 的可选登录／私人历史记录仍未上线，不能直接迁入 Pages 当作有后端。发布切换及回退规则见 [部署证据](docs/DEPLOYMENT.md)。
 
 具体架构、预算与隐私门槛见 [设计方案](docs/ARCHITECTURE.md)。
 
@@ -74,7 +76,7 @@
 - 已有生产证据：Astro 版本 `1740ee7` 的 18/18 自动测试和 65,600 种原创演示答案组合、生产 SHA 对齐及桌面／440×956 CSS px 浏览器验收。
 - 已合并 [PR #6](https://github.com/mykcs/the-community-lab/pull/6)（双季独立会话与源题标识索引）及 [PR #7](https://github.com/mykcs/the-community-lab/pull/7)（嘉宾证据日期、重复身份和社媒网址防错），GitHub Actions 与 Git 自动生产发布通过；最新生产 Chrome 双视口的完整 8＋6 题回归记录见 [验收笔记](docs/QA-2026-10-29.md)。
 - 需继续：实体 iPhone 18 Pro Max 设备尚未核验（现有 440×956 为真实 Chrome 的移动视口模拟）；原版许可、独立韩中复核、官方计分／路径金标准及真实嘉宾同季数据和社媒归属均未完成。
-- **GitHub→Vercel 自动部署已验收：** 2026-10-29 PR #7 触发 Git Preview，合并 main 后由 Git 自动发布 Production，均 `READY`、`source=git` 且提交 SHA 对齐。详情见 [部署证据](docs/DEPLOYMENT.md)。
+- **现行发布：GitHub Pages**；2026-10-29 的 GitHub→Vercel 自动发布验收属于旧部署历史，保留 [原始证据](docs/DEPLOYMENT.md) 供回退核查。
 
 ## 开发和证据检查
 

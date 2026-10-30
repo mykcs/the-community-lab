@@ -5,6 +5,7 @@ import test from 'node:test';
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
+const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
 test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /branches:\s*\[main\]/);
@@ -13,11 +14,16 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /- run: npm run check/);
   assert.match(workflow, /- run: npm run build/);
   assert.match(workflow, /docs\/translation-review\/\*\*/);
+  assert.match(workflow, /public\/\*\*/);
   assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@v4/);
   assert.match(workflow, /pages:\s*write/);
   assert.match(workflow, /id-token:\s*write/);
+});
+
+test('Vercel stays available as rollback but no longer auto-deploys Git pushes', () => {
+  assert.equal(vercel.git.deploymentEnabled, false);
 });
 
 test('Only the unified Pages workflow deploys; translation review still has its own validation', () => {
