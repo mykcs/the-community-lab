@@ -33,10 +33,14 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
 });
 
-test('the homepage makes the public translation review route discoverable and labels it as an unreviewed draft', () => {
+test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
   assert.match(homepage, /https:\/\/mykcs\.github\.io\/the-community-lab\/translation-review\//);
-  assert.match(homepage, /124 题和 550 个选项/);
-  assert.match(homepage, /尚无独立人工韩中复核，不能作为正式测试/);
+  assert.match(homepage, /124 题[、和]\s*550 个选项/);
+  assert.match(homepage, /questionnaire\/\?season=2/);
+  assert.match(homepage, /questionnaire\/\?season=1/);
+  assert.match(homepage, /非官方原题试填/);
+  assert.match(homepage, /真人复核/);
+  assert.match(homepage, /不提供官方分数或嘉宾匹配/);
 });
 
 test('the homepage value-axis figure is illustrative, Chinese-readable, and not a personal result', () => {
