@@ -143,7 +143,7 @@ test('s1-class-15 says private tutoring rather than an after-school class', () =
   assert.ok(question, 's1-class-15 must remain in the source dataset');
   assert.equal(question.source_text_ko, '어린 시절 과외를 받아본 적 있다');
   assert.equal(question.translation_zh_cn, '我小时候接受过私人辅导。');
-  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_version, 'draft-0.1.2');
   assert.match(question.translator_note, /韩国国立国语院.*private lesson/);
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.equal(question.review_status, 'draft');
