@@ -55,6 +55,40 @@ test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /此自述只作本地留痕，不证明审校者身份或能力/);
 });
 
+test('editing a reviewed translation or option withdraws its self-reported pass', () => {
+  const body = html.match(/function recordTranslationEdit\([^]*?\n\}/)?.[0];
+  assert.ok(body, 'the edit/review transition must be explicit and testable');
+  const edits = {
+    q1: { review: 'pass', note: 'reviewer A · bilingual evidence · 2026-10-30' },
+    q2: { review: 'pass', note: 'reviewer B · 2026-10-30' },
+    q3: { review: 'revise', note: 'needs changes' },
+  };
+  let saves = 0;
+  const update = new Function('edits', 'save', body + '; return recordTranslationEdit;')(edits, () => saves++);
+  const q1Select = { value: 'pass' };
+  update('q1', { translation: '修改后的中文' }, q1Select);
+  assert.equal(edits.q1.review, 'pending');
+  assert.equal(edits.q1.reviewNoteStale, true);
+  assert.equal(q1Select.value, 'pending');
+  assert.equal(edits.q1.note, 'reviewer A · bilingual evidence · 2026-10-30');
+  const q2Select = { value: 'pass' };
+  update('q2', { options: ['甲', '乙'] }, q2Select);
+  assert.equal(edits.q2.review, 'pending');
+  assert.equal(edits.q2.reviewNoteStale, true);
+  assert.equal(q2Select.value, 'pending');
+  const q3Select = { value: 'revise' };
+  update('q3', { translation: '修改' }, q3Select);
+  assert.equal(edits.q3.review, 'revise');
+  assert.equal(edits.q3.reviewNoteStale, false);
+  assert.equal(q3Select.value, 'revise');
+  assert.equal(saves, 3);
+  assert.match(html, /recordTranslationEdit\(q\.id,\{translation:edit\.value\},status\)/);
+  assert.match(html, /recordTranslationEdit\(q\.id,\{options:arr\},status\)/);
+  assert.match(html, /再次修改题干译文或选项.*自动退回待复核/);
+  assert.match(html, /curr\.reviewNoteStale===true/);
+  assert.match(html, /note:note\.value,reviewNoteStale:false/);
+});
+
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
   assert.doesNotMatch(html, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\b(?:href|rel)\s*=/i);
   assert.match(html, /localStorage\.setItem/);
