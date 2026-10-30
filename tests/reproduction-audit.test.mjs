@@ -39,6 +39,16 @@ test('official synthetic readbacks distinguish one checked all-O pair from the u
   assert.equal(buildReproductionAudit().originalEquivalenceVerified, false);
 });
 
+test('empty official readback evidence must never be reported as all matching', async () => {
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations([]), /至少需要一条|不能为空/);
+  let called = false;
+  await assert.rejects(
+    () => verifyOfficialSyntheticScoreReadbacks([], async () => { called = true; throw new Error('must not fetch'); }),
+    /至少需要一条|不能为空/,
+  );
+  assert.equal(called, false, 'empty evidence must be rejected before network access');
+});
+
 test('an unverified synthetic input cannot be upgraded to a gold input/output pair by assertion alone', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   samples[1].inputVerification = 'verified';
