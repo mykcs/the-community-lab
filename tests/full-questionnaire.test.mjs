@@ -79,7 +79,7 @@ test('pilot refuses source metadata drift that would mislabel question origin or
 
 test('mixed per-question draft versions are preserved honestly in both season receipts', () => {
   assert.equal(pack.translationVersion, 'MIXED_PER_QUESTION');
-  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 6);
+  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 7);
   for (const season of [1, 2]) {
     const questions = pack.seasons[season];
     const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
