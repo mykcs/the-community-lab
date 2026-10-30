@@ -17,6 +17,7 @@ on:
       - 'scripts/**'
       - 'tests/**'
       - 'docs/translation-review/**'
+      - 'docs/original-question-translation-review/**'
   workflow_dispatch:
 
 permissions:
@@ -45,6 +46,10 @@ jobs:
         run: |
           mkdir -p dist/translation-review
           cp docs/translation-review/index.html dist/translation-review/index.html
+      - name: Publish the standalone original-question review page
+        run: |
+          mkdir -p dist/original-question-translation-review
+          cp docs/original-question-translation-review/index.html dist/original-question-translation-review/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
