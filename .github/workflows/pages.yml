@@ -15,6 +15,7 @@ on:
       - 'lib/**'
       - 'scripts/**'
       - 'tests/**'
+      - 'docs/translation-review/**'
   workflow_dispatch:
 
 permissions:
@@ -39,6 +40,10 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: Include the unreviewed bilingual translation draft on a separate route
+        run: |
+          mkdir -p dist/translation-review
+          cp docs/translation-review/index.html dist/translation-review/index.html
       - uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist

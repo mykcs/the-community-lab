@@ -1,0 +1,32 @@
+name: Validate translation review draft
+
+on:
+  pull_request:
+    paths:
+      - 'docs/translation-review/**'
+      - 'tests/translation-review-page.test.mjs'
+      - '.github/workflows/github-pages-translation-review.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/translation-review/**'
+      - 'tests/translation-review-page.test.mjs'
+      - '.github/workflows/github-pages-translation-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: translation-review-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: node --test tests/translation-review-page.test.mjs

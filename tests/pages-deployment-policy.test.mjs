@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
+const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
 
 test('Pages builds static site from main after all project checks', () => {
@@ -11,10 +12,18 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /- run: npm ci/);
   assert.match(workflow, /- run: npm run check/);
   assert.match(workflow, /- run: npm run build/);
+  assert.match(workflow, /docs\/translation-review\/\*\*/);
+  assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@v4/);
   assert.match(workflow, /pages:\s*write/);
   assert.match(workflow, /id-token:\s*write/);
+});
+
+test('Only the unified Pages workflow deploys; translation review still has its own validation', () => {
+  assert.match(translationWorkflow, /name: Validate translation review draft/);
+  assert.match(translationWorkflow, /- run: node --test tests\/translation-review-page\.test\.mjs/);
+  assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
 });
 
 test('Astro keeps Vercel rollback origin and uses GitHub project subpath only for Pages', () => {
