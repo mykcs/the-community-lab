@@ -6,7 +6,7 @@
 
 **[立即体验网站 · the-community-lab.vercel.app](https://the-community-lab.vercel.app/)**
 
-**[公开韩中译文复核草稿](https://mykcs.github.io/the-community-lab/)**：含两季 124 道题的 AI 初译，仅供公开复核；非官方、不是正式译文或可答题测试，独立韩中人工复核尚未完成。审校修改只保存在当前浏览器，不会上传。
+**[公开韩中译文复核草稿](https://mykcs.github.io/the-community-lab/translation-review/)**：含两季 124 道题的 AI 初译，仅供公开复核；非官方、不是正式译文或可答题测试，独立韩中人工复核尚未完成。审校修改只保存在当前浏览器，不会上传。迁移完成后它是 Pages 主站下的独立子页面，不与正式问卷题库混用。
 
 第一版已实现：第二季 6 道原创双语示例题、第一季 8 道原创双语示例题、逐题选择／返回／双季独立暂停继续及结果重看（限当前页面，刷新清空）、三轴／四轴结果、本机下载结果，以及明确的嘉宾匹配资料核验状态。另有 7 位嘉宾的 13 个公开社媒导航链接，由两名独立 Agent 逐条核对公开原始来源；尚未经真人逐条复核，Instagram 页面未直接读取，也不用于匹配、排名或活跃度判断。题目与评分从未声称等价于节目原版。浏览器不会向服务器上传选项或成绩。
 
@@ -48,6 +48,8 @@
 - 结果：计划用 Supabase Auth + 私有 Postgres 表，配合行级权限（RLS）隔离每位用户。
 - 隐私：默认只在本地浏览器保留临时结果；明确同意后才上传。提供本人查看、下载和删除。
 - 费用：初期以 GitHub、Vercel Hobby、Supabase Free 的**免费额度**为目标；不擅自开通付费服务。
+
+**静态托管迁移（2026-10-30）：** 正在将当前不收集答卷的双语演示站迁往 GitHub Pages，候选首页地址为 `https://mykcs.github.io/the-community-lab/`，独立公开译审草稿路径为 `/the-community-lab/translation-review/`。在统一的 Actions 发布、两个地址可达及双季实际交互验收完成前，上方 Vercel 链接仍是正式问卷访问入口。GitHub Pages 免费托管公开仓库、公共标准 runner 的构建不扣计费计算额度，但有 1 GB 站点大小、约 100 GB/月软流量限制，不是无限资源。Pages 只提供静态文件；PR #11 的可选登录／私人历史记录仍未上线，不能直接迁入 Pages 当作有后端。发布切换及回退规则见 [部署证据与迁移计划](docs/DEPLOYMENT.md)。
 
 具体架构、预算与隐私门槛见 [设计方案](docs/ARCHITECTURE.md)。
 

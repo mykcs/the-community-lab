@@ -1,8 +1,18 @@
-# 部署与持续集成 · 2026-10-29
+# 部署与持续集成 · 2026-10-29 起
+
+## 2026-10-30 · GitHub Pages 迁移候选（等待真实发布验收）
+
+- **用户目标：** 将已公开的 `mykcs/the-community-lab` 轻量 Astro 静态问卷站迁到 GitHub Pages，降低 Vercel Hobby 部署额度压力；不新增付费额度。预计新网址：`https://mykcs.github.io/the-community-lab/`。
+- **分工：** `main` 的源代码和标准项目检查继续由 GitHub Actions 管理；新的 `.github/workflows/pages.yml` 在静态构建通过后，将 124 题未复核的独立译审草稿复制到 `dist/translation-review/index.html`，与主问卷一起上传一个 Pages artifact，只允许 `main` 或手动触发发布。此前另一个 Pages 工作流只能继续**验证**译审草稿，不能再单独部署、覆盖同一 Pages 网址。Vercel 当前 Production 在 Pages 完整验收前保留回退能力。`astro.config.mjs` 按 `COMMUNITY_DEPLOY_TARGET=github-pages` 选择 GitHub Pages 子路径，其他构建保持 Vercel 原 URL 与根路径。
+- **Pages 设置已启用（待本站合并版发布）：** 2026-10-30 使用仓库管理员已有的 GitHub CLI 会话将 Pages 的 `build_type` 设为 `workflow`，随后 `GET /repos/mykcs/the-community-lab/pages` 读回 `build_type=workflow`、网址 `https://mykcs.github.io/the-community-lab/`。之后已有独立的 124 题译审草稿工作流成功部署**到根目录**；在本次迁移前该地址并非正式问卷。普通 `GITHUB_TOKEN` 不能替代首次管理员设置。合并统一工作流后，必须检查 Pages 发布的 main SHA、首页及 `/translation-review/` 均 HTTP 可达、JS/CSS 无丢失、两季 8＋6 原创演示题均能完成。未通过前不得改 README 正式问卷入口、禁用旧站或声称切换完成。
+- **范围：** 此工作流只发布 `main` 当前静态站。GitHub Pages 不执行 `api/*`、Vercel Functions 或 Node 服务器；[草稿 PR #11](https://github.com/mykcs/the-community-lab/pull/11) 的 OAuth／账户保存／注销 API 不在此迁移范围，仍要经过隐私、双账号隔离、删除读回等独立验收，且需要单独后端承载。当前网站无账号与个人答卷上传，不应为了迁移引入新的数据收集。
+- **免费不等于无限：** GitHub Pages 对公共仓库免费；公共仓库标准 GitHub-hosted runner 不扣月度计费计算额度（不含 larger runner）。Pages 站点上限 1 GB、每月约 100 GB 软流量限制；默认每小时 10 次构建软限制不适用于自定义 Actions 工作流，仍可能限速。参考 [GitHub Pages 官方限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)及 [Actions 计费](https://docs.github.com/en/billing/concepts/product-billing/github-actions)。
+
+下面各节是先前 Vercel 和译文草稿独立部署的历史证据，保留供回退核验，**不表示统一的 GitHub Pages 正式问卷已上线**。
 
 ## GitHub Pages：公开译文复核草稿
 
-[公开复核页](https://mykcs.github.io/the-community-lab/)由 `.github/workflows/github-pages-translation-review.yml` 从 `docs/translation-review/` 独立发布。PR 只运行内容门禁；合入 `main` 后由 GitHub Pages workflow 部署。该目录不放入 Astro 的 `public/`，因此不会混入 Vercel 正式产品站点。页面明确标为非官方 AI 翻译草稿，124 题均未完成独立人工韩中复核；浏览器中的审校修改保存在访问者本地，不上传。用户已确认取得公开材料的非营利翻译许可，许可原件因隐私不公开，项目无法独立展示或核验原件。
+首次[公开复核页](https://mykcs.github.io/the-community-lab/)由 `.github/workflows/github-pages-translation-review.yml` 从 `docs/translation-review/` 独立发布，2026-10-30 的该工作流 `push` 运行成功。为避免以后每次译文更新覆盖主问卷首页，统一工作流将它调整为[独立复核子页面](https://mykcs.github.io/the-community-lab/translation-review/)，原工作流只负责内容验证、不再发布。该目录不放入 Astro 的 `public/`，因此不会混入 Vercel 正式产品站点。页面明确标为非官方 AI 翻译草稿，124 题均未完成独立人工韩中复核；浏览器中的审校修改保存在访问者本地，不上传。用户已确认取得公开材料的非营利翻译许可，许可原件因隐私不公开，项目无法独立展示或核验原件。
 
 ## 当前结论：GitHub → Vercel 自动发布已验收
 
