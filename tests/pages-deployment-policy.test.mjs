@@ -5,6 +5,7 @@ import test from 'node:test';
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
+const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
 test('Pages builds static site from main after all project checks', () => {
@@ -30,6 +31,12 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.match(translationWorkflow, /name: Validate translation review draft/);
   assert.match(translationWorkflow, /- run: node --test tests\/translation-review-page\.test\.mjs/);
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+});
+
+test('the homepage makes the public translation review route discoverable and labels it as an unreviewed draft', () => {
+  assert.match(homepage, /https:\/\/mykcs\.github\.io\/the-community-lab\/translation-review\//);
+  assert.match(homepage, /124 题和 550 个选项/);
+  assert.match(homepage, /尚无独立人工韩中复核，不能作为正式测试/);
 });
 
 test('Astro keeps Vercel rollback origin and uses GitHub project subpath only for Pages', () => {
