@@ -89,3 +89,31 @@ test('two distinct choices cannot be silently replaced by equal values', () => {
   unknownSecondReverse.questions.find(q => q.season === 2).reverseFlagInPublicClient = false;
   assert.throws(() => summarizeSourceIndex(unknownSecondReverse), /第二季客户端/);
 });
+
+test('observed client metadata cannot silently lose its permission and review fields', () => {
+  const missing = structuredClone(INDEX);
+  delete missing.questions[0].sourceTextReusePermission;
+  assert.throws(() => summarizeSourceIndex(missing), /缺项|证据/);
+
+  const changed = structuredClone(INDEX);
+  changed.questions[0].sourceTextReusePermission = 'licensed';
+  assert.throws(() => summarizeSourceIndex(changed), /证据|未知|许可/);
+
+  const changedReview = structuredClone(INDEX);
+  changedReview.questions[0].independentBilingualReview = 'bilingual_reviewed';
+  assert.throws(() => summarizeSourceIndex(changedReview), /证据|未知|复核/);
+});
+
+test('a source list fingerprint alone cannot certify official origin, legal reuse or scoring', () => {
+  for (const [field, value] of [
+    ['sourceAuthority', 'OFFICIAL_VERIFIED'],
+    ['legalReusePermission', 'licensed'],
+    ['translationAndIndependentReview', 'verified'],
+    ['officialScoringAgreement', 'validated_against_original'],
+    ['sourceIdentityCoverage', 'OFFICIAL_ALL_PATHS_VERIFIED'],
+  ]) {
+    const inflated = structuredClone(INDEX);
+    inflated[field] = value;
+    assert.throws(() => summarizeSourceIndex(inflated), /证据|状态|权限/, field);
+  }
+});
