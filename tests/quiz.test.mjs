@@ -86,11 +86,31 @@ test('duplicate IDs and option translation gaps are rejected', () => {
 test('S1 demo translation preserves the original speed condition and versions the change', () => {
   const first = SEASONS[1];
   const second = SEASONS[2];
+  const government = first.questions.find(q => q.id === 's1-d01');
   const corrected = first.questions.find(q => q.id === 's1-d08');
+  assert.equal(government.source_text_ko, '중요한 사회 문제는 정부가 적극적으로 해결해야 한다.');
+  assert.equal(government.translation_zh_cn, '面对重大的社会问题，政府应该积极解决。');
   assert.equal(corrected.source_text_ko, '사회가 빠르게 변할 때는 익숙한 방식을 지키는 편이 낫다.');
   assert.equal(corrected.translation_zh_cn, '当社会快速变化时，沿用熟悉的做法更好。');
-  assert.equal(first.version, 'independent-s1-demo-0.1.1');
-  assert.ok(first.questions.every(q => q.translation_version === 'demo-s1-0.1.1'));
+  assert.equal(first.version, 'independent-s1-demo-0.1.2');
+  assert.ok(first.questions.every(q => q.translation_version === 'demo-s1-0.1.2'));
   assert.equal(second.version, 'independent-s2-demo-0.1.0');
   assert.ok(second.questions.every(q => q.translation_version === 'demo-0.1.0'));
+});
+
+test('a demo result must never lose its questionnaire or scoring provenance version', () => {
+  for (const season of Object.values(SEASONS)) {
+    const answers = Object.fromEntries(season.questions.map(q => [q.id, q.options[0].value]));
+    const validResult = scoreAnswers(season, answers);
+    assert.equal(validResult.question_version, season.version);
+    assert.equal(validResult.scoring_version, season.scoringVersion);
+    for (const field of ['version', 'scoringVersion']) {
+      for (const invalid of [undefined, null, '', '   ', 123]) {
+        const malformed = structuredClone(season);
+        malformed[field] = invalid;
+        assert.throws(() => validateSeason(malformed), /题库或计分版本缺失/);
+        assert.throws(() => scoreAnswers(malformed, answers), /题库或计分版本缺失/);
+      }
+    }
+  }
 });

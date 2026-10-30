@@ -63,3 +63,23 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - feat/private-history-candidate 已在本地与 main 00f1b7b60b6521dc69047c21d8ae9bf4a50135f6 同步，并通过本地 npm run check、npm run build 与游客/隐私/历史页面浏览器验收。GitHub PR #11 仍未接收这批候选更新；当前没有新的 Preview 或生产部署。
 - 历史登录与保存仍默认关闭。PGlite 合成认证回归不等于真实 Supabase、GitHub OAuth、双账号交叉隔离或删除读回验收；隐私/数据区域/保留期决策仍缺失。
 - PR #34 的 Vercel Check 在 2026-10-30 返回 api-deployments-free-per-day 与“24 小时后重试”。在平台状态变化前，不为本地候选重试部署或用其他方式规避该限制。
+
+## 2026-10-30 PR #35 自动发布验收
+
+- PR #35 head `2b355d9af854c576ae54d00b33661fdf71a82103` 的 GitHub Actions run [#40997558072](https://github.com/mykcs/the-community-lab/actions/runs/40997558072) 成功；Vercel Git Preview `dpl_FpWobo8dsYvpfVmG5AfiNa5sM69h` 为 `READY`、`source=git`，SHA 与 head 精确一致。
+- PR #35 已合并为 main `4a2eed51552a6894e60bcaa0dd74dd55ad61c93b`；Vercel Git Production `dpl_CBjmj7e9oxcuNHxsZqoMsnrMPqeY` 为 `READY`、`target=production`、`source=git`，SHA 与 main 一致，alias 包含 `the-community-lab.vercel.app`。正式站浏览器已确认页面可打开；本次代码仅加强嘉宾匹配输入校验，不改变页面交互。
+- 此部署前 PR #35 的旧 head 曾被 Vercel `api-deployments-free-per-day` 拒绝。更新到最新 main 后的 Preview 和合并后 Production 均成功，故 Issue #30 已关闭。这个成功结果不等于读取到部署额度余额；剩余额度仍未知，未来仍需观察平台状态。未升级计划、未加收费服务、未使用 Ignore Build Step。
+
+
+## 2026-10-30 PR #39 / #40 合并与精确 Production 刷新
+
+- [PR #40](https://github.com/mykcs/the-community-lab/pull/40) 的 Vercel 分支策略仅对 `docs/**` 与 `research/**` 关闭 Git 自动部署；未列出的 `main`、`fix/**`、`feat/**`、`ops/**` 仍保持默认行为。PR #40 的 `ops/**` 验收分支有真实 Preview，但这**不验证** `docs/**` 的抑制效果。
+- [PR #39](https://github.com/mykcs/the-community-lab/pull/39) 修复缺少题库／计分版本时演示结果丢失版本来源的问题。其精确 head 的 GitHub Actions run [#41001092175](https://github.com/mykcs/the-community-lab/actions/runs/41001092175) 成功，PR 已合入。
+- 当前 main merge commit `4b2e3ee0926411c229c9ba1d494bf7c83cf0b80f` 的 GitHub Vercel status 为 `success`。Production deployment [dpl_CwsfwhXP8DfWeVthm5zzRCvM99Zd](https://vercel.com/wangrui92-team/the-community-lab/CwsfwhXP8DfWeVthm5zzRCvM99Zd) 为 `READY`、`source=git`、`target=production`，Git SHA 与 main 精确一致，并带正式域名 `the-community-lab.vercel.app` alias。正式域名可加载新首页和当前核验状态。
+- 文档分支的真实验收：[PR #41](https://github.com/mykcs/the-community-lab/pull/41) 的 `docs/**` head `e4e2925c996529cd477dd6a146e8f5c4b8936f2c` 运行 GitHub Actions [#41008346764](https://github.com/mykcs/the-community-lab/actions/runs/41008346764) 成功（`npm ci`、`npm run check`、`npm run build`）；Vercel 按该 SHA 查询返回 0 条 deployment。该次文档分支因此通过 Actions 且没有创建 Preview；同一分支规则减少了这一次 Preview deployment。Vercel 未提供每日限额余额，无法把单次抑制换算成剩余额度或保证未来不会限流。
+
+## 私人历史候选与当前 main 同步
+
+- `feat/private-history-candidate` 已在本地合并到当前 main `e2b644f733e2986ebc54d2bee71566deff6ec8c3`，并完成版本目录兼容修复和本地回归。
+- 该同步尚未推送到 PR #11；因此新候选没有 GitHub Actions、Vercel Preview 或 Production 验收。上一精确 PR head 的 Vercel `build-rate-limit` 状态不证明此新 head 的结果，也不证明限制已经恢复。
+- 不升级套餐或绕过限额。PR #11 保持 Draft；真实 OAuth、隐私/区域/保留期决定、双真实账号隔离、删除读回和精确 head Preview 仍是任何启用或合并私人保存之前的门槛。

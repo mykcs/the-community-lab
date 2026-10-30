@@ -19,6 +19,7 @@ CREATE TABLE community_private.test_versions (
 INSERT INTO community_private.test_versions VALUES
   (1, 'independent-s1-demo-0.1.0', 'independent-fourpoint-v1', 'demo-0.1.0', 'independent_demo', ARRAY['politics','gender','class','openness']),
   (1, 'independent-s1-demo-0.1.1', 'independent-fourpoint-v1', 'demo-s1-0.1.1', 'independent_demo', ARRAY['politics','gender','class','openness']),
+  (1, 'independent-s1-demo-0.1.2', 'independent-fourpoint-v1', 'demo-s1-0.1.2', 'independent_demo', ARRAY['politics','gender','class','openness']),
   (2, 'independent-s2-demo-0.1.0', 'independent-binary-v1', 'demo-0.1.0', 'independent_demo', ARRAY['principle','structure','meaning']);
 ALTER TABLE community_private.test_versions ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON community_private.test_versions FROM PUBLIC, anon, authenticated;
