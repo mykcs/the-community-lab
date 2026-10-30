@@ -1,5 +1,9 @@
 # 部署与持续集成 · 2026-10-29
 
+## GitHub Pages：公开译文复核草稿
+
+[公开复核页](https://mykcs.github.io/the-community-lab/)由 `.github/workflows/github-pages-translation-review.yml` 从 `docs/translation-review/` 独立发布。PR 只运行内容门禁；合入 `main` 后由 GitHub Pages workflow 部署。该目录不放入 Astro 的 `public/`，因此不会混入 Vercel 正式产品站点。页面明确标为非官方 AI 翻译草稿，124 题均未完成独立人工韩中复核；浏览器中的审校修改保存在访问者本地，不上传。用户已确认取得公开材料的非营利翻译许可，许可原件因隐私不公开，项目无法独立展示或核验原件。
+
 ## 当前结论：GitHub → Vercel 自动发布已验收
 
 **现有项目已接通 GitHub，完成了从 PR 预览到 main 生产的两次真实自动发布。** 项目 `the-community-lab` 仍属于原来的 Vercel Hobby 团队 `wangrui92-team`，未新增第二个站点、付费升级或 OAuth 秘钥。团队 Git 连接信息可读回 `mykcs/the-community-lab`。
