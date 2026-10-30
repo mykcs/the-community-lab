@@ -86,6 +86,20 @@ test('second-season AI wording revisions preserve degree, referent, and priority
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('rp03 preserves the source item’s absolute priority and both review pages stay in sync', () => {
+  const question = data.questions.find(item => item.id === 'rp03');
+  assert.ok(question, 'rp03 must remain in the source dataset');
+  assert.match(question.source_text_ko, /항상/);
+  assert.equal(question.translation_zh_cn, '“不得杀人”这一原则应始终优先于“即使牺牲少数人也要拯救更多生命”这一目标。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /rp03.*draft-0\.1\.2/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'the published standalone review page must use the canonical draft questions');
+  assert.equal(standaloneData.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(standaloneData.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
