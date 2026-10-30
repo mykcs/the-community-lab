@@ -1,0 +1,119 @@
+---
+import '../../styles/global.css';
+import { loadFullQuestionnaire } from '../../../scripts/load-full-questionnaire.mjs';
+
+const base = import.meta.env.BASE_URL;
+const pack = loadFullQuestionnaire();
+// The source text is third-party data: never let it close the JSON script tag.
+const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101319" />
+    <meta name="description" content="The Community Lab 独立非官方完整原题试填：第一季 87 题、第二季 37 题，韩文原文与未经人工复核的中文 AI 初译。无官方计分或嘉宾匹配。" />
+    <title>124 道节目原题 · 非官方试填 | The Community Lab</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%2310131a'/%3E%3Ccircle cx='24' cy='24' r='14' fill='none' stroke='%23ff7468' stroke-width='4'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ff7468'/%3E%3C/svg%3E" />
+    <style is:global>
+      .full-shell{max-width:1130px;margin:auto;padding:45px clamp(22px,6vw,65px) 95px}
+      .full-top{display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap}
+      .full-nav{display:flex;gap:22px;align-items:center;color:#c1c6cf;font-size:12px}
+      .full-nav a:hover{color:var(--red)}
+      .full-kicker{font-size:11px;color:var(--red);font-weight:750;letter-spacing:.15em}
+      .full-pane[hidden]{display:none!important}
+      .full-lead{padding:66px 0 35px;border-bottom:1px solid var(--line)}
+      .full-lead h1{font-size:clamp(38px,6vw,72px);line-height:1.17;letter-spacing:-.07em;margin:18px 0}
+      .full-lead h1 em{font-style:normal;color:var(--red)}
+      .full-lead p{color:#aeb4bf;line-height:1.95;font-size:14px;max-width:760px}
+      .full-warning{border-left:3px solid var(--red);background:#35272b;padding:18px 22px;margin:30px 0;max-width:920px}
+      .full-warning strong{color:#ffb5ad;font-size:13px}
+      .full-warning p{color:#e1c6c7;font-size:12px;line-height:1.8;margin:8px 0 0}
+      .full-season-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:32px}
+      .full-season{border:1px solid #5b5156;background:linear-gradient(135deg,#34303a,#1c232b);padding:25px 26px;text-align:left;color:var(--text);min-height:200px;display:flex;flex-direction:column;align-items:start;gap:11px}
+      .full-season:hover{border-color:var(--red);background:#353039}
+      .full-season small{color:#ffb4a5;letter-spacing:.1em;font-size:10px}
+      .full-season strong{font-size:25px;letter-spacing:-.05em}
+      .full-season span{color:#adb4bd;font-size:12px;line-height:1.7}
+      .full-season b{font-size:12px;color:#f1d5c9;margin-top:auto}
+      .full-local{margin:22px 0;color:#8e98a5;font-size:12px;line-height:1.8}
+      .full-quiz-top{display:flex;gap:14px;justify-content:space-between;align-items:center;margin:20px 0 42px}
+      .full-muted-button{background:none;border:0;color:#c1c7cf;font-size:13px;padding:11px 0}
+      .full-muted-button:hover{color:var(--red)}
+      .full-progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#b8bec8}
+      .full-progress-head strong{color:#ffb4a5}
+      .full-progress{display:block;width:100%;height:4px;margin:14px 0 51px;accent-color:var(--red)}
+      .full-question{max-width:850px;margin:auto}
+      .full-group{font-size:11px;color:var(--red);letter-spacing:.08em}
+      .full-question h1{font:600 clamp(27px,3.3vw,42px)/1.55 var(--ko);letter-spacing:-.035em;word-break:keep-all;margin:19px 0 34px}
+      .full-translation{border-top:1px solid #4b535e;padding-top:17px;font-size:11px;color:#acb5c1}
+      .full-question-zh{font-size:clamp(19px,2.4vw,29px);font-weight:570;line-height:1.75;margin:13px 0 32px}
+      .full-choices{display:grid;gap:12px;margin:18px 0 22px}
+      .full-choice{display:flex;gap:16px;align-items:center;width:100%;min-height:74px;padding:16px 20px;text-align:left;color:var(--text);background:#1b222b;border:1px solid #414852}
+      .full-choice:hover{border-color:#b9857d}.full-choice[aria-pressed=true]{background:#392b31;border-color:var(--red);box-shadow:inset 3px 0 var(--red)}
+      .full-choice-mark{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;border:1px solid #7b8692;font-size:12px;color:#c5cad0}
+      .full-choice[aria-pressed=true] .full-choice-mark{background:var(--red);color:#101319;border-color:var(--red)}
+      .full-choice-copy{display:flex;flex-direction:column;gap:5px;min-width:0;word-break:keep-all}
+      .full-choice-ko{font:500 15px/1.6 var(--ko)}.full-choice-zh{color:#b6bec8;font-size:13px;line-height:1.6}
+      .full-quiz-actions{display:flex;justify-content:space-between;gap:12px;margin:35px 0}
+      .full-quiz-actions button{min-width:122px}
+      .full-evidence{font-size:11px;line-height:1.8;color:#8793a1;border-top:1px solid var(--line);padding-top:18px}
+      .full-evidence a{color:#f3b6aa;text-decoration:underline;text-underline-offset:3px}
+      .full-done{padding:70px 0;max-width:870px;margin:auto}
+      .full-done h1{font-size:clamp(35px,5vw,63px);letter-spacing:-.055em;line-height:1.2;margin:17px 0}
+      .full-done p{font-size:14px;color:#adb5c2;line-height:1.95}
+      .full-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:35px 0}
+      .full-summary div{background:#1b222b;border:1px solid #3f4853;padding:18px 22px}
+      .full-summary strong{display:block;font-size:24px;color:#ffb1a4;margin-top:9px}
+      .full-summary span{font-size:12px;color:#b9c0c9}
+      .full-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
+      .full-actions .button{font-size:12px}
+      .full-footer{border-top:1px solid var(--line);padding:30px clamp(22px,6vw,65px);font-size:11px;color:#929ba6;line-height:1.9}
+      @media(max-width:630px){.full-shell{padding-top:28px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-progress{margin-bottom:33px}.full-question h1{font-size:28px}.full-question-zh{font-size:21px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:14px}.full-quiz-top{margin-bottom:29px}}
+    </style>
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href={base} aria-label="同频实验室首页"><span class="brand-symbol" aria-hidden="true"><span></span></span><span class="brand-name">THE COMMUNITY <strong>LAB.</strong><small>同频实验室</small></span></a>
+        <nav class="full-nav" aria-label="本页导航"><a href={base}>返回首页</a><a href={`${base}translation-review/`}>查看译审原稿</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">GitHub ↗</a></nav>
+      </header>
+      <main class="full-shell">
+        <div class="full-top"><span class="full-kicker">124 SOURCE QUESTIONS / 非官方公开试填</span><span class="full-kicker">한국어 → 中文 AI 初译</span></div>
+        <section id="full-select" class="full-pane" aria-labelledby="full-title">
+          <div class="full-lead"><h1 id="full-title" tabindex="-1">节目题目，<br/><em>先完整体验。</em></h1><p>第一季 87 题、第二季 37 题，来自当前公开客户端已观察到的题目。你可以直接作答；韩文放在前面，中文为未经人工复核的 AI 初译。这里不提供官方计分，也不会把答案拿去匹配嘉宾。</p></div>
+          <aside class="full-warning"><strong>重要：这不是官方正式测试</strong><p>用户报告已获当前公开材料的官方非营利翻译许可，但本站未独立查看许可原件。题目文本、展示顺序依据已记录的公开客户端版本；中文译文尚未进行真人双语审核，源站最终评分算法也未核实。请把结果当作答题记录，不当作节目成绩。</p></aside>
+          <div class="full-season-grid">
+            <button type="button" class="full-season" data-start-season="2"><small>SEASON 02 / 37 QUESTIONS</small><strong>第二季 · 看不见的手</strong><span>37 道双选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="2">开始完整试填 ↗</b></button>
+            <button type="button" class="full-season" data-start-season="1"><small>SEASON 01 / 87 QUESTIONS</small><strong>第一季 · 价值观探索</strong><span>87 道四选／六选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="1">开始完整试填 ↗</b></button>
+          </div>
+          <p class="full-local">隐私：答案只存在于当前页面内存，不上传服务器、不发给第三方、不持久保存。两季可在本页暂停和继续；刷新或关闭会清空。下载答案由你主动决定，文件可能反映个人敏感观点，请自行保管。</p>
+        </section>
+
+        <section id="full-quiz" class="full-pane" hidden aria-labelledby="full-ko">
+          <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span></div>
+          <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
+          <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>
+          <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
+            <div class="full-quiz-actions"><button id="full-prev" class="button button-outline" type="button">← 上一题</button><button id="full-next" class="button button-primary" type="button" disabled>确认，继续 →</button></div>
+            <p class="full-evidence">本题来源：<a id="full-source" target="_blank" rel="noopener noreferrer">公开客户端同季题目</a>。题序依据该版本客户端的可核查展示位置；这不证明所有官方版本或服务端结果一致。页面不会向原站发送答案。</p>
+          </div>
+        </section>
+
+        <section id="full-done" class="full-pane full-done" hidden aria-labelledby="full-done-title">
+          <span class="full-kicker">FINISHED / LOCAL ANSWER RECORD</span><h1 id="full-done-title" tabindex="-1">你已经答完全部题目。</h1><p id="full-done-description"></p>
+          <aside class="full-warning"><strong>这里不显示官方分数或嘉宾匹配</strong><p>我们尚未获得可独立验证的逐题权重、反向计分、归一化及服务端结果金标准。下面仅统计每组答了多少道题，不推算政治倾向、心理标签或嘉宾相似度。</p></aside>
+          <div id="full-group-summary" class="full-summary" aria-label="各题组作答数量"></div>
+          <div class="full-actions"><button id="full-download" class="button button-primary" type="button">下载本机答案 JSON ↓</button><button id="full-restart" class="button button-outline" type="button">重新开始本季</button><button id="full-back" class="button button-text" type="button">返回两季入口 →</button></div>
+          <p class="full-local">下载的 JSON 含逐题选项与来源版本，可能涉及你的私人价值观。文件只在你点击后生成；本站不会保存或上传。</p>
+        </section>
+      </main>
+      <footer class="full-footer">独立非官方粉丝项目 · 用户报告的非营利转载许可未经本站独立核验 · 中文为 AI 初译，真人审核暂缓 · 官方评分和嘉宾匹配仍是 UNKNOWN · <a href={`${base}translation-review/`}>查看原文及译审情况</a></footer>
+    </div>
+    <script id="full-questionnaire-data" type="application/json" set:html={embedded}></script>
+    <script>import '../../../full-questionnaire-app.mjs';</script>
+    <noscript>本页需要启用 JavaScript 才能进行本机答题。</noscript>
+  </body>
+</html>

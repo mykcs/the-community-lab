@@ -5,6 +5,7 @@ import test from 'node:test';
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
+const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
 
 test('Pages builds static site from main after all project checks', () => {
@@ -15,8 +16,10 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /- run: npm run build/);
   assert.match(workflow, /node scripts\/verify-pages-history\.mjs/);
   assert.match(workflow, /docs\/translation-review\/\*\*/);
+  assert.match(workflow, /docs\/original-question-translation-review\/\*\*/);
   assert.match(workflow, /public\/\*\*/);
   assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
+  assert.match(workflow, /cp docs\/original-question-translation-review\/index\.html dist\/original-question-translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@v4/);
   assert.match(workflow, /pages:\s*write/);
@@ -31,6 +34,27 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.match(translationWorkflow, /name: Validate translation review draft/);
   assert.match(translationWorkflow, /- run: node --test tests\/translation-review-page\.test\.mjs/);
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+});
+
+test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
+  assert.match(homepage, /https:\/\/mykcs\.github\.io\/the-community-lab\/translation-review\//);
+  assert.match(homepage, /124 题[、和]\s*550 个选项/);
+  assert.match(homepage, /questionnaire\/\?season=2/);
+  assert.match(homepage, /questionnaire\/\?season=1/);
+  assert.match(homepage, /非官方原题试填/);
+  assert.match(homepage, /真人复核/);
+  assert.match(homepage, /不提供官方分数或嘉宾匹配/);
+});
+
+test('the homepage value-axis figure is illustrative, Chinese-readable, and not a personal result', () => {
+  const figure = homepage.match(/<figure class="hero-art"[^>]*>([\s\S]*?)<\/figure>/)?.[1];
+  assert.ok(figure, 'the hero diagram must use a semantic figure');
+  assert.match(figure, /figcaption class="hero-axis-caption" id="hero-axis-caption"/);
+  assert.match(figure, /第二季的三个价值维度/);
+  assert.match(figure, /示意图 · 不代表个人结果/);
+  for (const axis of ['01', '原则', '结果', '02', '结构', '能力', '03', '意义', '实利']) assert.ok(figure.includes(axis), axis);
+  assert.match(figure, /aria-hidden="true"/);
+  assert.doesNotMatch(figure, /YOUR POSITION|당신의 좌표/);
 });
 
 test('Astro keeps Vercel rollback origin and uses GitHub project subpath only for Pages', () => {
