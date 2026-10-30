@@ -45,6 +45,13 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(app, /file\.size > 128 \* 1024/);
   assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
   assert.match(app, /saved\.set\(session\.season/);
+  assert.match(page, /如导入会删除或覆盖本页已答选择，系统会先要求确认/);
+  const validatedAt = app.indexOf('restorePrivateProgressReceipt(pack, record)');
+  const confirmedAt = app.indexOf('window.confirm(');
+  const overwrittenAt = app.indexOf('saved.set(session.season');
+  assert.ok(validatedAt >= 0 && validatedAt < confirmedAt && confirmedAt < overwrittenAt);
+  assert.match(app, /wouldDiscardLocalAnswers\(previous\.answers, session\.answers\)/);
+  assert.match(app, /if \(!confirmed\) \{[\s\S]*?return;[\s\S]*?\}\s*\}\s*saved\.set\(/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
 });
 

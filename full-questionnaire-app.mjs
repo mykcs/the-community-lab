@@ -2,6 +2,7 @@ import {
   summarizeUnscoredAnswers,
   createPrivateProgressReceipt,
   restorePrivateProgressReceipt,
+  wouldDiscardLocalAnswers,
 } from './lib/full-questionnaire.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
@@ -147,6 +148,16 @@ async function importProgress(file) {
   try {
     const record = JSON.parse(await file.text());
     const session = restorePrivateProgressReceipt(pack, record);
+    const previous = saved.get(session.season);
+    if (previous && wouldDiscardLocalAnswers(previous.answers, session.answers)) {
+      const confirmed = window.confirm(
+        `第 ${session.season} 季已有 ${Object.keys(previous.answers).length} 道答案。导入会覆盖或删除其中部分选择，且无法撤销。确定继续？`,
+      );
+      if (!confirmed) {
+        status.textContent = '已取消恢复；本页现有答案和题位均未改变。';
+        return;
+      }
+    }
     saved.set(session.season, { season: session.season, index: session.index, answers: session.answers });
     active = saved.get(session.season);
     if (session.complete) finish();

@@ -4,6 +4,7 @@ import { loadFullQuestionnaire } from '../scripts/load-full-questionnaire.mjs';
 import {
   extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
   PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
+  wouldDiscardLocalAnswers,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -117,6 +118,16 @@ test('both seasons can export sparse private progress and restore exact answers,
     assert.equal(Object.getPrototypeOf(restored.answers), null);
     assert.ok(!('dimensions' in record) && !('matches' in record));
   }
+});
+
+test('import conflict gate distinguishes a safe superset from lost or changed local choices', () => {
+  const existing = Object.assign(Object.create(null), { first: 'O', second: 'X' });
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O', second: 'X', third: 'O' }), false);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O', second: 'X' }), false);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O' }), true);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'X', second: 'X' }), true);
+  assert.equal(wouldDiscardLocalAnswers(Object.create(null), Object.create(null)), false);
+  assert.throws(() => wouldDiscardLocalAnswers(existing, null));
 });
 
 test('existing completed-only local downloads remain importable without inventing official scores', () => {
