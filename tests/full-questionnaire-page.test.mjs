@@ -33,6 +33,21 @@ test('in-memory sessions support revisiting, changes, season isolation and local
   assert.doesNotMatch(app, /\.results\b|api\/v1\/results/);
 });
 
+test('private opt-in backup/restoration is local-only, version-checked and available before finishing', () => {
+  assert.match(page, /id="full-save"/);
+  assert.match(page, /id="full-import"/);
+  assert.match(page, /id="full-import-file" type="file"/);
+  assert.match(page, /默认只存在于当前页面内存/);
+  assert.match(page, /不自动持久保存/);
+  assert.match(page, /私人观点/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index\)/);
+  assert.match(app, /restorePrivateProgressReceipt\(pack, record\)/);
+  assert.match(app, /file\.size > 128 \* 1024/);
+  assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
+  assert.match(app, /saved\.set\(session\.season/);
+  assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
 test('build uses the already-published single draft source rather than duplicating source questions', () => {
   assert.match(loader, /docs\/translation-review\/index\.html/);
   assert.match(loader, /data\/original-question-index\.json/);
