@@ -2,7 +2,7 @@
 
 ## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
 
-- **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
+- **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
 - **唯一 Pages 发布身份：** [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 已合并为 `main` SHA `7cbb659c5d16c6002767ee32a0bd062d516badbf`；对应 [GitHub Actions run #41028239651](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 的 `build` 与 `deploy` 均为 `completed/success`，产物同时包含 Astro 首页和独立译审草稿。另一个译审工作流只做校验，不再覆盖 Pages 首页。
 - **线上访问验收：** 用真实 HTTP 请求核对两个页面及主站 JS/CSS 均为 200；浏览器检查了第二季 6/6 题、第一季 8/8 题、独立结果卡、退出续答，以及 `440×956` CSS px 手机视口。移动视口 `scrollWidth=440`、`innerWidth=440`，无横向溢出；此结果是浏览器模拟，**不是实体 iPhone 18 Pro Max 设备验收**。当前页面均标注独立粉丝项目、原创演示与未复核译文，不伪造官方题库或嘉宾匹配。
 - **Vercel 配额收口：** 本次后续仓库变更将 `vercel.json` 从仅忽略 `docs/**`、`research/**` 分支升级为 `"git":{"deploymentEnabled":false}`，按 [Vercel 官方 Git 配置](https://vercel.com/docs/project-configuration/git-configuration) 禁用所有分支的 Git 自动部署，避免 Pages 主站更新继续生成 Vercel Preview/Production；旧 Vercel 已发布版本不删除。该规则是否阻止本次后续 Git 事件，需合并后用实际部署列表验证；不能仅因文件存在宣称零消耗。

@@ -15,8 +15,10 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /- run: npm run check/);
   assert.match(workflow, /- run: npm run build/);
   assert.match(workflow, /docs\/translation-review\/\*\*/);
+  assert.match(workflow, /docs\/original-question-translation-review\/\*\*/);
   assert.match(workflow, /public\/\*\*/);
   assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
+  assert.match(workflow, /cp docs\/original-question-translation-review\/index\.html dist\/original-question-translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@v4/);
   assert.match(workflow, /pages:\s*write/);

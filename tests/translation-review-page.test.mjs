@@ -7,6 +7,25 @@ const embedded = html.match(/<script id="embedded-data" type="application\/json"
 assert.ok(embedded, 'the page must contain its self-contained translation dataset');
 const data = JSON.parse(embedded[1]);
 
+const standaloneHtml = await readFile(new URL('../docs/original-question-translation-review/index.html', import.meta.url), 'utf8');
+const standaloneEmbedded = standaloneHtml.match(/<script id="embedded-data" type="application\/json">([\s\S]*?)<\/script>/);
+assert.ok(standaloneEmbedded, 'the standalone page must contain its self-contained translation dataset');
+const standaloneData = JSON.parse(standaloneEmbedded[1]);
+
+test('standalone original-question page is published only as an unreviewed draft', () => {
+  assert.equal(standaloneData.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
+  assert.equal(standaloneData.questions.length, 124);
+  assert.equal(standaloneData.counts.season_1, 87);
+  assert.equal(standaloneData.counts.season_2, 37);
+  assert.equal(standaloneData.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(standaloneData.translation_review.publishable, false);
+  assert.match(standaloneHtml, /草稿，禁止作为正式译文发布/);
+  assert.match(standaloneHtml, /授权原件因隐私未分享，本站未能独立核验/);
+  assert.match(standaloneHtml, /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
+  assert.doesNotMatch(standaloneHtml, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\bhref\s*=\s*"https?:/i);
+  assert.doesNotMatch(standaloneHtml, /LOCAL_RESEARCH_CANDIDATE_NOT_FOR_PUBLICATION/);
+});
+
 test('published page is only an explicitly unreviewed draft', () => {
   assert.equal(data.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
   assert.equal(data.questions.length, 124);
