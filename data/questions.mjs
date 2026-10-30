@@ -14,6 +14,9 @@ function prompt(id, axis, ko, zh, options, polarity = 1) {
     options, polarity, translator_note: null };
 }
 
+// Version S1 wording changes separately so S2's verified demo wording stays stable.
+const seasonOnePrompt = (...args) => ({ ...prompt(...args), translation_version: 'demo-s1-0.1.2' });
+
 const pair = (leftKo, leftZh, rightKo, rightZh) => [
   { ko: leftKo, zh_cn: leftZh, value: 1 },
   { ko: rightKo, zh_cn: rightZh, value: -1 },
@@ -50,7 +53,7 @@ export const SEASONS = Object.freeze({
   },
   1: {
     id: 1,
-    version: 'independent-s1-demo-0.1.0',
+    version: 'independent-s1-demo-0.1.2',
     scoringVersion: 'independent-fourpoint-v1',
     label: '第一季 · 价值观探索',
     description: '四个独立维度来自本站原创演示模型，不可直接套用到节目嘉宾。',
@@ -62,14 +65,14 @@ export const SEASONS = Object.freeze({
       { id: 'openness', name: '接纳变化 / 维持惯例', ko: '변화 수용 / 관행 유지', negative: '更倾向维持惯例', positive: '更倾向接纳变化', explanation: '面对新观念和快速变化的社会，你倾向开放尝试还是沿用习惯？' },
     ],
     questions: [
-      prompt('s1-d01','politics', '중요한 사회 문제는 정부가 적극적으로 해결해야 한다.', '面对重大的社会问题，政府应该积极介入解决。', agreement),
-      prompt('s1-d02','gender', '성별과 관계없이 누구나 동등한 기회를 누려야 한다.', '无论性别，每个人都应享有平等的机会。', agreement),
-      prompt('s1-d03','class', '부의 격차를 줄이기 위한 공공 정책이 필요하다.', '为了缩小贫富差距，有必要采取公共政策。', agreement),
-      prompt('s1-d04','openness', '익숙하지 않은 생각도 먼저 들어 볼 가치가 있다.', '即使是陌生的观点，也值得先听一听。', agreement),
-      prompt('s1-d05','politics', '개인의 선택은 국가의 간섭 없이 최대한 존중받아야 한다.', '个人选择应尽可能不受国家干预，并得到尊重。', agreement, -1),
-      prompt('s1-d06','gender', '전통적인 성 역할은 사회를 안정시키는 데 필요하다.', '传统性别角色对于维持社会稳定是必要的。', agreement, -1),
-      prompt('s1-d07','class', '경제적 보상은 개인의 성취에 따라 달라져야 한다.', '经济回报应根据个人成就有所不同。', agreement, -1),
-      prompt('s1-d08','openness', '사회가 빠르게 변할 때는 익숙한 방식을 지키는 편이 낫다.', '当社会变化太快时，保留熟悉的做法更好。', agreement, -1),
+      seasonOnePrompt('s1-d01','politics', '중요한 사회 문제는 정부가 적극적으로 해결해야 한다.', '面对重大的社会问题，政府应该积极解决。', agreement),
+      seasonOnePrompt('s1-d02','gender', '성별과 관계없이 누구나 동등한 기회를 누려야 한다.', '无论性别，每个人都应享有平等的机会。', agreement),
+      seasonOnePrompt('s1-d03','class', '부의 격차를 줄이기 위한 공공 정책이 필요하다.', '为了缩小贫富差距，有必要采取公共政策。', agreement),
+      seasonOnePrompt('s1-d04','openness', '익숙하지 않은 생각도 먼저 들어 볼 가치가 있다.', '即使是陌生的观点，也值得先听一听。', agreement),
+      seasonOnePrompt('s1-d05','politics', '개인의 선택은 국가의 간섭 없이 최대한 존중받아야 한다.', '个人选择应尽可能不受国家干预，并得到尊重。', agreement, -1),
+      seasonOnePrompt('s1-d06','gender', '전통적인 성 역할은 사회를 안정시키는 데 필요하다.', '传统性别角色对于维持社会稳定是必要的。', agreement, -1),
+      seasonOnePrompt('s1-d07','class', '경제적 보상은 개인의 성취에 따라 달라져야 한다.', '经济回报应根据个人成就有所不同。', agreement, -1),
+      seasonOnePrompt('s1-d08','openness', '사회가 빠르게 변할 때는 익숙한 방식을 지키는 편이 낫다.', '当社会快速变化时，沿用熟悉的做法更好。', agreement, -1),
     ],
   },
 });

@@ -82,3 +82,18 @@ test('duplicate IDs and option translation gaps are rejected', () => {
   missing.questions[0].options[0].zh_cn = '';
   assert.throws(() => validateSeason(missing), /译文或权重缺失/);
 });
+
+test('S1 demo translation preserves the original speed condition and versions the change', () => {
+  const first = SEASONS[1];
+  const second = SEASONS[2];
+  const government = first.questions.find(q => q.id === 's1-d01');
+  const corrected = first.questions.find(q => q.id === 's1-d08');
+  assert.equal(government.source_text_ko, '중요한 사회 문제는 정부가 적극적으로 해결해야 한다.');
+  assert.equal(government.translation_zh_cn, '面对重大的社会问题，政府应该积极解决。');
+  assert.equal(corrected.source_text_ko, '사회가 빠르게 변할 때는 익숙한 방식을 지키는 편이 낫다.');
+  assert.equal(corrected.translation_zh_cn, '当社会快速变化时，沿用熟悉的做法更好。');
+  assert.equal(first.version, 'independent-s1-demo-0.1.2');
+  assert.ok(first.questions.every(q => q.translation_version === 'demo-s1-0.1.2'));
+  assert.equal(second.version, 'independent-s2-demo-0.1.0');
+  assert.ok(second.questions.every(q => q.translation_version === 'demo-0.1.0'));
+});
