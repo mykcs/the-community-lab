@@ -34,6 +34,32 @@ PR #22 合并后生产版本为 main `8f719869da1c842297b9286f5a20feadd2c88340`�
 
 当前不要求登录、不上传答题数据、未启用数据库或 GitHub OAuth；服务器存储个人结果需先取得用户主动同意并通过 RLS、双用户交叉隔离和删除读回。仅以 Vercel Hobby 和现有工具执行，不增加付费服务。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
 
-## 最新候选复核（2026-10-29）
+## 2026-10-29 续接快照：自动连接可用，免费部署额度仍需治理
 
-[Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 当前 head `96b60818beb449e70b2053a7d61d9f4216b29b38` 获得精确 SHA 的 GitHub Actions [run #40938619367](https://github.com/mykcs/the-community-lab/actions/runs/40938619367) `success` 和 Vercel Preview [dpl_GRLLydBMJL6Nfmp68DxR4ZhDerTV](https://vercel.com/wangrui92-team/the-community-lab/GRLLydBMJL6Nfmp68DxR4ZhDerTV) `READY`（`source=git`）。现有 Production alias 仍指向最新 `main=95f2732c65052a62014704841188a46ff7762353` 的 READY 生产部署。该 PR 未合并，因此候选功能尚未影响 Production。
+Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/the-community-lab`；没有扩展 GitHub App 权限。本轮 main 为 `756faf5e10fd900a4734db09ee3c75fd3de0c27e`，Production `dpl_9ANedrsw9TyNpsD26EDp9ASE7Rbn` 是 `READY`、Git SHA 精确匹配。账户仍是 Hobby；PR #29 Preview 与此 Production 已证明 GitHub→Vercel 能工作。
+
+在 2026-10-29 23:17 UTC 的滚动 24 小时只读列表中，团队返回 113 条部署记录（分页为 100＋13），项目自身返回 76 条（51 Preview、25 Production）。这是记录计数，不是可用额度的直接读回；Issue #30 仍有 `api-deployments-free-per-day` 失败证据且保持 OPEN。新的代码 PR 可能会触发 Preview，因此额度治理完成前不为本地候选推送或重复探测。未升级付费计划，也没有用 Ignore Build Step 绕开计数。
+
+### 2026-10-29 23:42 UTC 额度记录刷新
+
+- Vercel 只读列表以 `since=2026-10-28T23:42:42Z` 分页：团队共 112 条记录（103 `READY`、9 `CANCELED`），其中 `the-community-lab` 项目 76 条（均 `READY`）。项目的最新 Production 仍是 `dpl_9ANedrsw9TyNpsD26EDp9ASE7Rbn`，Git SHA `756faf5e10fd900a4734db09ee3c75fd3de0c27e`，Production 状态 `READY`。
+- Vercel [官方 Limits 文档](https://vercel.com/docs/limits#deployments-per-day-hobby)目前列出 Hobby 每 86,400 秒 100 次部署，`api-deployments-free-per-day` 的 scope 标为 `owner`。列表记录数不是额度计数器读回；本窗口 112 条记录与期间成功发布同时存在，因此不能单凭此列表断言当前限额状态已恢复或一定耗尽。之前的真实拒绝仍有效，候选推送与 Preview 继续等待可核验的额度状态；未升级计划，也未使用 Ignore Build Step。
+
+### 2026-10-30 00:22 UTC 线上与用量面板刷新
+
+- `git fetch origin main` 后，GitHub `main` 仍为 `3e61def01e896f51806748f6444d668e5d88d74c`。Vercel 项目详情确认最新 Production `dpl_FbeHqqUC573txFgd88Df25FsA3GS` 为 `READY`、`target=production`；部署元数据的 ref 为 `main`、Git SHA 与该 head 完全一致。该部署 aliases 包含 `the-community-lab.vercel.app`，正式项目和自动 Git 连接均仍可用。
+- 登录后的 Vercel Team Usage 面板在最近 24 小时（`2026-10-28 18:00` 至 `2026-10-29 18:00`，`America/Los_Angeles`）显示 **Number of Builds：Completed 114、Errored 0**；面板标注数据在读取时约 15 分钟前更新。该 build 指标不是 `api-deployments-free-per-day` 的剩余额度，也不能换算成余额。Usage 页没有展示该 owner-scope 部署额度的可用余额；此前真实限流拒绝仍未被解释或证实已恢复。
+- 本地交付候选 `fix/demo-translation-precision-20261029` 的 HEAD 是 `dd15a424acd1c6d8e5012a7d300dfc51ad5b4bd3`，已包含首页社媒目录实现；目录对应的隔离源码候选 `2404a5a3b93dc0798ba7b7c889205dbe80358679` 经两名独立 Agent 逐条核查 13/13 个主页关联 PASS。候选尚未 push，未创建 Preview，也未部署。可靠余额证据出现前，不用新的 Preview 或 Production 尝试配额。
+
+## 2026-10-30 PR #32 自动发布验收
+
+此前出现的 `api-deployments-free-per-day` 拒绝后，PR #32 已完成一次完整自动发布：GitHub Actions 和精确 head `526b8d1eafe04bad9b2f083b049343b803b573cd` 的 Vercel Preview `dpl_8sGgRfFsop5x67HNQJJ9ge9N4VqZ` 均成功；合并后，main `078a02213f26f129bbaf8c9a48d03ce9df8e42f7` 的 Vercel Git Production `dpl_7Tx4U1ZrwWXEeAo4j298EW8XHKhc` 为 `READY`，alias 包含 `the-community-lab.vercel.app`。这证明当前 GitHub Preview 与 main Production 自动链路可用；Issue #30 已据此关闭。
+
+此验收没有改变 Vercel Hobby 的每日限制，也没有读到该额度的剩余余额；之后的新部署仍须观察平台实际状态。没有升级付费计划或绕过限制。
+
+
+## 2026-10-30 私人历史候选状态
+
+- feat/private-history-candidate 已在本地与 main 00f1b7b60b6521dc69047c21d8ae9bf4a50135f6 同步，并通过本地 npm run check、npm run build 与游客/隐私/历史页面浏览器验收。GitHub PR #11 仍未接收这批候选更新；当前没有新的 Preview 或生产部署。
+- 历史登录与保存仍默认关闭。PGlite 合成认证回归不等于真实 Supabase、GitHub OAuth、双账号交叉隔离或删除读回验收；隐私/数据区域/保留期决策仍缺失。
+- PR #34 的 Vercel Check 在 2026-10-30 返回 api-deployments-free-per-day 与“24 小时后重试”。在平台状态变化前，不为本地候选重试部署或用其他方式规避该限制。
