@@ -72,3 +72,17 @@ test('restart of answered season asks before clearing private in-memory answers'
   assert.match(handler, /if \(answered > 0 && !window.confirm\([\s\S]*?\)\) return;/);
   assert.match(page, /重新开始本季会清空本页答案，须先确认/);
 });
+
+
+test('sparse resume at final question must redirect to the first unanswered question before finishing', () => {
+  const finish = app.match(/function finish\(\) \{([\s\S]*?)\n\}/)?.[1];
+  assert.ok(finish, 'finish handler exists');
+  const findAt = finish.indexOf('questions.findIndex(q => !Object.hasOwn(active.answers, q.id))');
+  const renderAt = finish.indexOf('render()');
+  const summaryAt = finish.indexOf('summarizeUnscoredAnswers(pack, active.season, active.answers)');
+  assert.ok(findAt >= 0 && findAt < renderAt && renderAt < summaryAt,
+    'finish checks completeness before creating a receipt');
+  assert.match(finish, /active\.index = firstMissing/);
+  assert.match(finish, /full-save-status/);
+  assert.match(finish, /return;/);
+});

@@ -99,6 +99,17 @@ function render() {
 }
 
 function finish() {
+  const questions = pack.seasons[active.season];
+  const firstMissing = questions.findIndex(q => !Object.hasOwn(active.answers, q.id));
+  if (firstMissing !== -1) {
+    // A restored sparse progress file can point at the final question even
+    // when earlier questions remain unanswered. Never lose the user's data.
+    const missingCount = questions.length - Object.keys(active.answers).length;
+    active.index = firstMissing;
+    render();
+    $('full-save-status').textContent = `还有 ${missingCount} 道未答题，已返回第 ${firstMissing + 1} 题补答；原有答案未更改。`;
+    return;
+  }
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers);
   active.receipt = summary;
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。`;
