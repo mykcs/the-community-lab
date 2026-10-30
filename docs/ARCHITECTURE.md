@@ -6,7 +6,7 @@
 
 | 职责 | 组件 | 原因 |
 | --- | --- | --- |
-| 网站 | Astro 7 + Tailwind CSS 4 静态构建 → GitHub Pages（迁移中）；Vercel 暂作回退 | 无账号问卷由浏览器直接运行。Pages 不提供服务端 API；未来需要私有数据 API 时先复用成熟认证及独立受控后端，不为了登录重写前端 |
+| 网站 | Astro 7 + Tailwind CSS 4 静态构建 → GitHub Pages（已上线）；Vercel 旧生产快照作回退 | 无账号问卷由浏览器直接运行。Pages 不提供服务端 API；未来需要私有数据 API 时先复用成熟认证及独立受控后端，不为了登录重写前端 |
 | 登录 | Supabase Auth 的 GitHub OAuth | 不自己处理 OAuth 回调、会话等高风险细节 |
 | 私有记录 | Supabase Postgres + Row Level Security（RLS） | 每条结果与身份绑定，数据库阻止访问别人的行 |
 | 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
@@ -64,6 +64,6 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 这是一份工程方案，不构成法律意见，也不授权开始收集真实个人信息。
 
-当前 Astro + Tailwind 静态演示版已在 [Vercel](https://the-community-lab.vercel.app/) 通过精确 SHA 的 Git 自动部署发布，仍仅有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。Vercel GitHub App 现已获得本仓库访问，原有生产项目已通过 PR #6 自动 Preview、合并后 `main` 自动 Production 和正式域名浏览器验收。详见 [2026-10-29 生产发布与自动连接缺口](DEPLOYMENT.md)；不得为绕过该缺口创建宽权限 GitHub Token。
+当前 Astro + Tailwind 双季静态演示版已在 [GitHub Pages](https://mykcs.github.io/the-community-lab/) 发布。2026-10-30 [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 合并后，对提交 `7cbb659c5d16c6002767ee32a0bd062d516badbf` 的 [Actions 运行](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 已核对 `build`、`deploy` 均成功，正式首页、译审子页、JS/CSS 均 HTTP 200；浏览器走通了第二季 6 题、第一季 8 题、暂停续答和结果卡，440×956 CSS px 手机模拟视口没有横向溢出（并非实体手机）。
 
-2026-10-30 开始迁往 [GitHub Pages 候选地址](https://mykcs.github.io/the-community-lab/)；仅在工作流真实部署和浏览器验收通过后才将它标为正式站。Vercel 部署历史不因为迁移而丢失。服务器功能需要未来单独设计、授权和验证。
+原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。服务器功能需要未来单独设计、授权和验证；不得创建宽权限 GitHub Token 来绕过现有边界。
