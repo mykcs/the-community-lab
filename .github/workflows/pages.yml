@@ -12,6 +12,7 @@ on:
       - 'src/**'
       - 'public/**'
       - 'app.mjs'
+      - 'full-questionnaire-app.mjs'
       - 'data/**'
       - 'lib/**'
       - 'scripts/**'

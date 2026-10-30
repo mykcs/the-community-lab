@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { loadFullQuestionnaire } from '../scripts/load-full-questionnaire.mjs';
-import { extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers } from '../lib/full-questionnaire.mjs';
+import {
+  extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
+  PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
+  wouldDiscardLocalAnswers,
+} from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
 const pack = loadFullQuestionnaire();
@@ -75,7 +79,7 @@ test('pilot refuses source metadata drift that would mislabel question origin or
 
 test('mixed per-question draft versions are preserved honestly in both season receipts', () => {
   assert.equal(pack.translationVersion, 'MIXED_PER_QUESTION');
-  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 4);
+  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 6);
   for (const season of [1, 2]) {
     const questions = pack.seasons[season];
     const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
@@ -91,4 +95,129 @@ test('mixed per-question draft versions are preserved honestly in both season re
   const draft = structuredClone(raw);
   draft.questions.at(-1).translation_version = 'official-1.0.0';
   assert.throws(() => buildFullQuestionnaire(draft, index));
+});
+
+test('both seasons can export sparse private progress and restore exact answers, order and position', () => {
+  for (const season of [1, 2]) {
+    const questions = pack.seasons[season];
+    const answers = Object.create(null);
+    answers[questions[0].id] = questions[0].options[0].value;
+    answers[questions[3].id] = questions[3].options.at(-1).value;
+    const record = createPrivateProgressReceipt(pack, season, answers, 3);
+    const restored = restorePrivateProgressReceipt(pack, JSON.parse(JSON.stringify(record)));
+    assert.equal(record.format, PRIVATE_PROGRESS_FORMAT);
+    assert.equal(record.scoringVersion, 'UNKNOWN');
+    assert.equal(record.sourceSha256, pack.sourceSha256);
+    assert.equal(record.questionCount, questions.length);
+    assert.equal(record.currentQuestionId, questions[3].id);
+    assert.equal(restored.season, season);
+    assert.equal(restored.index, 3);
+    assert.equal(restored.answeredCount, 2);
+    assert.equal(restored.complete, false);
+    assert.deepEqual({ ...restored.answers }, { ...answers });
+    assert.equal(Object.getPrototypeOf(restored.answers), null);
+    assert.ok(!('dimensions' in record) && !('matches' in record));
+  }
+});
+
+test('import conflict gate distinguishes a safe superset from lost or changed local choices', () => {
+  const existing = Object.assign(Object.create(null), { first: 'O', second: 'X' });
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O', second: 'X', third: 'O' }), false);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O', second: 'X' }), false);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'O' }), true);
+  assert.equal(wouldDiscardLocalAnswers(existing, { first: 'X', second: 'X' }), true);
+  assert.equal(wouldDiscardLocalAnswers(Object.create(null), Object.create(null)), false);
+  assert.throws(() => wouldDiscardLocalAnswers(existing, null));
+});
+
+test('existing completed-only local downloads remain importable without inventing official scores', () => {
+  for (const season of [1, 2]) {
+    const questions = pack.seasons[season];
+    const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+    const oldReceipt = summarizeUnscoredAnswers(pack, season, answers);
+    const restoredOld = restorePrivateProgressReceipt(pack, oldReceipt);
+    const newReceipt = createPrivateProgressReceipt(pack, season, answers, questions.length - 1);
+    const restoredNew = restorePrivateProgressReceipt(pack, newReceipt);
+    for (const restored of [restoredOld, restoredNew]) {
+      assert.equal(restored.answeredCount, questions.length);
+      assert.equal(restored.index, questions.length - 1);
+      assert.equal(restored.complete, true);
+      assert.deepEqual({ ...restored.answers }, answers);
+    }
+  }
+});
+
+test('private resume refuses version drift, unknown/duplicate answers, falsified scoring and malformed position', () => {
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.slice(0, 2).map(q => [q.id, q.options[0].value]));
+  const receipt = createPrivateProgressReceipt(pack, 2, answers, 1);
+  const reject = change => {
+    const copy = structuredClone(receipt);
+    change(copy);
+    assert.throws(() => restorePrivateProgressReceipt(pack, copy));
+  };
+  reject(r => { r.season = 1; });
+  reject(r => { r.questionCount = 36; });
+  reject(r => { r.sourceSha256 = 'a'.repeat(64); });
+  reject(r => { r.translationVersion = 'official-99.99.99'; });
+  reject(r => { r.scoringVersion = 'season-2-score@2'; });
+  reject(r => { r.status = 'OFFICIAL_RESULT'; });
+  reject(r => { r.format = 'unknown'; });
+  reject(r => { r.currentQuestionId = '__proto__'; });
+  reject(r => { r.selections.push(structuredClone(r.selections[0])); });
+  reject(r => { r.selections[0].questionId = '__proto__'; });
+  reject(r => { r.selections[0].selectedValue = 'NO_SUCH_OPTION'; });
+  reject(r => { r.selections[0].translationVersion = 'official-99.99.99'; });
+  reject(r => { r.selections = Array.from({ length: 38 }, () => r.selections[0]); });
+  assert.throws(() => restorePrivateProgressReceipt(pack, null));
+  assert.throws(() => createPrivateProgressReceipt(pack, 2, { __proto__: null, bad: 'x' }, 1));
+  assert.throws(() => createPrivateProgressReceipt(pack, 2, answers, 99));
+  const legacyIncomplete = summarizeUnscoredAnswers(pack, 2, Object.fromEntries(questions.map(q => [q.id, q.options[0].value])));
+  legacyIncomplete.selections.pop();
+  assert.throws(() => restorePrivateProgressReceipt(pack, legacyIncomplete));
+});
+test('translation-only draft updates allow safe opt-in resume while retaining each answer’s original version until reconfirmed', () => {
+  for (const season of [1, 2]) {
+    const questions = pack.seasons[season];
+    const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+    const receipt = createPrivateProgressReceipt(pack, season, answers, questions.length - 1);
+    const oldVersion = 'draft-0.0.1';
+    receipt.translationVersion = oldVersion;
+    receipt.selections[0].translationVersion = oldVersion;
+    const restored = restorePrivateProgressReceipt(pack, receipt);
+    assert.deepEqual(restored.changedQuestionIds, [questions[0].id]);
+    assert.equal(restored.complete, true);
+    assert.equal(restored.answerVersions[questions[0].id], oldVersion);
+    assert.equal(restored.answers[questions[0].id], questions[0].options[0].value);
+    const reexported = createPrivateProgressReceipt(
+      pack, season, restored.answers, restored.index, restored.answerVersions,
+    );
+    assert.equal(reexported.selections[0].translationVersion, oldVersion);
+    const summary = summarizeUnscoredAnswers(pack, season, restored.answers, restored.answerVersions);
+    assert.equal(summary.selections[0].translationVersion, oldVersion);
+    // Actually reselecting that answer under the current wording updates provenance.
+    restored.answerVersions[questions[0].id] = questions[0].translationVersion;
+    assert.equal(createPrivateProgressReceipt(pack, season, restored.answers, 0, restored.answerVersions)
+      .selections[0].translationVersion, questions[0].translationVersion);
+    assert.throws(() => restorePrivateProgressReceipt(pack, {
+      ...receipt, sourceSha256: 'x'.repeat(64),
+    }), /来源或版本不匹配/);
+    assert.throws(() => restorePrivateProgressReceipt(pack, {
+      ...receipt, selections: [{ ...receipt.selections[0], translationVersion: 'official-1.0' }],
+    }), /不同版本的答案/);
+  }
+});
+
+test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
+  const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
+  assert.match(app, /const changed = session\.changedQuestionIds\.length/);
+  assert.match(app, /if \(discardsLocal \|\| changed\)/);
+  assert.match(app, /window\.confirm/);
+  assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
+  assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);
+  assert.match(app, /active\.needsReview\?\.delete\(q\.id\)/);
+  assert.match(app, /active\.needsReview\?\.has\(q\.id\)/);
+  assert.match(app, /if \(session\.complete && !changed\) finish\(\)/);
+  assert.match(app, /summarizeUnscoredAnswers\(pack, active\.season, active\.answers, active\.answerVersions\)/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions\)/);
 });

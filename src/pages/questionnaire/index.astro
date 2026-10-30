@@ -38,9 +38,16 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-season span{color:#adb4bd;font-size:12px;line-height:1.7}
       .full-season b{font-size:12px;color:#f1d5c9;margin-top:auto}
       .full-local{margin:22px 0;color:#8e98a5;font-size:12px;line-height:1.8}
+      .full-resume{border:1px solid #46515e;background:#1b222b;padding:18px 22px;margin:23px 0;max-width:920px}
+      .full-resume p{font-size:12px;color:#b1bac6;line-height:1.8;margin:10px 0 0}
+      .full-feedback{font-size:12px;color:#ffd0b7;line-height:1.7;min-height:1.7em}
+      .full-resume button{font-size:12px}
       .full-quiz-top{display:flex;gap:14px;justify-content:space-between;align-items:center;margin:20px 0 42px}
+      .full-quiz-backup{display:flex;flex-wrap:wrap;gap:5px 16px;align-items:center;justify-content:flex-end}
+      .full-quiz-disclosure{border-left:3px solid #ff7468;background:#2d252c;color:#ead3d0;padding:12px 16px;margin:0 0 26px;font-size:12px;line-height:1.8}
       .full-muted-button{background:none;border:0;color:#c1c7cf;font-size:13px;padding:11px 0}
       .full-muted-button:hover{color:var(--red)}
+      .full-muted-button:disabled{opacity:.5;cursor:not-allowed}
       .full-progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#b8bec8}
       .full-progress-head strong{color:#ffb4a5}
       .full-progress{display:block;width:100%;height:4px;margin:14px 0 51px;accent-color:var(--red)}
@@ -70,7 +77,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
       .full-actions .button{font-size:12px}
       .full-footer{border-top:1px solid var(--line);padding:30px clamp(22px,6vw,65px);font-size:11px;color:#929ba6;line-height:1.9}
-      @media(max-width:630px){.full-shell{padding-top:28px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-progress{margin-bottom:33px}.full-question h1{font-size:28px}.full-question-zh{font-size:21px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:14px}.full-quiz-top{margin-bottom:29px}}
+      @media(max-width:630px){.full-shell{padding-top:28px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-progress{margin-bottom:33px}.full-question h1{font-size:28px}.full-question-zh{font-size:21px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:14px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin-bottom:29px}.full-quiz-backup{justify-content:flex-start}}
     </style>
   </head>
   <body>
@@ -89,11 +96,13 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
             <button type="button" class="full-season" data-start-season="2"><small>SEASON 02 / 37 QUESTIONS</small><strong>第二季 · 看不见的手</strong><span>37 道双选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="2">开始完整试填 ↗</b></button>
             <button type="button" class="full-season" data-start-season="1"><small>SEASON 01 / 87 QUESTIONS</small><strong>第一季 · 价值观探索</strong><span>87 道四选／六选题 · 韩文原文 + 中文 AI 初译</span><b data-season-progress="1">开始完整试填 ↗</b></button>
           </div>
-          <p class="full-local">隐私：答案只存在于当前页面内存，不上传服务器、不发给第三方、不持久保存。两季可在本页暂停和继续；刷新或关闭会清空。下载答案由你主动决定，文件可能反映个人敏感观点，请自行保管。</p>
+          <div class="full-resume"><button id="full-import" class="button button-outline" type="button">从本机 JSON 恢复答题进度 ↑</button><input id="full-import-file" type="file" accept=".json,application/json" hidden /><p>做题途中可以主动下载进度文件，刷新后再从这里恢复。也兼容本网站之前下载的完整答题记录。如导入会删除或覆盖本页已答选择，系统会先要求确认；若 AI 中文译文已更新，会保留原答案版本并要求你重新阅读题目、逐题确认。文件不会上传，但包含你的私人观点，切勿公开分享。</p><p id="full-import-status" class="full-feedback" role="status" aria-live="polite"></p></div>
+          <p class="full-local">隐私：答案默认只存在于当前页面内存，不上传服务器、不发给第三方、不自动持久保存。两季可在本页暂停和继续；刷新或关闭会清空内存进度。只有你主动下载本机 JSON 文件，才可以在以后手动恢复；请自行妥善保管。</p>
         </section>
 
         <section id="full-quiz" class="full-pane" hidden aria-labelledby="full-ko">
-          <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span></div>
+          <p class="full-quiz-disclosure" role="note">非官方试填 · 韩文原题与中文 AI 初译（未经真人双语审校）；用户报告的非营利翻译许可原件未独立核验。这里没有官方计分或嘉宾匹配。作答只保留在本页内存，不自动上传；需要保留请主动下载本机进度 JSON。</p>
+          <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span><div class="full-quiz-backup"><button id="full-save" class="full-muted-button" type="button" disabled>↓ 下载本机进度 JSON</button><span id="full-save-status" class="full-feedback" role="status" aria-live="polite"></span></div></div>
           <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
           <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>
           <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
@@ -107,6 +116,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
           <aside class="full-warning"><strong>这里不显示官方分数或嘉宾匹配</strong><p>我们尚未获得可独立验证的逐题权重、反向计分、归一化及服务端结果金标准。下面仅统计每组答了多少道题，不推算政治倾向、心理标签或嘉宾相似度。</p></aside>
           <div id="full-group-summary" class="full-summary" aria-label="各题组作答数量"></div>
           <div class="full-actions"><button id="full-download" class="button button-primary" type="button">下载本机答案 JSON ↓</button><button id="full-restart" class="button button-outline" type="button">重新开始本季</button><button id="full-back" class="button button-text" type="button">返回两季入口 →</button></div>
+          <p class="full-feedback">重新开始本季会清空本页答案，须先确认。建议先下载 JSON 备份。</p>
           <p class="full-local">下载的 JSON 含逐题选项与来源版本，可能涉及你的私人价值观。文件只在你点击后生成；本站不会保存或上传。</p>
         </section>
       </main>

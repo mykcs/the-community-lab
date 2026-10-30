@@ -3,10 +3,10 @@
 ## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
-- **唯一 Pages 发布身份：** [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 已合并为 `main` SHA `7cbb659c5d16c6002767ee32a0bd062d516badbf`；对应 [GitHub Actions run #41028239651](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 的 `build` 与 `deploy` 均为 `completed/success`，产物同时包含 Astro 首页和独立译审草稿。另一个译审工作流只做校验，不再覆盖 Pages 首页。
-- **线上访问验收：** 用真实 HTTP 请求核对两个页面及主站 JS/CSS 均为 200；浏览器检查了第二季 6/6 题、第一季 8/8 题、独立结果卡、退出续答，以及 `440×956` CSS px 手机视口。移动视口 `scrollWidth=440`、`innerWidth=440`，无横向溢出；此结果是浏览器模拟，**不是实体 iPhone 18 Pro Max 设备验收**。当前页面均标注独立粉丝项目、原创演示与未复核译文，不伪造官方题库或嘉宾匹配。
-- **Vercel 配额收口：** 本次后续仓库变更将 `vercel.json` 从仅忽略 `docs/**`、`research/**` 分支升级为 `"git":{"deploymentEnabled":false}`，按 [Vercel 官方 Git 配置](https://vercel.com/docs/project-configuration/git-configuration) 禁用所有分支的 Git 自动部署，避免 Pages 主站更新继续生成 Vercel Preview/Production；旧 Vercel 已发布版本不删除。该规则是否阻止本次后续 Git 事件，需合并后用实际部署列表验证；不能仅因文件存在宣称零消耗。
-- **尚未完成的产品目标：** 原站两季 87＋37 道题的正式复刻、翻译独立复核、官方评分与同季嘉宾数据仍未验收；PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
+- **最新 Pages 发布证据：** [PR #92](https://github.com/mykcs/the-community-lab/pull/92) 已合并为 `main` SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e`；[Astro 验证 #41104034687](https://github.com/mykcs/the-community-lab/actions/runs/41104034687) 与 [Pages 发布 #41104034849](https://github.com/mykcs/the-community-lab/actions/runs/41104034849) 均成功，build 与 deploy job 均完成。
+- **线上访问验收：** 最新主线发布后，对首页、`/translation-review/`、`/original-question-translation-review/` 与 `/questionnaire/` 的实时 GET 均返回 HTTP 200。两个译审页都读回 S2 `ms07` 修订句“比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。”，版本 `draft-0.1.1`、`review_status: draft`；这仍是 AI 草稿，不可作为正式译文。PR #92 补充了直接进入季别答题页时的试点局限说明。已记录的 440×956 与 1440×900 CSS px 浏览器视口验收仍属模拟，不是实体 iPhone 验收。
+- **Vercel 配额收口：** `vercel.json` 通过 `"git":{"deploymentEnabled":false}` 禁用所有分支的 Git 自动部署；在当前 Vercel 项目对 main SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e` 的精确查询返回 0 条部署。旧 Vercel 已发布版本保留作回退快照。
+- **尚未完成的产品目标：** 两季原题的正式复刻仍未验收；独立韩中人工复核为 `0/124`，官方评分与同季可比嘉宾成绩仍为 `UNKNOWN`。PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
 
 ## 历史迁移计划快照（已被上述正式验收取代）
 
@@ -22,9 +22,9 @@
 
 首次[公开复核页](https://mykcs.github.io/the-community-lab/)由 `.github/workflows/github-pages-translation-review.yml` 从 `docs/translation-review/` 独立发布，2026-10-30 的该工作流 `push` 运行成功。为避免以后每次译文更新覆盖主问卷首页，统一工作流将它调整为[独立复核子页面](https://mykcs.github.io/the-community-lab/translation-review/)，原工作流只负责内容验证、不再发布。该目录不放入 Astro 的 `public/`，因此不会混入 Vercel 正式产品站点。页面明确标为非官方 AI 翻译草稿，124 题均未完成独立人工韩中复核；浏览器中的审校修改保存在访问者本地，不上传。用户已确认取得公开材料的非营利翻译许可，许可原件因隐私不公开，项目无法独立展示或核验原件。
 
-## 当前结论：GitHub → Vercel 自动发布已验收
+## 历史验收：GitHub → Vercel 自动发布曾经通过
 
-**现有项目已接通 GitHub，完成了从 PR 预览到 main 生产的两次真实自动发布。** 项目 `the-community-lab` 仍属于原来的 Vercel Hobby 团队 `wangrui92-team`，未新增第二个站点、付费升级或 OAuth 秘钥。团队 Git 连接信息可读回 `mykcs/the-community-lab`。
+GitHub Pages 接管主站之前，项目曾完成 PR 预览与 main 生产的真实 Vercel Git 自动发布。项目 `the-community-lab` 当时仍属于 Vercel Hobby 团队 `wangrui92-team`，未新增第二个站点、付费升级或 OAuth 秘钥。该自动发布链路后来按当前 Pages 主站策略关闭；上表记录当前主站和最新部署证据。
 
 | 验收 | GitHub 证据 | Vercel 证据与结论 |
 | --- | --- | --- |

@@ -21,6 +21,10 @@ test('standalone original-question page is published only as an unreviewed draft
   assert.equal(standaloneData.translation_review.publishable, false);
   assert.match(standaloneHtml, /草稿，禁止作为正式译文发布/);
   assert.match(standaloneHtml, /授权原件因隐私未分享，本站未能独立核验/);
+  assert.match(standaloneHtml, /审校者自报通过（待核验）/);
+  assert.doesNotMatch(standaloneHtml, /独立人工复核通过/);
+  assert.match(standaloneHtml, /项目核对来源版本、双语能力依据与独立性后才会计入正式复核/);
+  assert.match(standaloneHtml, /github\.com\/mykcs\/the-community-lab\/issues\/new/);
   assert.match(standaloneHtml, /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
   assert.doesNotMatch(standaloneHtml, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\bhref\s*=\s*"https?:/i);
   assert.doesNotMatch(standaloneHtml, /LOCAL_RESEARCH_CANDIDATE_NOT_FOR_PUBLICATION/);
@@ -82,6 +86,82 @@ test('second-season AI wording revisions preserve degree, referent, and priority
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
   }
   assert.match(data.translation_review.editorial_pass, /rp08、rp10、ms05、ms11/);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('rp03 preserves the source item’s absolute priority and both review pages stay in sync', () => {
+  const question = data.questions.find(item => item.id === 'rp03');
+  assert.ok(question, 'rp03 must remain in the source dataset');
+  assert.match(question.source_text_ko, /항상/);
+  assert.equal(question.translation_zh_cn, '“不得杀人”这一原则应始终优先于“即使牺牲少数人也要拯救更多生命”这一目标。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /rp03.*draft-0\.1\.2/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'the published standalone review page must use the canonical draft questions');
+  assert.equal(standaloneData.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(standaloneData.translation_review.publishable, false);
+});
+
+test('s1-politics-14 does not add exclusive force absent from Korean', () => {
+  const question = data.questions.find(item => item.id === 's1-politics-14');
+  assert.ok(question, 's1-politics-14 must remain in the source dataset');
+  assert.match(question.source_text_ko, /대부분 망친다고 봐야 한다/);
+  assert.equal(question.translation_zh_cn, '政府一旦干预民营企业，大多会把事情搞砸。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translator_note, '2026-10-30 AI复核：原文「대부분 망친다고」未明确表达“只会”这一排他语气，已删去该词；仍待独立韩中人工复核。');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-politics-14/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('s1-class-15 says private tutoring rather than an after-school class', () => {
+  const question = data.questions.find(item => item.id === 's1-class-15');
+  assert.ok(question, 's1-class-15 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '어린 시절 과외를 받아본 적 있다');
+  assert.equal(question.translation_zh_cn, '我小时候接受过私人辅导。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /韩国国立国语院.*private lesson/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-class-15/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('ms07 keeps the Korean comparison and teaching priority without implying exclusion', () => {
+  const question = data.questions.find(item => item.id === 'ms07');
+  assert.ok(question, 'ms07 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '내 자식에게는 영리하게 돈 버는 법보다 양심에 따라 사는 법을 먼저 가르치겠다.');
+  assert.equal(question.translation_zh_cn, '比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /比较助词「보다」.*先后副词「먼저」/);
+  assert.match(question.translator_note, /korean\.go\.kr/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /ms07/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('s1-gender-17 translates 믿음 as belief while remaining an unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-gender-17');
+  assert.ok(question, 's1-gender-17 must remain in the source dataset');
+  assert.match(question.source_text_ko, /근거 없는 믿음이다/);
+  assert.equal(question.translation_zh_cn, '性别薪酬差距是一种毫无根据的信念。女性已经因同等劳动获得与男性同等的报酬。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.match(question.translator_note, /믿음.*belief\/conviction/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-gender-17.*draft-0\.1\.2/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
   assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(data.translation_review.publishable, false);
 });
