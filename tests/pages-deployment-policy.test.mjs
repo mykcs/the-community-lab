@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
+const verifyWorkflow = readFileSync(new URL('../.github/workflows/verify.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
 const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
@@ -62,4 +63,14 @@ test('Astro keeps Vercel rollback origin and uses GitHub project subpath only fo
   assert.match(astro, /https:\/\/mykcs\.github\.io/);
   assert.match(astro, /\/the-community-lab\//);
   assert.match(astro, /https:\/\/the-community-lab\.vercel\.app/);
+});
+
+test('standalone questionnaire browser logic changes trigger PR Verify and Pages publication', () => {
+  for (const [name, yaml] of [['PR/commit Verify', verifyWorkflow], ['production Pages', workflow]]) {
+    assert.match(yaml, /['"]full-questionnaire-app\.mjs['"]/, name);
+    if (name === 'PR/commit Verify') {
+      assert.equal((yaml.match(/'full-questionnaire-app\.mjs'/g) || []).length, 2,
+        'both pull_request and main push must trigger Verify');
+    }
+  }
 });

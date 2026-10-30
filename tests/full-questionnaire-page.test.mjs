@@ -60,3 +60,15 @@ test('build uses the already-published single draft source rather than duplicati
   assert.match(loader, /data\/original-question-index\.json/);
   assert.doesNotMatch(loader, /https?:\/\//);
 });
+
+test('restart of answered season asks before clearing private in-memory answers', () => {
+  const handler = app.match(/\$\('full-restart'\)\.addEventListener\('click', \(\) => \{([\s\S]*?)\n\}\);/)?.[1];
+  assert.ok(handler, 'restart must use an explicit handler');
+  const countAt = handler.indexOf('Object.keys(active.answers).length');
+  const confirmAt = handler.indexOf('window.confirm(');
+  const restartAt = handler.indexOf('begin(active.season, true)');
+  assert.ok(countAt >= 0 && countAt < confirmAt && confirmAt < restartAt,
+    'count and ask before replacing the in-memory season');
+  assert.match(handler, /if \(answered > 0 && !window.confirm\([\s\S]*?\)\) return;/);
+  assert.match(page, /重新开始本季会清空本页答案，须先确认/);
+});
