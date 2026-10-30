@@ -1,9 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { SEASONS } from '../data/questions.mjs';
 import { ORIGINAL_SITE_AUDIT } from '../data/original-site-audit.mjs';
 import { buildReproductionAudit } from '../lib/reproduction-audit.mjs';
 import { scoreAnswers } from '../lib/quiz.mjs';
+
+test('homepage distinguishes user-reported reuse permission from independent verification', () => {
+  const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
+  assert.match(homepage, /用户报告已获当前公开材料的官方非营利翻译许可/);
+  assert.match(homepage, /许可原件未独立核验/);
+  assert.match(homepage, /正式译文与官方计分仍待核验/);
+  assert.doesNotMatch(homepage, /原题转载许可[^。]*仍待核验/);
+});
 
 test('source item counts and independent demo item counts are never conflated', () => {
   const audit = buildReproductionAudit();

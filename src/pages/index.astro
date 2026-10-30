@@ -82,7 +82,7 @@ const audit = buildReproductionAudit();
 
           <section class="section experiments" id="experiments" aria-labelledby="experiments-title">
             <div class="section-topline"><span>01 — SELECT YOUR SEASON</span><span>두 개의 시즌 / 两季入口</span></div>
-            <div class="section-heading"><div><h2 id="experiments-title">从哪一季开始？</h2><p>先用少量原创题感受双语体验。两季进度分别暂存在本页，刷新或关闭页面会清空；正式原题仍待来源与版权核验。</p></div><span class="section-count">02 <small>TESTS</small></span></div>
+            <div class="section-heading"><div><h2 id="experiments-title">从哪一季开始？</h2><p>先用少量原创题感受双语体验。两季进度分别暂存在本页，刷新或关闭页面会清空；正式原题仍待来源、版本与人工复核核对。</p></div><span class="section-count">02 <small>TESTS</small></span></div>
             <div class="season-grid">
               <article class="season-card season-two"><div class="season-meta"><span class="chip chip-accent">优先开发</span><span>SEASON 02 / 2026</span></div><div class="season-number">02<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">보이지 않는 손</p><h3>第二季 · 看不见的手</h3><p>原则与结果，结构与能力，意义与实利。三个坐标，看看你如何取舍。</p></div><div class="season-footer"><span>3 组价值轴 <i>·</i> 6 道原创演示题</span><button id="start-s2" class="season-arrow" type="button" aria-label="开始第二季演示测试"><span>开始</span><span aria-hidden="true">↗</span></button></div><p id="s2-session-note" class="session-note" hidden></p><a class="source-site" href="https://the-community-survey.web.app/season/2" target="_blank" rel="noopener noreferrer">另去韩文原站完成 37 题 <span aria-hidden="true">↗</span></a></article>
               <article class="season-card season-one"><div class="season-meta"><span class="chip">同步预览</span><span>SEASON 01 / 2024</span></div><div class="season-number">01<span>.</span></div><div class="season-body"><p class="season-korean" lang="ko">더 커뮤니티</p><h3>第一季 · 价值观探索</h3><p>公共参与、性别观念、阶级分配与开放性。四个角度，看见差异。</p></div><div class="season-footer"><span>4 组价值轴 <i>·</i> 8 道原创演示题</span><button id="start-s1" class="season-arrow" type="button" aria-label="开始第一季演示测试"><span>开始</span><span aria-hidden="true">↗</span></button></div><p id="s1-session-note" class="session-note" hidden></p><a class="source-site" href="https://the-community-survey.web.app/season/1" target="_blank" rel="noopener noreferrer">另去韩文原站完成 87 题 <span aria-hidden="true">↗</span></a></article>
@@ -92,7 +92,7 @@ const audit = buildReproductionAudit();
                 <h3 id="audit-heading" class="m-0 text-xl font-bold tracking-tight text-[#f4f0e7]">原题资料核验进度</h3>
                 <span class="rounded-full border border-[#ff776c]/50 px-3 py-1 text-xs text-[#ffb4a5]">公开的核验账本 · 非官方</span>
               </div>
-              <p class="mt-3 text-sm leading-7 text-[#b6bbc5]">已定位两季公开客户端里的源题标识。原题转载许可、正式译文与官方计分仍待核验，演示题单独计数。</p>
+              <p class="mt-3 text-sm leading-7 text-[#b6bbc5]">已定位两季公开客户端里的源题标识。用户报告已获当前公开材料的官方非营利翻译许可，许可原件未独立核验；正式译文与官方计分仍待核验，演示题单独计数。</p>
               <div class="mt-5 grid gap-3 md:grid-cols-2">
                 {Object.values(SEASONS).map(season => (
                   <div class="border border-white/10 bg-[#101319] p-4">
@@ -110,7 +110,7 @@ const audit = buildReproductionAudit();
               <details class="mt-5 border-t border-white/10 pt-4 text-sm leading-7 text-[#b6bbc5]">
                 <summary class="cursor-pointer text-[#f4f0e7]">查看逐题来源与尚缺的证据</summary>
                 <p class="mt-3">索引记录了 87＋37 个源题标识、所属维度、选项数量及客户端资源指纹，不包含原题题干或选项文字。源数组位置不等于答题时的展示顺序；非连续标识也不等于漏题。</p>
-                <p class="mt-2">核对日期：2026-10-29。第一季当前客户端混用六级与四级选项；本站演示仍是独立四级量表。原题转载许可、源站官方归属、独立人工韩中审校及服务端评分金标准均待核实。</p>
+                <p class="mt-2">核对日期：2026-10-29。第一季当前客户端混用六级与四级选项；本站演示仍是独立四级量表。用户报告已获当前公开材料的官方非营利翻译许可，原件未独立核验；源站与题库版本归属、独立人工韩中审校及服务端评分金标准仍待核实。</p>
                 <a class="mt-3 inline-flex text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/data/original-question-index.json" target="_blank" rel="noopener noreferrer">逐题来源与缺口清单 ↗</a>
               </details>
               <a class="mt-5 inline-flex text-sm text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/docs/VERIFICATION-MATRIX.md" target="_blank" rel="noopener noreferrer">查看每一道验证关卡与证据 →</a>
