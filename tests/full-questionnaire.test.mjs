@@ -79,7 +79,17 @@ test('pilot refuses source metadata drift that would mislabel question origin or
 
 test('mixed per-question draft versions are preserved honestly in both season receipts', () => {
   assert.equal(pack.translationVersion, 'MIXED_PER_QUESTION');
-  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 7);
+  // Translation editors may legitimately publish another AI draft in this
+  // canonical source. Do not freeze an incidental version count: the previous
+  // hard-coded count broke main CI/Pages on every such revision.
+  const sourceVersions = new Map(raw.questions
+    .filter(q => q.season === 2)
+    .map(q => [q.id, q.translation_version]));
+  assert.equal(sourceVersions.size, pack.seasons[2].length);
+  for (const question of pack.seasons[2]) {
+    assert.equal(question.translationVersion, sourceVersions.get(question.id));
+  }
+  // Keep the specific sa06 regression without pinning unrelated items.
   assert.equal(pack.seasons[2].find(q => q.id === 'sa06')?.translationVersion, 'draft-0.1.1');
   for (const season of [1, 2]) {
     const questions = pack.seasons[season];
@@ -93,6 +103,23 @@ test('mixed per-question draft versions are preserved honestly in both season re
     assert.equal(receipt.translationVersions.reduce((n, v) => n + v.questionCount, 0), questions.length);
     assert.deepEqual(receipt.selections.map(s => s.translationVersion), questions.map(q => q.translationVersion));
   }
+  // Simulate the next legitimate translation-only revision. The produced
+  // receipt must follow per-question source versions without a test edit.
+  const nextDraft = structuredClone(raw);
+  const revised = nextDraft.questions.find(q => q.id === 'sa06');
+  const versionParts = revised.translation_version.match(/^draft-(\d+)\.(\d+)\.(\d+)$/);
+  assert.ok(versionParts);
+  revised.translation_version = `draft-${versionParts[1]}.${versionParts[2]}.${Number(versionParts[3]) + 1}`;
+  const nextPack = buildFullQuestionnaire(nextDraft, index);
+  const nextQuestions = nextPack.seasons[2];
+  const nextAnswers = Object.fromEntries(nextQuestions.map(q => [q.id, q.options[0].value]));
+  const nextReceipt = summarizeUnscoredAnswers(nextPack, 2, nextAnswers);
+  assert.equal(nextQuestions.find(q => q.id === 'sa06').translationVersion, revised.translation_version);
+  assert.equal(nextReceipt.selections.find(s => s.questionId === 'sa06').translationVersion, revised.translation_version);
+  assert.deepEqual(
+    new Map(nextReceipt.translationVersions.map(v => [v.version, v.questionCount])),
+    nextQuestions.reduce((counts, q) => counts.set(q.translationVersion, (counts.get(q.translationVersion) || 0) + 1), new Map()),
+  );
   const draft = structuredClone(raw);
   draft.questions.at(-1).translation_version = 'official-1.0.0';
   assert.throws(() => buildFullQuestionnaire(draft, index));
