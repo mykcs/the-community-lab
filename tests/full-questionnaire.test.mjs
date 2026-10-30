@@ -56,3 +56,39 @@ test('all answers can be completed as a receipt, but never produce invented offi
     assert.throws(() => summarizeUnscoredAnswers(pack, season, incomplete));
   }
 });
+
+test('pilot refuses source metadata drift that would mislabel question origin or group', () => {
+  const cases = [
+    ['source position', d => { d.questions[0].source_position += 1; }],
+    ['season one source group', d => { d.questions[0].source_group = 'unverified'; }],
+    ['season one reverse direction', d => { d.questions[0].reverse_flag_in_public_client = !d.questions[0].reverse_flag_in_public_client; }],
+    ['season two source group', d => { d.questions.find(q => q.season === 2).source_group_ko = 'unverified'; }],
+    ['season two agreement side', d => { d.questions.find(q => q.season === 2).agree_value_ko = 'unverified'; }],
+    ['wrong-season link', d => { d.questions.find(q => q.season === 2).source_url = 'https://thecommunity.co.kr/season/1/test'; }],
+  ];
+  for (const [label, change] of cases) {
+    const draft = structuredClone(raw);
+    change(draft);
+    assert.throws(() => buildFullQuestionnaire(draft, index), undefined, label);
+  }
+});
+
+test('mixed per-question draft versions are preserved honestly in both season receipts', () => {
+  assert.equal(pack.translationVersion, 'MIXED_PER_QUESTION');
+  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 4);
+  for (const season of [1, 2]) {
+    const questions = pack.seasons[season];
+    const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+    const receipt = summarizeUnscoredAnswers(pack, season, answers);
+    const versions = new Map();
+    for (const q of questions) versions.set(q.translationVersion, (versions.get(q.translationVersion) || 0) + 1);
+    assert.equal(receipt.translationVersion,
+      versions.size === 1 ? versions.keys().next().value : 'MIXED_PER_QUESTION');
+    assert.deepEqual(new Map(receipt.translationVersions.map(v => [v.version, v.questionCount])), versions);
+    assert.equal(receipt.translationVersions.reduce((n, v) => n + v.questionCount, 0), questions.length);
+    assert.deepEqual(receipt.selections.map(s => s.translationVersion), questions.map(q => q.translationVersion));
+  }
+  const draft = structuredClone(raw);
+  draft.questions.at(-1).translation_version = 'official-1.0.0';
+  assert.throws(() => buildFullQuestionnaire(draft, index));
+});
