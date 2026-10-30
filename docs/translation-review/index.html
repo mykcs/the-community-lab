@@ -20,7 +20,7 @@
 <div class="notice"><strong>公开复核草稿 · 非官方 · 不是可用于答题的正式译文或测试</strong>124 题和 550 个答案选项目前均为 AI 初译，尚无独立韩中双语人工复核。用户确认已获官方许可，可非营利翻译当前公开材料，且无期限；原件因隐私未分享。本页公开用于复核的仍是 AI 草译；独立人工双语复核完成前，不得作为正式译文或测试使用。</div>
 <p class="source">来源资源 SHA-256：<code>59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e</code> · 当前核对版本 · 源题数量 87 + 37</p>
 <p class="source">此页不会上传审校内容。修改和标记仅保存在你当前浏览器的本地存储；可导出或重新导入同一来源版本的 JSON，导入前需确认覆盖本机草稿。此 Pages 页面公开可访问，请勿在备注中写入私人信息。</p>
-<div class="toolbar"><input id="search" type="search" placeholder="搜索题号、韩文或中文"><select id="season"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group"><option value="all">全部维度</option></select><select id="reviewFilter"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="import" type="button">导入审校 JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="secondary" id="compare" type="button">对照两份审校 JSON</button><input id="compare-files" type="file" accept=".json,application/json" multiple hidden><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
+<div class="toolbar"><input id="search" type="search" placeholder="搜索题号、韩中题干或答案选项"><select id="season"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group"><option value="all">全部维度</option></select><select id="reviewFilter"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="import" type="button">导入审校 JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="secondary" id="compare" type="button">对照两份审校 JSON</button><input id="compare-files" type="file" accept=".json,application/json" multiple hidden><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
 </header>
 <section class="wrap comparison" id="comparison" hidden></section>
 <main class="wrap" id="list"></main>
@@ -134,12 +134,18 @@ function showReviewComparison(report){
  details.append(summary,list);target.replaceChildren(heading,warning,metrics,download,details);target.hidden=false;
  heading.focus();target.scrollIntoView({behavior:'smooth',block:'start'});
 }
+function matchesReviewSearch(q,e,term){
+ if(!term)return true;
+ const fields=[q.id,q.source_text_ko,e.translation??q.translation_zh_cn,groupLabel(q)];
+ q.options.forEach((option,index)=>{fields.push(option.ko,e.options?.[index]??option.zh_cn)});
+ return fields.some(value=>String(value??'').toLowerCase().includes(term));
+}
 function render(){
  const term=search.value.trim().toLowerCase();const wantedSeason=season.value,wantedGroup=group.value,wantedReview=reviewFilter.value;
  const rows=data.questions.filter(q=>{
-  const e=edits[q.id]||{};const text=[q.id,q.source_text_ko,e.translation||q.translation_zh_cn,groupLabel(q)].join(' ').toLowerCase();
+  const e=edits[q.id]||{};
   const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;
-  return (!term||text.includes(term))&&(wantedSeason==='all'||String(q.season)===wantedSeason)&&(wantedGroup==='all'||wantedGroup===q.season+':'+g)&&(wantedReview==='all'||(e.review||'pending')===wantedReview)
+  return matchesReviewSearch(q,e,term)&&(wantedSeason==='all'||String(q.season)===wantedSeason)&&(wantedGroup==='all'||wantedGroup===q.season+':'+g)&&(wantedReview==='all'||(e.review||'pending')===wantedReview)
  });
  list.replaceChildren();count.textContent='显示 '+rows.length+' / '+data.questions.length+' 题';
  if(!rows.length){list.append(node('div','empty','没有符合条件的题目'));return}

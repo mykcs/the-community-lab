@@ -231,3 +231,18 @@ test('local review comparison rejects changed source evidence and non-self-repor
   assert.throws(() => compare(stalePass, clean, data), /缺少有效备注/);
   assert.doesNotMatch(html, /\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|\bsendBeacon\s*\(|\.innerHTML\s*=/);
 });
+
+test('review search finds Korean and Chinese option texts including local edits', () => {
+  const source = html.match(/function matchesReviewSearch\([^]*?\n\}/)?.[0];
+  assert.ok(source, 'option-aware review search must be independently testable');
+  const matches = new Function('groupLabel', source + ';return matchesReviewSearch;')(q => q.source_group);
+  const q = { id:'s1-search', season:1, source_group:'politics',
+    source_text_ko:'질문 본문', translation_zh_cn:'题干中文',
+    options:[{ ko:'한국어 옵션 고유어', zh_cn:'中文答案唯一词', mark:'1' }] };
+  assert.equal(matches(q, {}, 's1-search'), true);
+  assert.equal(matches(q, {}, '한국어 옵션 고유어'), true);
+  assert.equal(matches(q, {}, '中文答案唯一词'), true);
+  assert.equal(matches(q, { options:['修改后的答案'] }, '修改后的答案'), true);
+  assert.equal(matches(q, { options:['修改后的答案'] }, '中文答案唯一词'), false);
+  assert.equal(matches(q, {}, '根本不存在的字符串'), false);
+});
