@@ -1,10 +1,10 @@
 name: Verify Astro bilingual demo
 on:
   pull_request:
-    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml']
+    paths: ['app.mjs', 'data/**', 'lib/**', 'tests/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
 permissions:
   contents: read
 concurrency:

@@ -1,4 +1,14 @@
-# 部署与持续集成 · 2026-10-29
+# 部署与持续集成 · 2026-10-29 起
+
+## 2026-10-30 · GitHub Pages 迁移候选（等待真实发布验收）
+
+- **用户目标：** 将已公开的 `mykcs/the-community-lab` 轻量 Astro 静态问卷站迁到 GitHub Pages，降低 Vercel Hobby 部署额度压力；不新增付费额度。预计新网址：`https://mykcs.github.io/the-community-lab/`。
+- **分工：** `main` 的源代码和标准项目检查继续由 GitHub Actions 管理；新的 `.github/workflows/pages.yml` 在静态构建通过后上传 `dist/`，只允许 `main` 或手动触发 Pages 发布。Vercel 当前 Production 在 Pages 完整验收前保留回退能力。`astro.config.mjs` 按 `COMMUNITY_DEPLOY_TARGET=github-pages` 选择 GitHub Pages 子路径，其他构建保持 Vercel 原 URL 与根路径。
+- **Pages 设置已启用（待首次发布）：** 2026-10-30 使用仓库管理员已有的 GitHub CLI 会话将 Pages 的 `build_type` 设为 `workflow`，随后 `GET /repos/mykcs/the-community-lab/pages` 读回 `build_type=workflow`、网址 `https://mykcs.github.io/the-community-lab/`，当时 `status=null`，不是部署成功。普通 `GITHUB_TOKEN` 不能替代该首次管理员设置。后续必须检查 Pages 工作流真实成功、其 deployment URL 与 main SHA、站点 HTTP 可达、浏览器 JS/CSS 无丢失、两季 8＋6 原创演示题均能完成。未通过前不得改 README 正式站入口、禁用旧站或声称切换完成。
+- **范围：** 此工作流只发布 `main` 当前静态站。GitHub Pages 不执行 `api/*`、Vercel Functions 或 Node 服务器；[草稿 PR #11](https://github.com/mykcs/the-community-lab/pull/11) 的 OAuth／账户保存／注销 API 不在此迁移范围，仍要经过隐私、双账号隔离、删除读回等独立验收，且需要单独后端承载。当前网站无账号与个人答卷上传，不应为了迁移引入新的数据收集。
+- **免费不等于无限：** GitHub Pages 对公共仓库免费；公共仓库标准 GitHub-hosted runner 不扣月度计费计算额度（不含 larger runner）。Pages 站点上限 1 GB、每月约 100 GB 软流量限制；默认每小时 10 次构建软限制不适用于自定义 Actions 工作流，仍可能限速。参考 [GitHub Pages 官方限制](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)及 [Actions 计费](https://docs.github.com/en/billing/concepts/product-billing/github-actions)。
+
+下面各节是 Vercel 历史生产证据，保留供回退核验，**不表示 GitHub Pages 已上线**。
 
 ## 当前结论：GitHub → Vercel 自动发布已验收
 

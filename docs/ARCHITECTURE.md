@@ -6,7 +6,7 @@
 
 | 职责 | 组件 | 原因 |
 | --- | --- | --- |
-| 网站 | Astro 6 + Tailwind CSS 4 静态构建 → Vercel | 当前已发布；无账号问卷由浏览器直接运行。未来需要私有数据 API 时先复用成熟认证及服务端服务，不为了登录无故重写前端框架 |
+| 网站 | Astro 7 + Tailwind CSS 4 静态构建 → GitHub Pages（迁移中）；Vercel 暂作回退 | 无账号问卷由浏览器直接运行。Pages 不提供服务端 API；未来需要私有数据 API 时先复用成熟认证及独立受控后端，不为了登录重写前端 |
 | 登录 | Supabase Auth 的 GitHub OAuth | 不自己处理 OAuth 回调、会话等高风险细节 |
 | 私有记录 | Supabase Postgres + Row Level Security（RLS） | 每条结果与身份绑定，数据库阻止访问别人的行 |
 | 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
@@ -23,13 +23,14 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 | 项目 | 小型非商业项目 | 可能开始产生费用的条件 |
 | --- | --- | --- |
 | GitHub 公共仓库与 OAuth App 注册 | $0 | 通常没有“每次 GitHub 登录收费” |
+| GitHub Pages + 公共标准 GitHub Actions runner | $0（适用范围及限制内） | Pages 站点最多 1 GB、流量约 100 GB/月软限制；公共标准 runner 免费但大 runner、产物存储等另有计费规则 |
 | Vercel Hobby | $0/月（额度内，仅限个人／非商业使用） | 商业化、使用限制或需要 Pro 功能 |
 | Supabase Free（认证与数据库） | $0/月：50,000 月活用户、500 MB 数据库、5 GB 流量额度 | 超额／需要稳定在线；Pro 从 $25/月起 |
 | 可选独立域名 | 可暂时 $0，使用提供商免费子域名 | 购买并每年续费自定义域名 |
 
-**预期初始账单为 $0/月，不保证无限流量或持续免费。** Supabase 免费项目若一周缺乏足够活动可能暂停；需要长期可靠公开服务时应评估付费方案，不得未经批准自行升级。Vercel Hobby 同样受非商业使用条款和额度约束。
+**预期初始账单为 $0/月，不保证无限流量或持续免费。** Supabase 免费项目若一周缺乏足够活动可能暂停；需要长期可靠公开服务时应评估合适方案，不得未经批准自行升级。Vercel Hobby 同样受非商业使用条款和额度约束。GitHub Pages 的公开静态托管不等于免费提供数据库、动态 API 或无限 Actions artifact 存储。
 
-官方参考：[GitHub OAuth App 注册](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)、[Supabase GitHub 登录](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)、[Supabase 价格](https://supabase.com/pricing)、[Supabase 免费项目暂停](https://supabase.com/docs/guides/platform/free-project-pausing)、[Vercel Hobby](https://vercel.com/docs/plans/hobby)。实际开通时重新检查实时价格。
+官方参考：[GitHub Pages 限额](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)、[GitHub Actions 计费](https://docs.github.com/en/billing/concepts/product-billing/github-actions)、[GitHub OAuth App 注册](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)、[Supabase GitHub 登录](https://supabase.com/docs/guides/auth/social-sign-in/auth-github)、[Supabase 价格](https://supabase.com/pricing)、[Supabase 免费项目暂停](https://supabase.com/docs/guides/platform/free-project-pausing)、[Vercel Hobby](https://vercel.com/docs/plans/hobby)。实际开通时重新检查实时价格。
 
 ## 数据流与用户决定权
 
@@ -64,3 +65,5 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 这是一份工程方案，不构成法律意见，也不授权开始收集真实个人信息。
 
 当前 Astro + Tailwind 静态演示版已在 [Vercel](https://the-community-lab.vercel.app/) 通过精确 SHA 的 Git 自动部署发布，仍仅有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。Vercel GitHub App 现已获得本仓库访问，原有生产项目已通过 PR #6 自动 Preview、合并后 `main` 自动 Production 和正式域名浏览器验收。详见 [2026-10-29 生产发布与自动连接缺口](DEPLOYMENT.md)；不得为绕过该缺口创建宽权限 GitHub Token。
+
+2026-10-30 开始迁往 [GitHub Pages 候选地址](https://mykcs.github.io/the-community-lab/)；仅在工作流真实部署和浏览器验收通过后才将它标为正式站。Vercel 部署历史不因为迁移而丢失。服务器功能需要未来单独设计、授权和验证。

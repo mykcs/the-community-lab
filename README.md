@@ -47,6 +47,8 @@
 - 隐私：默认只在本地浏览器保留临时结果；明确同意后才上传。提供本人查看、下载和删除。
 - 费用：初期以 GitHub、Vercel Hobby、Supabase Free 的**免费额度**为目标；不擅自开通付费服务。
 
+**静态托管迁移（2026-10-30）：** 正在将当前不收集答卷的双语演示站迁往 GitHub Pages，候选地址为 `https://mykcs.github.io/the-community-lab/`。在其 Actions 发布、网址可达及双季实际交互验收完成前，上方 Vercel 链接仍是正式访问入口。GitHub Pages 免费托管公开仓库、公共标准 runner 的构建不扣计费计算额度，但有 1 GB 站点大小、约 100 GB/月软流量限制，不是无限资源。Pages 只提供静态文件；PR #11 的可选登录／私人历史记录仍未上线，不能直接迁入 Pages 当作有后端。发布切换及回退规则见 [部署证据与迁移计划](docs/DEPLOYMENT.md)。
+
 具体架构、预算与隐私门槛见 [设计方案](docs/ARCHITECTURE.md)。
 
 ## 我们先复用哪些成熟成果
