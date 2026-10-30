@@ -119,6 +119,21 @@ test('s1-politics-14 does not add exclusive force absent from Korean', () => {
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-class-15 says private tutoring rather than an after-school class', () => {
+  const question = data.questions.find(item => item.id === 's1-class-15');
+  assert.ok(question, 's1-class-15 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '어린 시절 과외를 받아본 적 있다');
+  assert.equal(question.translation_zh_cn, '我小时候接受过私人辅导。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /韩国国立国语院.*private lesson/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-class-15/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
