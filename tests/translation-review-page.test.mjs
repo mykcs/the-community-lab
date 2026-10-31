@@ -250,6 +250,22 @@ test('s1-gender-21 keeps 엄살 as exaggerated suffering in the unreviewed draft
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-openness-09 makes all-participant team dining explicit in the unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-openness-09');
+  assert.ok(question, 's1-openness-09 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '팀워크를 위해서는 내키지 않더라도 회식에 다같이 참여해야한다.');
+  assert.equal(question.translation_zh_cn, '为了团队协作，即使不情愿，大家也应该一起参加团队聚餐。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /다같이.*大家/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr\/chn\/dicSearch\/SearchView\?ParaWordNo=88144/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-openness-09.*draft-0\.1\.1/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
