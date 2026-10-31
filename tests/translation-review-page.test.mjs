@@ -219,6 +219,22 @@ test('s1-gender-17 translates 믿음 as belief while remaining an unreviewed dra
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-gender-21 keeps 엄살 as exaggerated illness in the unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-gender-21');
+  assert.ok(question, 's1-gender-21 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '여성이 우울증과 같은 정신질환을 호소할 때는 엄살인 경우가 많다.');
+  assert.equal(question.translation_zh_cn, '女性诉说抑郁症等精神疾病时，很多时候是在夸大病情。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /엄살.*虚构或夸大疼痛、痛苦/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr\/kor\/dicSearch\/SearchView\?ParaWordNo=67230/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-gender-21.*draft-0\.1\.1/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
