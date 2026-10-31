@@ -64,6 +64,9 @@ function render() {
   $('full-group').textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
+  const note = $('full-reader-note');
+  note.hidden = !q.readerNote;
+  note.textContent = q.readerNote || '';
   $('full-choice-prompt').textContent = q.options.length === 2
     ? '请选择一个更符合你观点的选项；下方韩文为公开客户端文字。'
     : `请选择一个选项（原题为 ${q.options.length} 级量表）。`;

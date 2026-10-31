@@ -28,6 +28,28 @@ test('124 source IDs, 550 bilingual choices and indexed client positions survive
   assert.equal(pack.seasons[2][0].id, index.questions.find(q => q.season === 2 && q.displayPositionDerivedFromClient === 1).sourceQuestionId);
 });
 
+test('idiom reader note is visibly separate from draft translation and affects only its own provenance hash', () => {
+  const q = pack.seasons[1].find(item => item.id === 's1-openness-11');
+  assert.ok(q);
+  assert.equal(q.sourceKo, '“절이 싫으면 중이 떠나야지”라는 말은 대부분의 경우 옳다.');
+  assert.match(q.readerNote, /^AI 译注（待独立人工核对）/);
+  assert.match(q.readerNote, /不喜欢某个环境的人应该自己离开/);
+  assert.equal(q.translationVersion, 'draft-0.1.1');
+  assert.equal(pack.status, 'SOURCE_QUESTION_PILOT_UNREVIEWED_NOT_OFFICIAL');
+
+  const changedNote = structuredClone(pack);
+  changedNote.seasons[1].find(item => item.id === q.id).readerNote += '（修改）';
+  attachTranslationFingerprints(changedNote);
+  assert.notEqual(changedNote.seasons[1].find(item => item.id === q.id).translationFingerprint, q.translationFingerprint);
+  const other = pack.seasons[2][0];
+  assert.equal(changedNote.seasons[2][0].translationFingerprint, other.translationFingerprint,
+    'a note edit must not invalidate unrelated users’ receipts');
+
+  const bad = structuredClone(raw);
+  bad.questions.find(item => item.id === q.id).reader_note_zh_cn = '<script>'.repeat(100);
+  assert.throws(() => buildFullQuestionnaire(bad, index), /题目来源、状态或选项不匹配/);
+});
+
 test('source provenance, reported permission, unreviewed status and question count are hard gates', () => {
   const mutate = change => {
     const draft = structuredClone(raw);

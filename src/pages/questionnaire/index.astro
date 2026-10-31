@@ -55,7 +55,8 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-group{font-size:11px;color:var(--red);letter-spacing:.08em}
       .full-question h1{font:600 clamp(27px,3.3vw,42px)/1.55 var(--ko);letter-spacing:-.035em;word-break:keep-all;margin:19px 0 34px}
       .full-translation{border-top:1px solid #4b535e;padding-top:17px;font-size:11px;color:#acb5c1}
-      .full-question-zh{font-size:clamp(19px,2.4vw,29px);font-weight:570;line-height:1.75;margin:13px 0 32px}
+      .full-question-zh{font-size:clamp(19px,2.4vw,29px);font-weight:570;line-height:1.75;margin:13px 0 20px}
+      .full-reader-note{font-size:13px;line-height:1.85;color:#cbd5e1;background:#202936;border-left:3px solid #b0c6dc;padding:12px 16px;margin:0 0 24px}
       .full-choices{display:grid;gap:12px;margin:18px 0 22px}
       .full-choice{display:flex;gap:16px;align-items:center;width:100%;min-height:74px;padding:16px 20px;text-align:left;color:var(--text);background:#1b222b;border:1px solid #414852}
       .full-choice:hover{border-color:#b9857d}.full-choice[aria-pressed=true]{background:#392b31;border-color:var(--red);box-shadow:inset 3px 0 var(--red)}
@@ -105,7 +106,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
           <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span><div class="full-quiz-backup"><button id="full-save" class="full-muted-button" type="button" disabled>↓ 下载本机进度 JSON</button><span id="full-save-status" class="full-feedback" role="status" aria-live="polite"></span></div></div>
           <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
           <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>
-          <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
+          <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p id="full-reader-note" class="full-reader-note" role="note" hidden></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
             <div class="full-quiz-actions"><button id="full-prev" class="button button-outline" type="button">← 上一题</button><button id="full-next" class="button button-primary" type="button" disabled>确认，继续 →</button></div>
             <p class="full-evidence">本题来源：<a id="full-source" target="_blank" rel="noopener noreferrer">公开客户端同季题目</a>。题序依据该版本客户端的可核查展示位置；这不证明所有官方版本或服务端结果一致。页面不会向原站发送答案。</p>
           </div>

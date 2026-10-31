@@ -104,3 +104,11 @@ test("deep links entering a season directly retain disclosures inside the quiz p
   }
   assert.match(quiz, /class="full-quiz-disclosure" role="note"/);
 });
+
+test('AI idiom reader notes appear after the literal Chinese prompt, never as official wording', () => {
+  const marker = page.indexOf('id="full-reader-note"');
+  assert.ok(marker > page.indexOf('id="full-zh"') && marker < page.indexOf('id="full-choices"'));
+  assert.match(page, /id="full-reader-note"[^>]*role="note" hidden/);
+  assert.match(app, /note.hidden = !q.readerNote/);
+  assert.match(app, /note.textContent = q.readerNote \|\| ''/);
+});
