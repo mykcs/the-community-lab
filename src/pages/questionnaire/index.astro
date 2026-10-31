@@ -78,7 +78,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
       .full-actions .button{font-size:12px}
       .full-footer{border-top:1px solid var(--line);padding:30px clamp(22px,6vw,65px);font-size:11px;color:#929ba6;line-height:1.9}
-      @media(max-width:630px){.full-shell{padding-top:28px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-progress{margin-bottom:33px}.full-question h1{font-size:28px}.full-question-zh{font-size:21px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:14px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin-bottom:29px}.full-quiz-backup{justify-content:flex-start}}
+      @media(max-width:630px){.full-shell{padding-top:18px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-quiz-disclosure{padding:9px 12px;margin-bottom:10px;line-height:1.65}.full-progress{margin-bottom:22px}.full-question h1{font-size:27px;margin:12px 0 18px}.full-translation{padding-top:13px}.full-question-zh{font-size:20px;line-height:1.6;margin:10px 0 14px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:12px;min-height:72px}.full-choices{gap:9px;margin:12px 0 16px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin:10px 0 17px}.full-quiz-backup{justify-content:flex-start}}
     </style>
   </head>
   <body>
@@ -102,7 +102,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
         </section>
 
         <section id="full-quiz" class="full-pane" hidden aria-labelledby="full-ko">
-          <p class="full-quiz-disclosure" role="note">非官方试填 · 韩文原题与中文 AI 初译（未经真人双语审校）；用户报告的非营利翻译许可原件未独立核验。这里没有官方计分或嘉宾匹配。作答只保留在本页内存，不自动上传；需要保留请主动下载本机进度 JSON。</p>
+          <p class="full-quiz-disclosure" role="note">非官方试填。中文 AI 初译未经真人双语审校；非营利许可为用户报告，许可原件未独立核验。没有官方计分或嘉宾匹配。作答不自动上传，留在本页内存；主动下载才保存。</p>
           <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span><div class="full-quiz-backup"><button id="full-save" class="full-muted-button" type="button" disabled>↓ 下载本机进度 JSON</button><span id="full-save-status" class="full-feedback" role="status" aria-live="polite"></span></div></div>
           <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
           <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>
