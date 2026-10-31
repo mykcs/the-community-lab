@@ -423,7 +423,10 @@ test('review search finds Korean and Chinese option texts including local edits'
 test('both reviewer pages expose the same separately marked, unreviewed idiom note', () => {
   const idiom = data.questions.find(q => q.id === 's1-openness-11');
   assert.ok(idiom);
-  assert.equal(idiom.translation_version, 'draft-0.1.1');
+  assert.equal(idiom.translation_version, 'draft-0.1.2');
+  assert.match(idiom.reader_note_zh_cn, /尚未查到可核验的最早文学出处/);
+  assert.match(idiom.reader_note_zh_cn, /《警世通言/);
+  assert.match(idiom.reader_note_zh_cn, /不完全等义/);
   assert.match(idiom.reader_note_zh_cn, /AI 译注（待独立人工核对）/);
   assert.deepEqual(standaloneData.questions, data.questions);
   assert.match(html, /if\(q.reader_note_zh_cn\)zp.append/);
