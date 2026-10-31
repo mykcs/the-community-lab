@@ -99,8 +99,8 @@ function render() {
   $('full-next').textContent = active.index === questions.length - 1 ? '完成本季答题 →' : '确认，继续 →';
   $('full-save').disabled = answered === 0;
   $('full-save-status').textContent = active.needsReview?.has(q.id)
-    ? '这道题的中文 AI 译文已经更新；请阅读韩文和新中文后重新点击选项，才能继续。'
-    : (active.needsReview?.size ? `还有 ${active.needsReview.size} 道旧译文答案待重新确认。` : '');
+    ? '这道题缺少历史中文文字指纹，或 AI 译文已经更新；请阅读当前韩文和中文并重新点击选项确认。'
+    : (active.needsReview?.size ? `还有 ${active.needsReview.size} 道历史文字无法验证或译文更新的答案待重新确认。` : '');
   if (!panes.quiz.hidden) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     $('full-ko').focus({ preventScroll: true });
@@ -123,7 +123,7 @@ function finish() {
   if (firstUnreviewed !== -1) {
     active.index = firstUnreviewed;
     render();
-    $('full-save-status').textContent = `还有 ${active.needsReview.size} 道译文更新后的选项需要重新确认，原答案已保留。`;
+    $('full-save-status').textContent = `还有 ${active.needsReview.size} 道缺少历史文字证据或译文更新的选项需要重新确认，原答案已保留。`;
     return;
   }
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
@@ -184,7 +184,7 @@ async function importProgress(file) {
           ? `第 ${session.season} 季已有 ${Object.keys(previous.answers).length} 道答案；导入会覆盖或删除部分选择，无法撤销。`
           : '',
         changed
-          ? `其中 ${changed} 道题的中文 AI 译文文字或版本与备份不一致。原始韩文来源和选项值仍匹配，旧选择会保留，但需要在当前译文下逐题重新确认。`
+          ? `其中 ${changed} 道题缺少历史中文文字指纹，或 AI 译文文字／版本与备份不一致。原始韩文来源和选项值仍匹配，旧选择会保留，但须按当前译文逐题重新确认。`
           : '',
       ].filter(Boolean);
       if (!window.confirm(`${reasons.join('\n')}
@@ -209,7 +209,7 @@ async function importProgress(file) {
       render();
       view('quiz');
       $('full-save-status').textContent = changed
-        ? `已保留 ${session.answeredCount} 道旧答案；请重新确认 ${changed} 道更新译文的选择。`
+        ? `已保留 ${session.answeredCount} 道旧答案；请重新确认 ${changed} 道缺少历史文字证据或译文更新的选择。`
         : `已恢复第 ${session.season} 季 ${session.answeredCount} 道答案`;
     }
     status.textContent = '';
