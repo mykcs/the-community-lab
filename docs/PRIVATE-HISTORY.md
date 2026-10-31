@@ -43,7 +43,7 @@ GitHub 登录目前默认涉及提供给 Supabase 的账号标识／资料／邮
 
 单条删除先确认本人可见记录，删除后再读服务器，只有仍为同一有效会话且结果为空才显示成功。身份改变、服务错误或读回仍有记录时，不从列表移除该条。
 
-GitHub Pages 不执行 `/api`。账号注销从浏览器以已登录用户 JWT 调用 Supabase `functions.invoke('account-delete')`，仅允许精确配置的网站 Origin，通过 CORS 预检后处理 POST JSON；要求单独确认和 Bearer 会话。Edge Functions 的 `verify_jwt` 明确保持 `true`，共享核心再验证调用者及活动会话，自己派生 user ID；请求不能提供目标 ID。用户数据的常规操作仍走用户 JWT，不走管理 secret。
+GitHub Pages 不执行 `/api`。账号注销从浏览器以已登录用户 JWT 调用 Supabase `functions.invoke('account-delete')`，仅允许精确配置的网站 Origin，通过 CORS 预检后处理 POST JSON；要求单独确认和 Bearer 会话。Supabase Edge Function 的平台 `verify_jwt` 设为 `false`，让不带用户 JWT 的 CORS `OPTIONS` 预检能到达处理器；这只关闭网关在执行代码前的 JWT 检查。注销处理器仍校验精确 Origin、显式确认、Bearer JWT（用 `auth.getUser` 验证）及活动会话，并从已验证身份派生 user ID；匿名 POST 会返回 401。请求不能提供目标 ID。用户数据的常规操作仍走用户 JWT，不走管理 secret。
 
 Edge 由托管 Supabase 注入 `SUPABASE_URL`、`SUPABASE_PUBLISHABLE_KEYS` 和 `SUPABASE_SECRET_KEYS`，只读取映射中 `default` 键。后两个 key 映射绝不能给浏览器。服务端 `PUBLIC_HISTORY_AUTH_ENABLED`、`PUBLIC_HISTORY_SITE_ORIGIN` 和 `HISTORY_ACCOUNT_DELETE_ENABLED` 均须明确配置，删除功能默认关闭。前端 `PUBLIC_HISTORY_SITE_ORIGIN` 填纯 origin；Astro `BASE_URL` 决定固定登录回调和内部导航路径，不接受可控跳转目标。即使设置了 Pages 项目路径前缀，也不能消除 `*.github.io` 的共享 origin；该主机的登录／历史配置会 fail closed。专用自有域名或项目专属主机需另行配置并实测。备用 Vercel 函数不会因为存在于仓库而在 Pages 上运行。
 
