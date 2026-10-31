@@ -61,9 +61,9 @@
     "interpretation": "Labels absent in this observed 37-item source list; does not prove missing required questions."
   },
   "pathObservations": {
-    "publicClient": "The observed bundle derives a per-season question order with a fixed-seed shuffle; answer advances the index by one, previous decrements it, and the final answer submits to the API. No answer-dependent branch is observed in this bundle. Two observed S2 runs showed the same order, but broader cross-session stability and the full browser graph remain UNVERIFIED.",
+    "publicClient": "The observed bundle derives a per-season question order with a fixed-seed shuffle; answer advances the index by one, previous decrements it, and the final answer submits to the API. No answer-dependent branch is observed in this bundle. Two historical full S2 runs matched, and two fresh runs matched on the first item only; broader cross-session stability and the full browser graph remain UNVERIFIED.",
     "season1Browser": "First item exposes 4 answer controls; after one synthetic answer the second exposes 6; previous control becomes available. No final submission was made.",
-    "season2Intro": "The visible introduction states that questions are presented in randomized order independent of measurement area. It does not say whether the permutation changes between sessions.",
+    "season2Intro": "The visible introduction states that questions are presented in randomized order independent of measurement area. It does not say whether the permutation changes between sessions. Two fresh blank-nickname starts both reached 1/37 and showed the same first item; no option was selected and no result was submitted. This does not establish the full cross-session sequence.",
     "scoring": "Final answers submitted to /api/v1/results with Firebase App Check; scoring weights and official result agreement remain UNKNOWN. No protected or admin route accessed."
   },
   "questions": [
