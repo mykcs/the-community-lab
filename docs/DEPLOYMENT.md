@@ -1,5 +1,13 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-10-31 · GitHub Pages 全站读回与渲染验收（main `501ff3a53c60de6112a703553ba68a5b91f2dc91`）
+
+- **正式站：** [GitHub Pages 首页](https://mykcs.github.io/the-community-lab/)；首页、Astro 问卷与独立译审页都由 Pages 提供，不只是审阅目录。
+- **发布身份：** PR #149 合并提交 `501ff3a53c60de6112a703553ba68a5b91f2dc91`；该 SHA 的 Pages 构建与部署 [run #41167308141](https://github.com/mykcs/the-community-lab/actions/runs/41167308141) 成功。
+- **HTTP 读回：** 首页、`/questionnaire/?season=1`、`/questionnaire/?season=2`、`/translation-review/`、`/original-question-translation-review/` 均返回 HTTP 200；两季问卷入口实际显示 S1 87 题、S2 37 题。
+- **浏览器渲染：** 在 440×956 CSS px 视口查看首页和两季问卷，并在 1280×720 CSS px 查看 S2 问卷。韩文原文在中文 AI 初译之前，题数、题组选项与页面限制说明可见。S2 本地答题选择使进度从 0/37 变为 1/37，继续后进入第 2/37 题；没有向官方测试提交答卷。
+- **验收边界：** 这是浏览器视口模拟，不是实体 iPhone 验收；仅检查首屏与一个 S2 前进流程，不证明 124 题全路径或官方评分一致。译文独立真人复核仍为 **0/124**，官方计分公式为 `UNKNOWN`，真实嘉宾匹配资格为 0。
+
 ## 2026-10-31 · S2 sa13 文案修订已发布（PR #138）
 
 - **正式网站：** [GitHub Pages 原题复核页](https://mykcs.github.io/the-community-lab/original-question-translation-review/)；首页继续由 GitHub Pages 提供。
