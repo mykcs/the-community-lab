@@ -12,7 +12,7 @@ const pack = loadFullQuestionnaire();
 const raw = extractDraftPack(readFileSync(new URL('../docs/translation-review/index.html', import.meta.url), 'utf8'));
 const index = JSON.parse(readFileSync(new URL('../data/original-question-index.json', import.meta.url), 'utf8'));
 
-test('124 source IDs, 550 bilingual choices and observed fixed client order survive integration', () => {
+test('124 source IDs, 550 bilingual choices and indexed client positions survive integration', () => {
   assert.equal(pack.status, 'SOURCE_QUESTION_PILOT_UNREVIEWED_NOT_OFFICIAL');
   assert.equal(pack.rightsEvidence, 'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED');
   assert.equal(pack.scoringVersion, 'UNKNOWN');
