@@ -285,6 +285,37 @@ test('option-only AI wording edits trigger the same restoration gate, without re
   )).changedQuestionIds, []);
 });
 
+test('legacy backup without wording fingerprint stays UNKNOWN across imports and reexports', () => {
+  const current = loadFullQuestionnaire();
+  const q = current.seasons[2][0];
+  const answers = { [q.id]: q.options[0].value };
+  const legacy = createPrivateProgressReceipt(current, 2, answers, 0);
+  delete legacy.selections[0].translationFingerprint;
+  const restored = restorePrivateProgressReceipt(current, legacy);
+  assert.equal(restored.answerFingerprints[q.id], null, 'missing historic fingerprint must stay unknown');
+
+  const next = createPrivateProgressReceipt(current, 2, restored.answers, 0,
+    restored.answerVersions, restored.answerFingerprints);
+  assert.equal(next.selections[0].translationFingerprint, null,
+    're-export must not falsely claim that the user read the current Chinese wording');
+  const again = restorePrivateProgressReceipt(current, next);
+  assert.equal(again.answerFingerprints[q.id], null);
+
+  const future = structuredClone(current);
+  future.seasons[2][0].draftZh += '（同版本后续改译）';
+  attachTranslationFingerprints(future);
+  const stillUnknown = restorePrivateProgressReceipt(future, next);
+  assert.equal(stillUnknown.answerFingerprints[q.id], null);
+  assert.deepEqual(stillUnknown.changedQuestionIds, [],
+    'without a historic fingerprint the comparison can only use version labels');
+
+  stillUnknown.answerFingerprints[q.id] = future.seasons[2][0].translationFingerprint;
+  const reconfirmed = createPrivateProgressReceipt(future, 2, stillUnknown.answers, 0,
+    stillUnknown.answerVersions, stillUnknown.answerFingerprints);
+  assert.equal(reconfirmed.selections[0].translationFingerprint,
+    future.seasons[2][0].translationFingerprint, 'actual re-selection can establish the current wording');
+});
+
 test('legacy local backups stay importable, and a malformed new fingerprint is rejected', () => {
   const before = loadFullQuestionnaire();
   const first = before.seasons[2][0];
