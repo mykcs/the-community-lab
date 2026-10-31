@@ -19,7 +19,7 @@ const req = (method, requestOrigin = origin, headers = {}) => new Request('https
 
 test('Supabase gateway lets preflight reach the handler while POST identity remains checked in code', async () => {
   const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
-  assert.match(config, /\\[functions\\.account-delete\\]\\s+verify_jwt\\s*=\\s*false/);
+  assert.ok(config.includes('[functions.account-delete]\nverify_jwt = false'));
 });
 
 test('Edge maps only injected default keys and stays disabled without exact explicit gates', () => {
