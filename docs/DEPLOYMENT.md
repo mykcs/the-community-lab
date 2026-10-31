@@ -2,9 +2,9 @@
 
 ## 2026-10-31 · GitHub Pages 与 main 发布身份对齐
 
-- 当前 GitHub `main` 为 `072312efd89a6dfef560137e39568e2f48b344bc`。当前正式 Pages 内容由 PR #157 合并后的 `a995df5fbe396b3be97a68a1561ad35002db39e5` 构建；Pages run [#41218944391](https://github.com/mykcs/the-community-lab/actions/runs/41218944391) 的 build、deploy jobs 均成功，构建包含 `npm ci`、`npm run check`、`npm run build` 及两个静态复核页。
-- `a995df5fbe396b3be97a68a1561ad35002db39e5` 之后，PR #158 的 `072312efd89a6dfef560137e39568e2f48b344bc` 只改了 `docs/VERIFICATION-MATRIX.md`。Pages 工作流不监听该路径，因此无需重新部署；最新正式首页返回 HTTP 200，Chrome 中可见 124 题 AI 初译、人工复核 `0/124`、官方计分未核实及 7 位嘉宾／13 条导航链接。
-- 因此，“当前 main”与“最近 Pages artifact 的源码 SHA”不同，但差异仅为未参与 Pages 构建的核验文档。前一节 `501ff3a...` 的记录保留为历史发布快照，不再代表最近一次 Pages 发布。
+- 核验快照：PR #159 合并前，GitHub `main` 为 `072312efd89a6dfef560137e39568e2f48b344bc`。最近正式 Pages 内容由 PR #157 合并后的 `a995df5fbe396b3be97a68a1561ad35002db39e5` 构建；Pages run [#41218944391](https://github.com/mykcs/the-community-lab/actions/runs/41218944391) 的 build、deploy jobs 均成功，构建包含 `npm ci`、`npm run check`、`npm run build` 及两个静态复核页。
+- PR #158 和 PR #159 都只改了文档；Pages 工作流不监听这些路径，因此没有触发新部署。正式首页返回 HTTP 200，Chrome 中可见 124 题 AI 初译、人工复核 `0/124`、官方计分未核实及 7 位嘉宾／13 条导航链接。
+- 此快照与最近 Pages artifact 的源码 SHA 不同，原因是主线随后只增加了核验文档和本部署记录。前一节 `501ff3a...` 保留为更早的历史发布快照，不代表最近一次 Pages 发布。
 
 ## 2026-10-31 · GitHub Pages 全站读回与渲染验收（main `501ff3a53c60de6112a703553ba68a5b91f2dc91`）
 
