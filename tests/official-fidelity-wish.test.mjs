@@ -26,7 +26,7 @@ test('the proof contract cannot replace a verified input vector with a result sc
   assert.match(matrix, /主观打算全选 X、结果截图、仅有结果 ID/);
   assert.match(matrix, /独立计算/);
   assert.match(matrix, /有限几个对照样例全部相同，也不能证明所有选择结果相同/);
-  assert.match(matrix, /一份.*输入已验收/);
+  assert.match(matrix, /两份.*输入已验收/);
   assert.match(translation, /翻译仅是展示层/);
   assert.match(translation, /理解检验/);
 });
