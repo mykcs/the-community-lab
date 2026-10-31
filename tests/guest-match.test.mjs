@@ -7,6 +7,7 @@ import { rankComparableGuests } from '../lib/guest-match.mjs';
 const user = {
   season: 2, origin: 'licensed_official', question_version: 'licensed-source-2026',
   scoring_version: 'licensed-official-v1',
+  question_set_hash: '0123456789abcdef',
   dimensions: [{ id: 'a', score: 40 }, { id: 'b', score: -30 }, { id: 'c', score: 0 }],
 };
 
@@ -14,6 +15,7 @@ function guest(id, scores, override = {}) {
   return {
     id, stage_name: `合成嘉宾${id}`, season: 2,
     question_version: 'licensed-source-2026', scoring_version: 'licensed-official-v1',
+    question_set_hash: '0123456789abcdef',
     score_source_url: `https://www.rfc-editor.org/rfc/rfc6761.html`, score_checked_at: '2026-10-29',
     // Synthetic ONLY: exercise the future provenance contract; never publish as a real guest.
     score_review_status: 'human_reviewed_primary_source',
@@ -140,6 +142,24 @@ test('a URL and a checked date alone cannot promote unreviewed guest scores', ()
     assert.equal(ranked.excluded, 1);
     assert.deepEqual(ranked.matches, []);
   }
+});
+
+
+test('same labelled versions with a different question-set hash cannot enter guest ranking', () => {
+  // Synthetic fingerprints only; never infer a real guest's questionnaire
+  // fingerprint from code/category cards that omit this source identity.
+  const records = [
+    guest('matching', [40, -30, 0]),
+    guest('missing-hash', [40, -30, 0], { question_set_hash: undefined }),
+    guest('different-hash', [40, -30, 0], { question_set_hash: 'ffffffffffffffff' }),
+  ];
+  const ranked = rankComparableGuests(user, records);
+  assert.deepEqual(ranked.matches.map(g => g.guest_id), ['matching']);
+  assert.equal(ranked.excluded, 2);
+  assert.throws(() => rankComparableGuests({ ...user, question_set_hash: undefined }, records),
+    /无效的匹配输入/);
+  assert.throws(() => rankComparableGuests({ ...user, question_set_hash: '' }, records),
+    /无效的匹配输入/);
 });
 
 test('public guest score candidates without both question and scoring versions remain excluded', () => {
