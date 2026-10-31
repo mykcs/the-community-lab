@@ -172,6 +172,10 @@ test('existing completed-only local downloads remain importable without inventin
       assert.equal(restored.complete, true);
       assert.deepEqual({ ...restored.answers }, answers);
     }
+    // Older completed files have no proof of which wording was actually read.
+    // Keep their choices but do not auto-complete without reconfirmation.
+    assert.deepEqual(restoredOld.changedQuestionIds, questions.map(q => q.id));
+    assert.deepEqual(restoredNew.changedQuestionIds, []);
   }
 });
 
@@ -293,6 +297,7 @@ test('legacy backup without wording fingerprint stays UNKNOWN across imports and
   delete legacy.selections[0].translationFingerprint;
   const restored = restorePrivateProgressReceipt(current, legacy);
   assert.equal(restored.answerFingerprints[q.id], null, 'missing historic fingerprint must stay unknown');
+  assert.deepEqual(restored.changedQuestionIds, [q.id], 'unknown wording must require a new click');
 
   const next = createPrivateProgressReceipt(current, 2, restored.answers, 0,
     restored.answerVersions, restored.answerFingerprints);
@@ -300,20 +305,22 @@ test('legacy backup without wording fingerprint stays UNKNOWN across imports and
     're-export must not falsely claim that the user read the current Chinese wording');
   const again = restorePrivateProgressReceipt(current, next);
   assert.equal(again.answerFingerprints[q.id], null);
+  assert.deepEqual(again.changedQuestionIds, [q.id], 're-exporting cannot bypass reconfirmation');
 
   const future = structuredClone(current);
   future.seasons[2][0].draftZh += '（同版本后续改译）';
   attachTranslationFingerprints(future);
   const stillUnknown = restorePrivateProgressReceipt(future, next);
   assert.equal(stillUnknown.answerFingerprints[q.id], null);
-  assert.deepEqual(stillUnknown.changedQuestionIds, [],
-    'without a historic fingerprint the comparison can only use version labels');
+  assert.deepEqual(stillUnknown.changedQuestionIds, [q.id],
+    'matching editorial labels do not prove what an old respondent read');
 
   stillUnknown.answerFingerprints[q.id] = future.seasons[2][0].translationFingerprint;
   const reconfirmed = createPrivateProgressReceipt(future, 2, stillUnknown.answers, 0,
     stillUnknown.answerVersions, stillUnknown.answerFingerprints);
   assert.equal(reconfirmed.selections[0].translationFingerprint,
     future.seasons[2][0].translationFingerprint, 'actual re-selection can establish the current wording');
+  assert.deepEqual(restorePrivateProgressReceipt(future, reconfirmed).changedQuestionIds, []);
 });
 
 test('legacy local backups stay importable, and a malformed new fingerprint is rejected', () => {
@@ -323,7 +330,7 @@ test('legacy local backups stay importable, and a malformed new fingerprint is r
     { [first.id]: first.options[0].value }, 0);
   const legacy = structuredClone(receipt);
   delete legacy.selections[0].translationFingerprint;
-  assert.deepEqual(restorePrivateProgressReceipt(before, legacy).changedQuestionIds, []);
+  assert.deepEqual(restorePrivateProgressReceipt(before, legacy).changedQuestionIds, [first.id]);
   const malformed = structuredClone(receipt);
   malformed.selections[0].translationFingerprint = 'not-a-sha';
   assert.throws(() => restorePrivateProgressReceipt(before, malformed), /非法|无效|不同版本/);
