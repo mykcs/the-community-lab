@@ -119,6 +119,13 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 
 此验收没有改变 Vercel Hobby 的每日限制，也没有读到该额度的剩余余额；之后的新部署仍须观察平台实际状态。没有升级付费计划或绕过限制。
 
+
+## 2026-10-30 私人历史候选状态
+
+- feat/private-history-candidate 已在本地与 main 00f1b7b60b6521dc69047c21d8ae9bf4a50135f6 同步，并通过本地 npm run check、npm run build 与游客/隐私/历史页面浏览器验收。GitHub PR #11 仍未接收这批候选更新；当前没有新的 Preview 或生产部署。
+- 历史登录与保存仍默认关闭。PGlite 合成认证回归不等于真实 Supabase、GitHub OAuth、双账号交叉隔离或删除读回验收；隐私/数据区域/保留期决策仍缺失。
+- PR #34 的 Vercel Check 在 2026-10-30 返回 api-deployments-free-per-day 与“24 小时后重试”。在平台状态变化前，不为本地候选重试部署或用其他方式规避该限制。
+
 ## 2026-10-30 PR #35 自动发布验收
 
 - PR #35 head `2b355d9af854c576ae54d00b33661fdf71a82103` 的 GitHub Actions run [#40997558072](https://github.com/mykcs/the-community-lab/actions/runs/40997558072) 成功；Vercel Git Preview `dpl_FpWobo8dsYvpfVmG5AfiNa5sM69h` 为 `READY`、`source=git`，SHA 与 head 精确一致。
@@ -132,3 +139,9 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - [PR #39](https://github.com/mykcs/the-community-lab/pull/39) 修复缺少题库／计分版本时演示结果丢失版本来源的问题。其精确 head 的 GitHub Actions run [#41001092175](https://github.com/mykcs/the-community-lab/actions/runs/41001092175) 成功，PR 已合入。
 - 当前 main merge commit `4b2e3ee0926411c229c9ba1d494bf7c83cf0b80f` 的 GitHub Vercel status 为 `success`。Production deployment [dpl_CwsfwhXP8DfWeVthm5zzRCvM99Zd](https://vercel.com/wangrui92-team/the-community-lab/CwsfwhXP8DfWeVthm5zzRCvM99Zd) 为 `READY`、`source=git`、`target=production`，Git SHA 与 main 精确一致，并带正式域名 `the-community-lab.vercel.app` alias。正式域名可加载新首页和当前核验状态。
 - 文档分支的真实验收：[PR #41](https://github.com/mykcs/the-community-lab/pull/41) 的 `docs/**` head `e4e2925c996529cd477dd6a146e8f5c4b8936f2c` 运行 GitHub Actions [#41008346764](https://github.com/mykcs/the-community-lab/actions/runs/41008346764) 成功（`npm ci`、`npm run check`、`npm run build`）；Vercel 按该 SHA 查询返回 0 条 deployment。该次文档分支因此通过 Actions 且没有创建 Preview；同一分支规则减少了这一次 Preview deployment。Vercel 未提供每日限额余额，无法把单次抑制换算成剩余额度或保证未来不会限流。
+
+## 私人历史候选与当前 main 同步
+
+- `feat/private-history-candidate` 已在本地合并到当前 main `e2b644f733e2986ebc54d2bee71566deff6ec8c3`，并完成版本目录兼容修复和本地回归。
+- 合并提交 `f88afaa91b94645a0985eaac26a52e6f0d28976d` 已快进推送到 Draft PR #11；GitHub Actions run `41011447548` 的 `npm ci`、`npm run check`、`npm run build` 均通过。Vercel 对精确 SHA 返回 `build-rate-limit`，且按 SHA 查询无 deployment；因此没有新的 Preview 或 Production 验收。
+- 不升级套餐或绕过限额。PR #11 保持 Draft；真实 OAuth、隐私/区域/保留期决定、双真实账号隔离、删除读回和精确 head Preview 仍是任何启用或合并私人保存之前的门槛。

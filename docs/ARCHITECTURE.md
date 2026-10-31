@@ -1,6 +1,6 @@
 # 网站、登录、结果保存与费用设计
 
-状态：**静态演示网站已发布；下面的账号、数据库与费用方案仍是候选，尚未开通。** 调查日期：2026-10-29。
+状态：**静态演示网站已发布；私有历史已有默认关闭的实现候选，尚未开通真实服务。** 调查日期：2026-10-29。
 
 ## 推荐最小方案
 
@@ -12,7 +12,7 @@
 | 无账号体验 | 浏览器会话／本地临时状态 | 朋友不必为做一套娱乐测试注册 GitHub |
 | 可选结果分享 | 用户主动生成的去身份化卡片 | 默认不包含用户名、逐题答案、账号 ID |
 | 嘉宾匹配 | 同季公开嘉宾成绩数据 + 浏览器本地计算 | 不必把访客结果上传至服务器即可计算最相近嘉宾 |
-| 嘉宾社媒目录 | 经过人工核实的公开账号及来源记录 | 网站展示资料来源和核查日期，不需要读取用户的社媒账户 |
+| 嘉宾社媒目录 | 经两名独立 Agent 逐条核查公开原始来源的导航链接；个人成绩和匹配身份仍需人工核实 | 网站标明来源核查方式和日期，不需要读取用户的社媒账户 |
 
 题库采用版本化双语数据：`source_text_ko` 与 `translation_zh_cn` 是不同字段，韩文优先展示，逐题附 `origin`（官方原题／本站原创演示）、`source_url`、`rights_status`、`review_status` 和 `translation_version`。本地演示题不得声称官方测量等价；完整规则见 [翻译与题库标准](TRANSLATION-STANDARD.md)。
 
@@ -43,15 +43,15 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 ## 数据模型与服务端限制
 
-建议 `test_runs(id, owner_id, season, question_version, scoring_version, result_json, created_at)`；原始答案如未来确需保存，必须单独设置 `consent_version` 和明确用途。所有记录默认私有，禁止公开查询个人测试结果。
+实现候选使用列级白名单与不可变版本目录，不接受任意 `result_json`；账号和时间由服务器产生。完整数据合同、SDK 登录交接、导出／删除与开放条件由 [私有历史候选](PRIVATE-HISTORY.md) 维护，实际权限以 canonical SQL 和目标服务读回为准。
 
-嘉宾目录与私人用户表分开维护：`guest_profiles`（公开节目昵称、季别）、`guest_results`（可核实的公开数值和版本、证据来源）、`guest_social_accounts`（平台、公开链接、本人归属证据、最后核验时间、活动核验时间）。不储存嘉宾私人联系方式。初期可用代码内版本化静态数据而非另开一套可写数据库。
+嘉宾目录与私人用户表分开维护：`guest_profiles`（公开节目昵称、季别）、`guest_results`（经人工验证的公开数值和版本、证据来源）、`guest_social_accounts`（平台、公开链接、原始来源、核查方式与日期）。只有经人工确认的账号归属可用于身份认证；本次 Agent 核查例外仅供公开链接导航，不进入匹配、排名或活跃度判断。不储存嘉宾私人联系方式。初期可用代码内版本化静态数据而非另开一套可写数据库。
 
 具体匹配算法、资料核验和「最活跃平台」判定见 [docs/GUEST-MATCHING.md](GUEST-MATCHING.md)。
 
 必须实施并实测：
 
-- `owner_id = auth.uid()` 的 `SELECT`、`INSERT`、`UPDATE`、`DELETE` 行级策略；禁止匿名绕过。
+- 本人 `SELECT`、`INSERT`、`DELETE` 行级策略与活动会话核验；候选不授予 `UPDATE`，禁止匿名绕过。
 - 后端验证用户会话、参数、测试版本；绝不把数据库 service role key 发到浏览器。
 - 双账号隔离测试、退出后不可访问、删除后服务端确认、URL 不泄露结果。
 - 登录仅申请必要范围；不要申请 `repo` 或 `read:org` 等与测试无关权限。
@@ -67,3 +67,5 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 当前 Astro + Tailwind 双季静态演示版已在 [GitHub Pages](https://mykcs.github.io/the-community-lab/) 发布。2026-10-30 [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 合并后，对提交 `7cbb659c5d16c6002767ee32a0bd062d516badbf` 的 [Actions 运行](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 已核对 `build`、`deploy` 均成功，正式首页、译审子页、JS/CSS 均 HTTP 200；浏览器走通了第二季 6 题、第一季 8 题、暂停续答和结果卡，440×956 CSS px 手机模拟视口没有横向溢出（并非实体手机）。
 
 原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。服务器功能需要未来单独设计、授权和验证；不得创建宽权限 GitHub Token 来绕过现有边界。
+
+可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。这里**只有离线候选代码**，没有部署 Supabase、GitHub OAuth 或真实数据，所有保存与注销开关仍默认关闭；不能将静态 Pages 的发布状态当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。

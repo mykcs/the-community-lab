@@ -5,20 +5,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
+    "test": "node --no-wasm-async-compilation --test",
     "audit:reproduction": "node scripts/audit-reproduction.mjs",
     "check": "npm test && npm run audit:reproduction && astro check",
     "build": "astro build",
     "dev": "astro dev",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "test:history": "node --no-wasm-async-compilation --test tests/history*.test.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "@tailwindcss/vite": "^4.2.2",
     "astro": "^7.4.4",
     "tailwindcss": "^4.2.2"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.8",
+    "@electric-sql/pglite": "0.5.13",
     "typescript": "^5.9.3"
   },
   "engines": {

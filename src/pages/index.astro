@@ -1,9 +1,13 @@
 ---
 import '../styles/global.css';
+import '../styles/history.css';
 import { SEASONS } from '../../data/questions.mjs';
 import { ORIGINAL_SITE_AUDIT } from '../../data/original-site-audit.mjs';
 import { GUEST_SOCIAL_DIRECTORY } from '../../data/guest-social-directory.mjs';
 import { buildReproductionAudit } from '../../lib/reproduction-audit.mjs';
+import { siteRoutePath } from '../../lib/history-config.mjs';
+const historyHref = siteRoutePath(import.meta.env.BASE_URL, 'history/');
+const privacyHref = siteRoutePath(import.meta.env.BASE_URL, 'privacy/');
 type GuestSocialAccount = { platform: string; url: string; evidence_url: string; relationship: string };
 type GuestSocialPerson = { season: number; stage_name_ko: string; accounts: ReadonlyArray<GuestSocialAccount> };
 const socialPeople = GUEST_SOCIAL_DIRECTORY as unknown as ReadonlyArray<GuestSocialPerson>;
@@ -50,6 +54,7 @@ const base = import.meta.env.BASE_URL;
         <nav aria-label="主导航" class="header-links">
           <a href="#experiments">双季测试</a>
           <a href="#how-it-works">我们的标准</a>
+          <a id="history-navigation" href={historyHref} hidden>私人历史</a>
           <a href="#guest-social">嘉宾社媒</a>
           <a class="nav-github" href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
         </nav>
@@ -211,7 +216,7 @@ const base = import.meta.env.BASE_URL;
         <section id="result-view" class="view result-view" hidden aria-labelledby="result-title"><div id="result-content"></div></section>
       </main>
 
-      <footer class="site-footer" id="privacy"><div class="footer-main"><div><span class="footer-brand">THE COMMUNITY LAB.</span><p>一个关于差异、理解与同频的非官方实验。</p></div><div class="footer-links"><a href="https://github.com/mykcs/the-community-lab/blob/main/WISH.md" target="_blank" rel="noopener noreferrer">项目愿望 ↗</a><a href="https://github.com/mykcs/the-community-lab/blob/main/docs/TRANSLATION-STANDARD.md" target="_blank" rel="noopener noreferrer">翻译标准 ↗</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">公开源码 ↗</a></div></div><div class="footer-bottom"><span>INDEPENDENT FAN EXPERIMENT · NOT OFFICIAL</span><span>无需注册或填写个人信息 · 答案只在本页处理 · 无第三方追踪</span></div></footer>
+      <footer class="site-footer" id="privacy"><div class="footer-main"><div><span class="footer-brand">THE COMMUNITY LAB.</span><p>一个关于差异、理解与同频的非官方实验。</p></div><div class="footer-links"><a href={privacyHref}>隐私与数据选择</a><a href="https://github.com/mykcs/the-community-lab/blob/main/WISH.md" target="_blank" rel="noopener noreferrer">项目愿望 ↗</a><a href="https://github.com/mykcs/the-community-lab/blob/main/docs/TRANSLATION-STANDARD.md" target="_blank" rel="noopener noreferrer">翻译标准 ↗</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">公开源码 ↗</a></div></div><div class="footer-bottom"><span>INDEPENDENT FAN EXPERIMENT · NOT OFFICIAL</span><span>无需注册或填写个人信息 · 答案只在本页处理 · 无第三方追踪</span></div></footer>
     </div>
   </body>
 </html>

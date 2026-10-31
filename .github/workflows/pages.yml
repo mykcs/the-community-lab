@@ -43,6 +43,8 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: Verify project-path navigation and private-history candidate is static-safe
+        run: node scripts/verify-pages-history.mjs
       - name: Include the unreviewed bilingual translation draft on a separate route
         run: |
           mkdir -p dist/translation-review
