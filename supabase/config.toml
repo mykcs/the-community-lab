@@ -1,4 +1,5 @@
-# Keep platform JWT verification on for the user-facing deletion endpoint.
-# The handler additionally verifies the caller identity and active session.
+# Browser CORS preflight carries no user JWT, so platform JWT verification would
+# reject OPTIONS before the handler can answer. The handler verifies auth.getUser
+# and an active session for every POST, and remains fail-closed when disabled.
 [functions.account-delete]
-verify_jwt = true
+verify_jwt = false
