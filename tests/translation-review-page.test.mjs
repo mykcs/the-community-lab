@@ -219,6 +219,19 @@ test('s1-gender-17 translates 믿음 as belief while remaining an unreviewed dra
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-gender-02 keeps both comparison subjects explicit as an unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-gender-02');
+  assert.ok(question, 's1-gender-02 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '자본주의 시장에서 일반적으로 남성의 능력은 여성의 능력보다 더 높게 평가된다.');
+  assert.equal(question.translation_zh_cn, '在资本主义市场中，男性的能力通常比女性的能力受到更高评价。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.deepEqual(standaloneData.questions, data.questions, 'both reviewer pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('s1-gender-21 keeps 엄살 as exaggerated suffering in the unreviewed draft', () => {
   const question = data.questions.find(item => item.id === 's1-gender-21');
   assert.ok(question, 's1-gender-21 must remain in the source dataset');
