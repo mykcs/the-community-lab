@@ -20,6 +20,8 @@ test('two source seasons, provenance and unreviewed pilot disclosures appear in 
   assert.match(page, /第二季 37 题/);
   assert.match(page, /AI 初译/);
   assert.match(page, /未经人工复核/);
+  assert.match(page, /独立韩中复核尚未完成/);
+  assert.doesNotMatch(page, /真人审核暂缓/);
   assert.match(page, /非官方正式测试|不是官方正式测试/);
   assert.match(page, /许可原件/);
   assert.match(page, /不上传服务器/);
