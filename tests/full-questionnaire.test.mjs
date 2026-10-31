@@ -163,6 +163,8 @@ test('existing completed-only local downloads remain importable without inventin
     const questions = pack.seasons[season];
     const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
     const oldReceipt = summarizeUnscoredAnswers(pack, season, answers);
+    // Reproduce the historical completed format before wording fingerprints existed.
+    for (const selection of oldReceipt.selections) delete selection.translationFingerprint;
     const restoredOld = restorePrivateProgressReceipt(pack, oldReceipt);
     const newReceipt = createPrivateProgressReceipt(pack, season, answers, questions.length - 1);
     const restoredNew = restorePrivateProgressReceipt(pack, newReceipt);
