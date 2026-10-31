@@ -4,7 +4,7 @@ import { loadFullQuestionnaire, attachTranslationFingerprints } from '../scripts
 import {
   extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
   PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
-  wouldDiscardLocalAnswers,
+  wouldDiscardLocalAnswers, countReplacedLocalAnswerProvenance,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -158,6 +158,30 @@ test('import conflict gate distinguishes a safe superset from lost or changed lo
   assert.throws(() => wouldDiscardLocalAnswers(existing, null));
 });
 
+test('importing an identical choice cannot silently erase a recorded wording fingerprint', () => {
+  const question = pack.seasons[2][0];
+  const answer = { [question.id]: question.options[0].value };
+  const known = {
+    answers: answer,
+    answerVersions: { [question.id]: question.translationVersion },
+    answerFingerprints: { [question.id]: question.translationFingerprint },
+  };
+  const legacy = createPrivateProgressReceipt(pack, 2, answer, 0);
+  delete legacy.selections[0].translationFingerprint;
+  const restored = restorePrivateProgressReceipt(pack, legacy);
+  assert.equal(wouldDiscardLocalAnswers(known.answers, restored.answers), false,
+    'selected original value is unchanged');
+  assert.equal(restored.changedQuestionIds.length, 0,
+    'legacy file cannot independently prove the Chinese wording changed');
+  assert.equal(countReplacedLocalAnswerProvenance(known, restored), 1,
+    'import must warn before known wording evidence becomes UNKNOWN');
+  assert.equal(countReplacedLocalAnswerProvenance(known, known), 0);
+  const changedVersion = structuredClone(known);
+  changedVersion.answerVersions[question.id] = 'draft-0.0.0';
+  assert.equal(countReplacedLocalAnswerProvenance(known, changedVersion), 1);
+  assert.throws(() => countReplacedLocalAnswerProvenance(known, { answers: answer }));
+});
+
 test('existing completed-only local downloads remain importable without inventing official scores', () => {
   for (const season of [1, 2]) {
     const questions = pack.seasons[season];
@@ -239,7 +263,7 @@ test('translation-only draft updates allow safe opt-in resume while retaining ea
 test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
   const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
   assert.match(app, /const changed = session\.changedQuestionIds\.length/);
-  assert.match(app, /if \(discardsLocal \|\| changed\)/);
+  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance\)/);
   assert.match(app, /window\.confirm/);
   assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
   assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);

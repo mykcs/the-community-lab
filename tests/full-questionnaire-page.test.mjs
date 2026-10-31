@@ -1,6 +1,13 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import test from 'node:test';
+
+test('backup import confirms changes to historical translation evidence even when choices match', () => {
+  const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
+  assert.match(app, /countReplacedLocalAnswerProvenance\(previous, session\)/);
+  assert.match(app, /discardsLocal \|\| changed \|\| overwrittenProvenance/);
+  assert.match(app, /旧备份可能使指纹变成历史未知/);
+});
 
 const page = readFileSync(new URL('../src/pages/questionnaire/index.astro', import.meta.url), 'utf8');
 const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
