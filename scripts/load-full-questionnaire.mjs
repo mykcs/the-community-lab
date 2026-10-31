@@ -10,7 +10,8 @@ import { verifyKoreanSourceSnapshot, verifySourceMetadataSnapshot } from './veri
 export function attachTranslationFingerprints(pack) {
   for (const q of [...pack.seasons[1], ...pack.seasons[2]]) {
     q.translationFingerprint = createHash('sha256')
-      .update(JSON.stringify([q.draftZh, q.options.map(o => [o.value, o.zh])]))
+      .update(JSON.stringify([q.draftZh, q.options.map(o => [o.value, o.zh]),
+        ...(q.readerNote ? [q.readerNote] : [])]))
       .digest('hex');
   }
   return pack;
