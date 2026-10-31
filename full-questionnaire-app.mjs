@@ -3,6 +3,7 @@ import {
   createPrivateProgressReceipt,
   restorePrivateProgressReceipt,
   wouldDiscardLocalAnswers,
+  countReplacedLocalAnswerProvenance,
 } from './lib/full-questionnaire.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
@@ -177,14 +178,18 @@ async function importProgress(file) {
     const session = restorePrivateProgressReceipt(pack, record);
     const previous = saved.get(session.season);
     const discardsLocal = previous && wouldDiscardLocalAnswers(previous.answers, session.answers);
+    const overwrittenProvenance = previous ? countReplacedLocalAnswerProvenance(previous, session) : 0;
     const changed = session.changedQuestionIds.length;
-    if (discardsLocal || changed) {
+    if (discardsLocal || changed || overwrittenProvenance) {
       const reasons = [
         discardsLocal
           ? `第 ${session.season} 季已有 ${Object.keys(previous.answers).length} 道答案；导入会覆盖或删除部分选择，无法撤销。`
           : '',
         changed
           ? `其中 ${changed} 道题的中文 AI 译文文字或版本与备份不一致。原始韩文来源和选项值仍匹配，旧选择会保留，但需要在当前译文下逐题重新确认。`
+          : '',
+        overwrittenProvenance
+          ? `还有 ${overwrittenProvenance} 道已有答案的选项值相同，但导入会替换本页记录的中文译文版本或文字指纹（旧备份可能使指纹变成历史未知）。建议先下载当前进度 JSON 备份。`
           : '',
       ].filter(Boolean);
       if (!window.confirm(`${reasons.join('\n')}
