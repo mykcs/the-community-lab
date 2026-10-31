@@ -10,10 +10,43 @@ export const KOREAN_SOURCE_SNAPSHOT = Object.freeze({
   sourceAssetSha256: '59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e',
   questionTextSha256: 'e3f1a365200baf882c9ffa1f874d8004356ccfc2c55906689e973ca1c0bbd0f9',
   optionLabelsSha256: '3d418f913d975e7457d19679bc8317d47fc52d1a40fd3b122b1f472d9452e63a',
+  sourceMetadataSha256: '3fed3169732ee94e26bc8ee5a28a5133bdd9996a37cd8780e3675e6d5fa326e1',
 });
 
 function hashJson(value) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+/**
+ * Bind the source-client hash to question IDs, order, raw option values
+ * and reverse/agree-side metadata. The Korean-text snapshot alone does
+ * not detect coordinated edits to the draft and source index.
+ * No copyrighted question prose or personal answers are hashed here.
+ */
+export function fingerprintSourceMetadata(index) {
+  const value = {
+    sourceAssetSha256: index?.sourceAssetSha256,
+    sourceAssetBytes: index?.sourceAssetBytes,
+    groups: index?.groups?.map(g => [
+      g.season, g.sourceGroup, g.count, g.optionCount,
+      g.reverseFlagCount, g.sourceArraySha256,
+    ]),
+    questions: index?.questions?.map(q => [
+      q.season, q.sourceQuestionId, q.sourceGroup,
+      q.sourceArrayPosition, q.displayPositionDerivedFromClient,
+      q.optionCount, q.optionValues,
+      q.reverseFlagInPublicClient, q.agreeSideInPublicClient ?? null,
+    ]),
+  };
+  return hashJson(value);
+}
+
+export function verifySourceMetadataSnapshot(index) {
+  if (index?.sourceAssetSha256 !== KOREAN_SOURCE_SNAPSHOT.sourceAssetSha256 ||
+      fingerprintSourceMetadata(index) !== KOREAN_SOURCE_SNAPSHOT.sourceMetadataSha256) {
+    throw new Error('源题元数据指纹不匹配：须先独立核对当前公开客户端的题号、选项值、顺序与方向');
+  }
+  return true;
 }
 
 /**

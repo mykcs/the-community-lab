@@ -22,9 +22,21 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
   assert.match(workflow, /cp docs\/original-question-translation-review\/index\.html dist\/original-question-translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
-  assert.match(workflow, /uses: actions\/deploy-pages@v4/);
+  assert.match(workflow, /uses: actions\/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5\.0\.1/);
   assert.match(workflow, /pages:\s*write/);
   assert.match(workflow, /id-token:\s*write/);
+});
+
+test('GitHub workflows use pinned Node 24 action releases and a fixed Ubuntu LTS image', () => {
+  const workflows = [workflow, verifyWorkflow, translationWorkflow];
+  for (const yaml of workflows) {
+    assert.match(yaml, /runs-on: ubuntu-24\.04/);
+    assert.match(yaml, /uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\.0\.1/);
+    assert.match(yaml, /uses: actions\/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7\.1\.0/);
+    assert.match(yaml, /node-version: ['"]?24['"]?/);
+    assert.doesNotMatch(yaml, /ubuntu-latest|actions\/(?:checkout|setup-node)@v[0-9]+/);
+  }
+  assert.match(workflow, /uses: actions\/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5\.0\.0/);
 });
 
 test('Vercel stays available as rollback but no longer auto-deploys Git pushes', () => {

@@ -1,12 +1,22 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-10-30 · GitHub Pages 正式主站（已真实验收）
+## 2026-10-30 · GitHub Pages 正式主站（PR #128 最新发布）
+
+- **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。
+- **当前发布身份：** PR #128 合并提交 `587ba04a8105516d0a86443305c38f54b44ba1da`。Pages run [#41145316397](https://github.com/mykcs/the-community-lab/actions/runs/41145316397) 在该 SHA 上 build 与 deploy 均成功；PR head 的 Astro 验证 run [#41145116128](https://github.com/mykcs/the-community-lab/actions/runs/41145116128) 和译审页验证 run [#41145115772](https://github.com/mykcs/the-community-lab/actions/runs/41145115772) 也成功。Pages 构建执行 `npm ci`、`npm run check`、`npm run build` 并复制两个独立复核页面。
+- **本次产品改动：** S1 `s1-class-23` 的韩文 `적어도 스무 권 넘게` 表示至少多于二十本；中文 AI 草稿现为“我小时候，书架上至少有二十一本父母读的书”，版本 `draft-0.1.2`。两份公开复核页已同步，并保留 `AI_DRAFT_UNREVIEWED` 与 `review_status=draft`。
+- **发布后读回：** 原题复核页返回 HTTP 200；线上 HTML 为 109,576 字节，包含“至少有二十一本”且不再包含旧的“至少有二十本”。124 题仍是 AI 初译，独立韩中人工复核仍为 **0/124**；官方评分公式仍为 `UNKNOWN`。
+- **仍未验收：** 两季完整原站路径、官方评分等价、独立人工翻译审校与同季同版本嘉宾分数。此发布只修正一条 AI 草稿，不推进这些门槛。
+
+### 上一版发布记录：PR #126（保留历史读回）
 
 - **正式首页：** https://mykcs.github.io/the-community-lab/；**独立译审草稿：** https://mykcs.github.io/the-community-lab/translation-review/；**原题复核独立静态页：** https://mykcs.github.io/the-community-lab/original-question-translation-review/。旧 `https://the-community-lab.vercel.app/` 保留作历史生产快照，不再作为最新主站。
-- **最新 Pages 发布证据：** [PR #92](https://github.com/mykcs/the-community-lab/pull/92) 已合并为 `main` SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e`；[Astro 验证 #41104034687](https://github.com/mykcs/the-community-lab/actions/runs/41104034687) 与 [Pages 发布 #41104034849](https://github.com/mykcs/the-community-lab/actions/runs/41104034849) 均成功，build 与 deploy job 均完成。
-- **线上访问验收：** 最新主线发布后，对首页、`/translation-review/`、`/original-question-translation-review/` 与 `/questionnaire/` 的实时 GET 均返回 HTTP 200。两个译审页都读回 S2 `ms07` 修订句“比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。”，版本 `draft-0.1.1`、`review_status: draft`；这仍是 AI 草稿，不可作为正式译文。PR #92 补充了直接进入季别答题页时的试点局限说明。已记录的 440×956 与 1440×900 CSS px 浏览器视口验收仍属模拟，不是实体 iPhone 验收。
-- **Vercel 配额收口：** `vercel.json` 通过 `"git":{"deploymentEnabled":false}` 禁用所有分支的 Git 自动部署；在当前 Vercel 项目对 main SHA `029b30638226e8a9e1994f1bc4d8eee220df0b6e` 的精确查询返回 0 条部署。旧 Vercel 已发布版本保留作回退快照。
-- **尚未完成的产品目标：** 两季原题的正式复刻仍未验收；独立韩中人工复核为 `0/124`，官方评分与同季可比嘉宾成绩仍为 `UNKNOWN`。PR #11 的 OAuth/私人历史记录不是静态 Pages 功能，保持隔离。Pages 免费不是无限资源，约束见下文。
+- **当前发布身份：** PR #126 合并提交 `79669a1fadce7ab5f0f49edf1192637423e12dae`。Pages push run [#41142960187](https://github.com/mykcs/the-community-lab/actions/runs/41142960187)（workflow run 53）在该 SHA 上 build 与 deploy 均成功；PR head `7994496478d2dc4a0cc6fe07823ac9fca970b4c3` 的 Astro 验证 run [#41142886709](https://github.com/mykcs/the-community-lab/actions/runs/41142886709) 也成功。构建完成 `npm ci`、`npm run check`、`npm run build`，并将 124 题 AI 草稿与独立原题复核页纳入 Pages artifact。
+- **本次产品改动：** PR #126 为本机下载的试填进度增加译文内容指纹。恢复旧备份时，即使译文版本号意外未改，只要中文题干或选项文字变动，也要求重新确认答案；指纹不证明翻译正确，答案不上传。原题仍是 AI 初译，真人韩中复核仍为 `0/124`，官方评分仍为 `UNKNOWN`。
+- **发布后读回：** Pages 首页返回 HTTP 200（26,673 字节）；第二季问卷路由 `/questionnaire/?season=2` 返回 HTTP 200（93,369 字节）；原题复核页返回 HTTP 200（136,489 字节），SHA-256 `7eb5b91307f0a3e17fe7f04fa5c86ae5796843717f08928b040cfe8990aad591`。当前三个路由均由该 Pages 主站提供。
+- **当前浏览器抽查：** 线上第二季首题在 440×956 与 1440×900 CSS px 视口均显示韩文在前、中文 AI 初译在后；在隔离临时页选择一个合成答案后，进度从 0/37 到 1/37，前进再返回仍保留该答案。未提交结果。此抽查不替代全路径或实体 iPhone 验收。
+- **Vercel 回退状态（2026-10-30 23:15 UTC 读回）：** 同一 Vercel 项目仍连接 GitHub 仓库 `mykcs/the-community-lab`、生产分支 `main`，但项目当前将 Git 自动创建部署设为 `disabled`，并禁用 repository dispatch。最新 Production 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA` 仍指向旧 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`；它只作为历史回退快照，GitHub Pages 是当前正式发布方。不要把这条旧 Production 当作 main 的自动部署验收。
+- **仍未验收：** 两季忠实复刻、独立人工翻译审校、官方计分一致性和同版本真实嘉宾匹配。社媒目录继续只作导航。
 
 ## 历史迁移计划快照（已被上述正式验收取代）
 

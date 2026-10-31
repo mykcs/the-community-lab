@@ -142,6 +142,21 @@ test('a URL and a checked date alone cannot promote unreviewed guest scores', ()
   }
 });
 
+test('public guest score candidates without both question and scoring versions remain excluded', () => {
+  // Synthetic shape only: public cards without version tags must not be ranked.
+  const unversioned = [
+    guest('missing-question-version', [2, 2, 2], { question_version: undefined }),
+    guest('missing-scoring-version', [2, 2, 2], { scoring_version: undefined }),
+    guest('missing-both-versions', [2, 2, 2], {
+      question_version: undefined, scoring_version: undefined,
+    }),
+  ];
+  const ranked = rankComparableGuests(user, unversioned);
+  assert.equal(ranked.status, 'no_verified_comparables');
+  assert.equal(ranked.excluded, 3);
+  assert.deepEqual(ranked.matches, []);
+});
+
 test('reviewed synthetic examples still rank, without qualifying the production directory', () => {
   const checked = rankComparableGuests(user, [guest('fixture', [40, -30, 0])]);
   assert.equal(checked.status, 'ready');

@@ -1,6 +1,13 @@
+import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import test from 'node:test';
+
+test('backup import confirms changes to historical translation evidence even when choices match', () => {
+  const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
+  assert.match(app, /countReplacedLocalAnswerProvenance\(previous, session\)/);
+  assert.match(app, /discardsLocal \|\| changed \|\| overwrittenProvenance/);
+  assert.match(app, /旧备份可能使指纹变成历史未知/);
+});
 
 const page = readFileSync(new URL('../src/pages/questionnaire/index.astro', import.meta.url), 'utf8');
 const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
@@ -40,7 +47,7 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(page, /默认只存在于当前页面内存/);
   assert.match(page, /不自动持久保存/);
   assert.match(page, /私人观点/);
-  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions\)/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions, active\.answerFingerprints\)/);
   assert.match(app, /restorePrivateProgressReceipt\(pack, record\)/);
   assert.match(app, /file\.size > 128 \* 1024/);
   assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
@@ -80,7 +87,7 @@ test('sparse resume at final question must redirect to the first unanswered ques
   assert.ok(finish, 'finish handler exists');
   const findAt = finish.indexOf('questions.findIndex(q => !Object.hasOwn(active.answers, q.id))');
   const renderAt = finish.indexOf('render()');
-  const summaryAt = finish.indexOf('summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions)');
+  const summaryAt = finish.indexOf('summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints)');
   assert.ok(findAt >= 0 && findAt < renderAt && renderAt < summaryAt,
     'finish checks completeness before creating a receipt');
   assert.match(finish, /active\.index = firstMissing/);

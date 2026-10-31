@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadFullQuestionnaire } from '../scripts/load-full-questionnaire.mjs';
+import { loadFullQuestionnaire, attachTranslationFingerprints } from '../scripts/load-full-questionnaire.mjs';
 import {
   extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
   PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
-  wouldDiscardLocalAnswers,
+  wouldDiscardLocalAnswers, countReplacedLocalAnswerProvenance,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -12,7 +12,7 @@ const pack = loadFullQuestionnaire();
 const raw = extractDraftPack(readFileSync(new URL('../docs/translation-review/index.html', import.meta.url), 'utf8'));
 const index = JSON.parse(readFileSync(new URL('../data/original-question-index.json', import.meta.url), 'utf8'));
 
-test('124 source IDs, 550 bilingual choices and observed fixed client order survive integration', () => {
+test('124 source IDs, 550 bilingual choices and indexed client positions survive integration', () => {
   assert.equal(pack.status, 'SOURCE_QUESTION_PILOT_UNREVIEWED_NOT_OFFICIAL');
   assert.equal(pack.rightsEvidence, 'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED');
   assert.equal(pack.scoringVersion, 'UNKNOWN');
@@ -79,7 +79,18 @@ test('pilot refuses source metadata drift that would mislabel question origin or
 
 test('mixed per-question draft versions are preserved honestly in both season receipts', () => {
   assert.equal(pack.translationVersion, 'MIXED_PER_QUESTION');
-  assert.equal(pack.seasons[2].filter(q => q.translationVersion === 'draft-0.1.1').length, 6);
+  // Translation editors may legitimately publish another AI draft in this
+  // canonical source. Do not freeze an incidental version count: the previous
+  // hard-coded count broke main CI/Pages on every such revision.
+  const sourceVersions = new Map(raw.questions
+    .filter(q => q.season === 2)
+    .map(q => [q.id, q.translation_version]));
+  assert.equal(sourceVersions.size, pack.seasons[2].length);
+  for (const question of pack.seasons[2]) {
+    assert.equal(question.translationVersion, sourceVersions.get(question.id));
+  }
+  // Keep the specific sa06 regression without pinning unrelated items.
+  assert.equal(pack.seasons[2].find(q => q.id === 'sa06')?.translationVersion, 'draft-0.1.1');
   for (const season of [1, 2]) {
     const questions = pack.seasons[season];
     const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
@@ -92,6 +103,23 @@ test('mixed per-question draft versions are preserved honestly in both season re
     assert.equal(receipt.translationVersions.reduce((n, v) => n + v.questionCount, 0), questions.length);
     assert.deepEqual(receipt.selections.map(s => s.translationVersion), questions.map(q => q.translationVersion));
   }
+  // Simulate the next legitimate translation-only revision. The produced
+  // receipt must follow per-question source versions without a test edit.
+  const nextDraft = structuredClone(raw);
+  const revised = nextDraft.questions.find(q => q.id === 'sa06');
+  const versionParts = revised.translation_version.match(/^draft-(\d+)\.(\d+)\.(\d+)$/);
+  assert.ok(versionParts);
+  revised.translation_version = `draft-${versionParts[1]}.${versionParts[2]}.${Number(versionParts[3]) + 1}`;
+  const nextPack = attachTranslationFingerprints(buildFullQuestionnaire(nextDraft, index));
+  const nextQuestions = nextPack.seasons[2];
+  const nextAnswers = Object.fromEntries(nextQuestions.map(q => [q.id, q.options[0].value]));
+  const nextReceipt = summarizeUnscoredAnswers(nextPack, 2, nextAnswers);
+  assert.equal(nextQuestions.find(q => q.id === 'sa06').translationVersion, revised.translation_version);
+  assert.equal(nextReceipt.selections.find(s => s.questionId === 'sa06').translationVersion, revised.translation_version);
+  assert.deepEqual(
+    new Map(nextReceipt.translationVersions.map(v => [v.version, v.questionCount])),
+    nextQuestions.reduce((counts, q) => counts.set(q.translationVersion, (counts.get(q.translationVersion) || 0) + 1), new Map()),
+  );
   const draft = structuredClone(raw);
   draft.questions.at(-1).translation_version = 'official-1.0.0';
   assert.throws(() => buildFullQuestionnaire(draft, index));
@@ -128,6 +156,30 @@ test('import conflict gate distinguishes a safe superset from lost or changed lo
   assert.equal(wouldDiscardLocalAnswers(existing, { first: 'X', second: 'X' }), true);
   assert.equal(wouldDiscardLocalAnswers(Object.create(null), Object.create(null)), false);
   assert.throws(() => wouldDiscardLocalAnswers(existing, null));
+});
+
+test('importing an identical choice cannot silently erase a recorded wording fingerprint', () => {
+  const question = pack.seasons[2][0];
+  const answer = { [question.id]: question.options[0].value };
+  const known = {
+    answers: answer,
+    answerVersions: { [question.id]: question.translationVersion },
+    answerFingerprints: { [question.id]: question.translationFingerprint },
+  };
+  const legacy = createPrivateProgressReceipt(pack, 2, answer, 0);
+  delete legacy.selections[0].translationFingerprint;
+  const restored = restorePrivateProgressReceipt(pack, legacy);
+  assert.equal(wouldDiscardLocalAnswers(known.answers, restored.answers), false,
+    'selected original value is unchanged');
+  assert.equal(restored.changedQuestionIds.length, 0,
+    'legacy file cannot independently prove the Chinese wording changed');
+  assert.equal(countReplacedLocalAnswerProvenance(known, restored), 1,
+    'import must warn before known wording evidence becomes UNKNOWN');
+  assert.equal(countReplacedLocalAnswerProvenance(known, known), 0);
+  const changedVersion = structuredClone(known);
+  changedVersion.answerVersions[question.id] = 'draft-0.0.0';
+  assert.equal(countReplacedLocalAnswerProvenance(known, changedVersion), 1);
+  assert.throws(() => countReplacedLocalAnswerProvenance(known, { answers: answer }));
 });
 
 test('existing completed-only local downloads remain importable without inventing official scores', () => {
@@ -211,13 +263,95 @@ test('translation-only draft updates allow safe opt-in resume while retaining ea
 test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
   const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
   assert.match(app, /const changed = session\.changedQuestionIds\.length/);
-  assert.match(app, /if \(discardsLocal \|\| changed\)/);
+  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance\)/);
   assert.match(app, /window\.confirm/);
   assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
   assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);
   assert.match(app, /active\.needsReview\?\.delete\(q\.id\)/);
   assert.match(app, /active\.needsReview\?\.has\(q\.id\)/);
   assert.match(app, /if \(session\.complete && !changed\) finish\(\)/);
-  assert.match(app, /summarizeUnscoredAnswers\(pack, active\.season, active\.answers, active\.answerVersions\)/);
-  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions\)/);
+  assert.match(app, /summarizeUnscoredAnswers\(pack, active\.season, active\.answers, active\.answerVersions, active\.answerFingerprints\)/);
+  assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions, active\.answerFingerprints\)/);
+});
+
+test('same-number draft wording edits cannot silently make a restored answer look reconfirmed', () => {
+  const before = loadFullQuestionnaire();
+  const question = before.seasons[2][0];
+  const oldAnswers = { [question.id]: question.options[0].value };
+  const receipt = createPrivateProgressReceipt(before, 2, oldAnswers, 0);
+  assert.match(receipt.selections[0].translationFingerprint, /^[a-f0-9]{64}$/);
+  const after = structuredClone(before);
+  after.seasons[2][0].draftZh += '（仅用于模拟不小心忘记升级版本的改译）';
+  attachTranslationFingerprints(after);
+  // The version is unchanged on purpose; a content fingerprint must still detect this.
+  const restored = restorePrivateProgressReceipt(after, receipt);
+  assert.deepEqual(restored.changedQuestionIds, [question.id]);
+  assert.equal(restored.answerFingerprints[question.id], receipt.selections[0].translationFingerprint);
+});
+test('option-only AI wording edits trigger the same restoration gate, without rewriting saved provenance', () => {
+  const before = loadFullQuestionnaire();
+  const first = before.seasons[1][0];
+  const answers = { [first.id]: first.options[1].value };
+  const receipt = createPrivateProgressReceipt(before, 1, answers, 0);
+  const after = structuredClone(before);
+  after.seasons[1][0].options[1].zh += '（选项译文修订模拟）';
+  attachTranslationFingerprints(after);
+  assert.equal(after.seasons[1][0].translationVersion, first.translationVersion);
+  const restored = restorePrivateProgressReceipt(after, receipt);
+  assert.deepEqual(restored.changedQuestionIds, [first.id]);
+  assert.equal(restored.answerFingerprints[first.id], receipt.selections[0].translationFingerprint);
+  const reexport = createPrivateProgressReceipt(after, 1, restored.answers, 0,
+    restored.answerVersions, restored.answerFingerprints);
+  assert.equal(reexport.selections[0].translationFingerprint, receipt.selections[0].translationFingerprint);
+  restored.answerFingerprints[first.id] = after.seasons[1][0].translationFingerprint;
+  assert.deepEqual(restorePrivateProgressReceipt(after, createPrivateProgressReceipt(
+    after, 1, restored.answers, 0, restored.answerVersions, restored.answerFingerprints,
+  )).changedQuestionIds, []);
+});
+
+test('legacy backup without wording fingerprint stays UNKNOWN across imports and reexports', () => {
+  const current = loadFullQuestionnaire();
+  const q = current.seasons[2][0];
+  const answers = { [q.id]: q.options[0].value };
+  const legacy = createPrivateProgressReceipt(current, 2, answers, 0);
+  delete legacy.selections[0].translationFingerprint;
+  const restored = restorePrivateProgressReceipt(current, legacy);
+  assert.equal(restored.answerFingerprints[q.id], null, 'missing historic fingerprint must stay unknown');
+
+  const next = createPrivateProgressReceipt(current, 2, restored.answers, 0,
+    restored.answerVersions, restored.answerFingerprints);
+  assert.equal(next.selections[0].translationFingerprint, null,
+    're-export must not falsely claim that the user read the current Chinese wording');
+  const again = restorePrivateProgressReceipt(current, next);
+  assert.equal(again.answerFingerprints[q.id], null);
+
+  const future = structuredClone(current);
+  future.seasons[2][0].draftZh += '（同版本后续改译）';
+  attachTranslationFingerprints(future);
+  const stillUnknown = restorePrivateProgressReceipt(future, next);
+  assert.equal(stillUnknown.answerFingerprints[q.id], null);
+  assert.deepEqual(stillUnknown.changedQuestionIds, [],
+    'without a historic fingerprint the comparison can only use version labels');
+
+  stillUnknown.answerFingerprints[q.id] = future.seasons[2][0].translationFingerprint;
+  const reconfirmed = createPrivateProgressReceipt(future, 2, stillUnknown.answers, 0,
+    stillUnknown.answerVersions, stillUnknown.answerFingerprints);
+  assert.equal(reconfirmed.selections[0].translationFingerprint,
+    future.seasons[2][0].translationFingerprint, 'actual re-selection can establish the current wording');
+});
+
+test('legacy local backups stay importable, and a malformed new fingerprint is rejected', () => {
+  const before = loadFullQuestionnaire();
+  const first = before.seasons[2][0];
+  const receipt = createPrivateProgressReceipt(before, 2,
+    { [first.id]: first.options[0].value }, 0);
+  const legacy = structuredClone(receipt);
+  delete legacy.selections[0].translationFingerprint;
+  assert.deepEqual(restorePrivateProgressReceipt(before, legacy).changedQuestionIds, []);
+  const malformed = structuredClone(receipt);
+  malformed.selections[0].translationFingerprint = 'not-a-sha';
+  assert.throws(() => restorePrivateProgressReceipt(before, malformed), /非法|无效|不同版本/);
+  const all = Object.fromEntries(before.seasons[1].map(q => [q.id, q.options[0].value]));
+  const size = Buffer.byteLength(JSON.stringify(createPrivateProgressReceipt(before, 1, all, 86)));
+  assert.ok(size < 128 * 1024, '87-question private backup must remain importable');
 });

@@ -70,6 +70,25 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
   assert.equal(optionCount, 550);
 });
 
+test('identical Korean answer labels keep a consistent Chinese draft', () => {
+  const translations = new Map();
+  for (const question of data.questions) {
+    for (const option of question.options) {
+      const source = option.ko.normalize('NFC').trim();
+      const translation = option.zh_cn.normalize('NFC').trim();
+      const existing = translations.get(source);
+      assert.ok(
+        existing === undefined || existing === translation,
+        `the same Korean answer label has conflicting Chinese drafts: ${source}`
+      );
+      translations.set(source, translation);
+    }
+  }
+  assert.ok(translations.size > 0);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('second-season AI wording revisions preserve degree, referent, and priority', () => {
   const expected = new Map([
     ['rp08', '自动驾驶汽车若面临撞上多名行人的局面，应以挽救多数人为方向进行设计，即使这意味着牺牲驾驶者。'],
@@ -86,6 +105,25 @@ test('second-season AI wording revisions preserve degree, referent, and priority
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
   }
   assert.match(data.translation_review.editorial_pass, /rp08、rp10、ms05、ms11/);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
+  const expected = new Map([
+    ['rp06', '一座聚集数万人的综合体育场收到炸弹威胁。若唯一能查明炸弹确切位置的方法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，就应该对他们施以酷刑。'],
+    ['sa03', '即使企业或组织按能力选人，如果人员构成偏向特定出身地、学校或性别，也有必要作出调整。'],
+  ]);
+  for (const [id, translation] of expected) {
+    const question = data.questions.find(item => item.id === id);
+    assert.ok(question, `${id} must remain in the source dataset`);
+    assert.equal(question.translation_zh_cn, translation, id);
+    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
+    assert.equal(question.review_status, 'draft', id);
+  }
+  assert.match(data.translation_review.editorial_pass, /rp06.*sa03/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must stay in sync');
   assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(data.translation_review.publishable, false);
 });
@@ -124,11 +162,26 @@ test('s1-class-15 says private tutoring rather than an after-school class', () =
   assert.ok(question, 's1-class-15 must remain in the source dataset');
   assert.equal(question.source_text_ko, '어린 시절 과외를 받아본 적 있다');
   assert.equal(question.translation_zh_cn, '我小时候接受过私人辅导。');
-  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_version, 'draft-0.1.2');
   assert.match(question.translator_note, /韩国国立国语院.*private lesson/);
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.equal(question.review_status, 'draft');
   assert.match(data.translation_review.editorial_pass, /s1-class-15/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('s1-class-23 preserves the source’s strict count threshold as an unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-class-23');
+  assert.ok(question, 's1-class-23 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '어릴 적 부모님이 읽는 책이 책꽂이에 적어도 스무 권 넘게 있었다');
+  assert.equal(question.translation_zh_cn, '我小时候，书架上至少有二十一本父母读的书。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.match(question.translator_note, /超过二十本.*二十一本/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-class-23.*draft-0\.1\.2/);
   assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
   assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(data.translation_review.publishable, false);

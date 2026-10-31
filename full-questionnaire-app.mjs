@@ -3,6 +3,7 @@ import {
   createPrivateProgressReceipt,
   restorePrivateProgressReceipt,
   wouldDiscardLocalAnswers,
+  countReplacedLocalAnswerProvenance,
 } from './lib/full-questionnaire.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
@@ -32,7 +33,7 @@ function begin(season, fresh = false) {
   if (![1, 2].includes(season)) return;
   if (fresh || !saved.has(season)) saved.set(season, {
     season, index: 0, answers: Object.create(null),
-    answerVersions: Object.create(null), needsReview: new Set(),
+    answerVersions: Object.create(null), answerFingerprints: Object.create(null), needsReview: new Set(),
   });
   active = saved.get(season);
   render();
@@ -83,6 +84,7 @@ function render() {
     btn.addEventListener('click', () => {
       active.answers[q.id] = choice.value;
       active.answerVersions[q.id] = q.translationVersion;
+      active.answerFingerprints[q.id] = q.translationFingerprint;
       active.needsReview?.delete(q.id);
       for (const entry of list.children) entry.setAttribute('aria-pressed', String(entry === btn));
       $('full-next').disabled = false;
@@ -125,7 +127,7 @@ function finish() {
     $('full-save-status').textContent = `还有 ${active.needsReview.size} 道译文更新后的选项需要重新确认，原答案已保留。`;
     return;
   }
-  const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions);
+  const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
   active.receipt = summary;
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。`;
   const panel = $('full-group-summary');
@@ -156,7 +158,7 @@ function download() {
 
 function saveProgress() {
   if (!active || Object.keys(active.answers).length === 0) return;
-  const record = createPrivateProgressReceipt(pack, active.season, active.answers, active.index, active.answerVersions);
+  const record = createPrivateProgressReceipt(pack, active.season, active.answers, active.index, active.answerVersions, active.answerFingerprints);
   downloadJson({
     ...record,
     notice: '此 JSON 含个人敏感观点，仅供本人恢复本机试填；非官方成绩，请勿上传公开仓库。',
@@ -176,14 +178,18 @@ async function importProgress(file) {
     const session = restorePrivateProgressReceipt(pack, record);
     const previous = saved.get(session.season);
     const discardsLocal = previous && wouldDiscardLocalAnswers(previous.answers, session.answers);
+    const overwrittenProvenance = previous ? countReplacedLocalAnswerProvenance(previous, session) : 0;
     const changed = session.changedQuestionIds.length;
-    if (discardsLocal || changed) {
+    if (discardsLocal || changed || overwrittenProvenance) {
       const reasons = [
         discardsLocal
           ? `第 ${session.season} 季已有 ${Object.keys(previous.answers).length} 道答案；导入会覆盖或删除部分选择，无法撤销。`
           : '',
         changed
-          ? `其中 ${changed} 道题的中文 AI 译文版本已更新。原始韩文来源和选项值仍匹配，旧选择会保留，但需要在新译文下逐题重新确认。`
+          ? `其中 ${changed} 道题的中文 AI 译文文字或版本与备份不一致。原始韩文来源和选项值仍匹配，旧选择会保留，但需要在当前译文下逐题重新确认。`
+          : '',
+        overwrittenProvenance
+          ? `还有 ${overwrittenProvenance} 道已有答案的选项值相同，但导入会替换本页记录的中文译文版本或文字指纹（旧备份可能使指纹变成历史未知）。建议先下载当前进度 JSON 备份。`
           : '',
       ].filter(Boolean);
       if (!window.confirm(`${reasons.join('\n')}
@@ -199,6 +205,7 @@ async function importProgress(file) {
       index: firstChanged >= 0 ? firstChanged : session.index,
       answers: session.answers,
       answerVersions: session.answerVersions,
+      answerFingerprints: session.answerFingerprints,
       needsReview: new Set(session.changedQuestionIds),
     });
     active = saved.get(session.season);
