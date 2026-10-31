@@ -1,4 +1,5 @@
 import { createAccountDeleteHandler } from './account-delete.mjs';
+import { getHistoryConfig } from '../../../lib/history-config.mjs';
 
 const allowedHeaders = 'authorization, apikey, x-client-info, content-type, x-retry-count, traceparent, tracestate, baggage';
 
@@ -28,9 +29,14 @@ export function edgeEnvironment(raw = {}) {
 export function createAccountDeleteEdgeHandler({ env = {}, fetch: transport = globalThis.fetch } = {}) {
   const sharedEnv = edgeEnvironment(env);
   const handler = createAccountDeleteHandler({ env: sharedEnv, fetch: transport });
-  const configured = sharedEnv.PUBLIC_HISTORY_AUTH_ENABLED === 'true' &&
-    sharedEnv.HISTORY_ACCOUNT_DELETE_ENABLED === 'true' &&
-    /^https:\/\/[^/]+$/.test(sharedEnv.PUBLIC_HISTORY_SITE_ORIGIN ?? '');
+  const site = getHistoryConfig({
+    authEnabled: sharedEnv.PUBLIC_HISTORY_AUTH_ENABLED === 'true',
+    siteOrigin: sharedEnv.PUBLIC_HISTORY_SITE_ORIGIN,
+    supabaseUrl: sharedEnv.PUBLIC_SUPABASE_URL,
+    publishableKey: sharedEnv.PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  }, sharedEnv.PUBLIC_HISTORY_SITE_ORIGIN ?? '');
+  const configured = site.configured && sharedEnv.HISTORY_ACCOUNT_DELETE_ENABLED === 'true' &&
+    /^sb_secret_[A-Za-z0-9_-]+$/.test(sharedEnv.SUPABASE_SECRET_KEY ?? '');
   const origin = sharedEnv.PUBLIC_HISTORY_SITE_ORIGIN;
   return async request => {
     // Suppress CORS completely when unconfigured or called from another origin.

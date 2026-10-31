@@ -18,7 +18,15 @@ test('exact callback origin and publishable-only key reject open redirects or ac
   assert.equal(getHistoryConfig(configured, 'https://another-preview.example').configured, false);
   assert.equal(getHistoryConfig({ ...configured, siteOrigin: 'http://127.0.0.1:4321' }, 'http://127.0.0.1:4321').configured, true);
 });
-test('GitHub Pages project base path and root-host rollback both use fixed local callback routes', () => {
+test('shared GitHub Pages origins cannot hold PKCE or Supabase session storage', () => {
+  for (const sharedOrigin of ['https://github.io', 'https://mykcs.github.io', 'https://another-owner.github.io']) {
+    const config = getHistoryConfig({ ...configured, siteOrigin: sharedOrigin, saveEnabled: true }, sharedOrigin);
+    assert.equal(config.configured, false, sharedOrigin);
+    assert.equal(config.saveAvailable, false, sharedOrigin);
+  }
+  assert.equal(getHistoryConfig({ ...configured, siteOrigin: 'https://github.io.example' }, 'https://github.io.example').configured, true);
+});
+test('dedicated root and project-base origins use fixed local callback routes', () => {
   const root = getHistoryConfig(configured, configured.siteOrigin);
   assert.equal(root.callbackPath, '/auth/callback/');
   assert.equal(siteRoutePath(root.basePath, 'history/'), '/history/');
@@ -26,6 +34,10 @@ test('GitHub Pages project base path and root-host rollback both use fixed local
   assert.equal(pages.configured, true);
   assert.equal(pages.callbackPath, '/the-community-lab/auth/callback/');
   assert.equal(siteRoutePath(pages.basePath, 'history/'), '/the-community-lab/history/');
+  const sharedPages = getHistoryConfig({ ...configured, siteOrigin: 'https://mykcs.github.io', basePath: '/the-community-lab/' }, 'https://mykcs.github.io');
+  assert.equal(sharedPages.configured, false);
+  assert.equal(sharedPages.saveAvailable, false);
+  assert.equal(sharedPages.callbackPath, '/the-community-lab/auth/callback/');
   for (const badPath of ['/other/../admin/', '//attacker/', '/the-community-lab/?next=other',
     'https://attacker.invalid/', '/the-community-lab']) {
     assert.equal(getHistoryConfig({ ...configured, basePath: badPath }, configured.siteOrigin).configured, false);

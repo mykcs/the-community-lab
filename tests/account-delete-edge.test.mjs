@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createAccountDeleteEdgeHandler, edgeEnvironment } from '../supabase/functions/_shared/account-delete-edge.mjs';
 
-const origin = 'https://mykcs.github.io';
+const origin = 'https://community.example.invalid';
 const edgeEnv = Object.freeze({
   PUBLIC_HISTORY_AUTH_ENABLED: 'true',
   HISTORY_ACCOUNT_DELETE_ENABLED: 'true',
@@ -47,6 +47,14 @@ test('Edge CORS authorizes only the configured origin and POST preflight, never 
 test('Edge remains fail-closed even for valid CORS preflight when deletion flag is off', async () => {
   const handler = createAccountDeleteEdgeHandler({ env: { ...edgeEnv, HISTORY_ACCOUNT_DELETE_ENABLED: 'false' } });
   const response = await handler(req('OPTIONS', origin, { 'Access-Control-Request-Method': 'POST' }));
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('access-control-allow-origin'), null);
+});
+
+test('Edge rejects GitHub Pages shared origins before granting CORS or handling auth requests', async () => {
+  const sharedOrigin = 'https://mykcs.github.io';
+  const handler = createAccountDeleteEdgeHandler({ env: { ...edgeEnv, PUBLIC_HISTORY_SITE_ORIGIN: sharedOrigin } });
+  const response = await handler(req('OPTIONS', sharedOrigin, { 'Access-Control-Request-Method': 'POST' }));
   assert.equal(response.status, 503);
   assert.equal(response.headers.get('access-control-allow-origin'), null);
 });
