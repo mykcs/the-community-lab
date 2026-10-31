@@ -1,5 +1,12 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-10-31 · PR #162 问卷移动端首屏优化已发布
+
+- **发布身份：** [PR #162](https://github.com/mykcs/the-community-lab/pull/162) 已合并；main 为 `1f0e7c1f9efce468d01d44fca4b23b1a928c45b3`。该 SHA 的 [Pages build/deploy run #41222250434](https://github.com/mykcs/the-community-lab/actions/runs/41222250434) 和 [main Verify run #41222250446](https://github.com/mykcs/the-community-lab/actions/runs/41222250446) 均成功。
+- **改动：** 缩短 S1/S2 问卷试填披露文案，保留非官方试填、AI 初译未经真人双语审校、许可为用户报告且原件未独立核验、无官方计分／嘉宾匹配及答案不自动上传等提示；压缩 630px 以下视口的题目、选项和进度区间距。
+- **正式站读回：** [第二季问卷](https://mykcs.github.io/the-community-lab/questionnaire/?season=2) 的页面内容含本次完整披露。440×956 CSS px 浏览器模拟首屏同时显示韩文题干、中文草稿及两个选项；1440×900 CSS px 桌面布局正常，未见横向溢出。
+- **本地验证：** PR 精确 head `f170b683c8e1de0d8fb74f087f24a3aa0109e26c` 的 `npm run check` 通过（135/135 测试、Astro 0 errors/warnings/hints），`npm run build` 成功。视口检查不是实体 iPhone 验收；翻译人工复核仍为 **0/124**，官方评分仍为 `UNKNOWN`。
+
 ## 2026-10-31 · GitHub Pages 与 main 发布身份对齐
 
 - 核验快照：PR #159 合并前，GitHub `main` 为 `072312efd89a6dfef560137e39568e2f48b344bc`。最近正式 Pages 内容由 PR #157 合并后的 `a995df5fbe396b3be97a68a1561ad35002db39e5` 构建；Pages run [#41218944391](https://github.com/mykcs/the-community-lab/actions/runs/41218944391) 的 build、deploy jobs 均成功，构建包含 `npm ci`、`npm run check`、`npm run build` 及两个静态复核页。
