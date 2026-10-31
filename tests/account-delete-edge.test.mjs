@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { createAccountDeleteEdgeHandler, edgeEnvironment } from '../supabase/functions/_shared/account-delete-edge.mjs';
 
 const origin = 'https://community.example.invalid';
@@ -14,6 +15,11 @@ const edgeEnv = Object.freeze({
 const req = (method, requestOrigin = origin, headers = {}) => new Request('https://project.example.invalid/functions/v1/account-delete', {
   method, headers: { Origin: requestOrigin, ...headers },
   ...(method === 'POST' ? { body: JSON.stringify({ confirm: 'DELETE_MY_ACCOUNT' }) } : {}),
+});
+
+test('Supabase gateway lets preflight reach the handler while POST identity remains checked in code', async () => {
+  const config = await readFile(new URL('../supabase/config.toml', import.meta.url), 'utf8');
+  assert.match(config, /\\[functions\\.account-delete\\]\\s+verify_jwt\\s*=\\s*false/);
 });
 
 test('Edge maps only injected default keys and stays disabled without exact explicit gates', () => {
