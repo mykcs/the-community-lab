@@ -1,5 +1,19 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-10-31 · GitHub Pages 与 main 发布身份对齐
+
+- 核验快照：PR #159 合并前，GitHub `main` 为 `072312efd89a6dfef560137e39568e2f48b344bc`。最近正式 Pages 内容由 PR #157 合并后的 `a995df5fbe396b3be97a68a1561ad35002db39e5` 构建；Pages run [#41218944391](https://github.com/mykcs/the-community-lab/actions/runs/41218944391) 的 build、deploy jobs 均成功，构建包含 `npm ci`、`npm run check`、`npm run build` 及两个静态复核页。
+- PR #158 和 PR #159 都只改了文档；Pages 工作流不监听这些路径，因此没有触发新部署。正式首页返回 HTTP 200，Chrome 中可见 124 题 AI 初译、人工复核 `0/124`、官方计分未核实及 7 位嘉宾／13 条导航链接。
+- 此快照与最近 Pages artifact 的源码 SHA 不同，原因是主线随后只增加了核验文档和本部署记录。前一节 `501ff3a...` 保留为更早的历史发布快照，不代表最近一次 Pages 发布。
+
+## 2026-10-31 · GitHub Pages 全站读回与渲染验收（main `501ff3a53c60de6112a703553ba68a5b91f2dc91`）
+
+- **正式站：** [GitHub Pages 首页](https://mykcs.github.io/the-community-lab/)；首页、Astro 问卷与独立译审页都由 Pages 提供，不只是审阅目录。
+- **发布身份：** PR #149 合并提交 `501ff3a53c60de6112a703553ba68a5b91f2dc91`；该 SHA 的 Pages 构建与部署 [run #41167308141](https://github.com/mykcs/the-community-lab/actions/runs/41167308141) 成功。
+- **HTTP 读回：** 首页、`/questionnaire/?season=1`、`/questionnaire/?season=2`、`/translation-review/`、`/original-question-translation-review/` 均返回 HTTP 200；两季问卷入口实际显示 S1 87 题、S2 37 题。
+- **浏览器渲染：** 在 440×956 CSS px 视口查看首页和两季问卷，并在 1280×720 CSS px 查看 S2 问卷。韩文原文在中文 AI 初译之前，题数、题组选项与页面限制说明可见。S2 本地答题选择使进度从 0/37 变为 1/37，继续后进入第 2/37 题；没有向官方测试提交答卷。
+- **验收边界：** 这是浏览器视口模拟，不是实体 iPhone 验收；仅检查首屏与一个 S2 前进流程，不证明 124 题全路径或官方评分一致。译文独立真人复核仍为 **0/124**，官方计分公式为 `UNKNOWN`，真实嘉宾匹配资格为 0。
+
 ## 2026-10-31 · S2 sa13 文案修订已发布（PR #138）
 
 - **正式网站：** [GitHub Pages 原题复核页](https://mykcs.github.io/the-community-lab/original-question-translation-review/)；首页继续由 GitHub Pages 提供。

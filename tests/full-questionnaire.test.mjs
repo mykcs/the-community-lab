@@ -33,8 +33,13 @@ test('idiom reader note is visibly separate from draft translation and affects o
   assert.ok(q);
   assert.equal(q.sourceKo, '“절이 싫으면 중이 떠나야지”라는 말은 대부분의 경우 옳다.');
   assert.match(q.readerNote, /^AI 译注（待独立人工核对）/);
-  assert.match(q.readerNote, /不喜欢某个环境的人应该自己离开/);
-  assert.equal(q.translationVersion, 'draft-0.1.1');
+  assert.match(q.readerNote, /不满环境的人自行离开/);
+  assert.equal(q.translationVersion, 'draft-0.1.3');
+  assert.match(q.readerNote, /《戏赠沈后》/);
+  assert.match(q.readerNote, /尚未查到可核验的最早文学出处/);
+  assert.match(q.readerNote, /此处不留人，自有留人处/);
+  assert.match(q.readerNote, /《警世通言/);
+  assert.match(q.readerNote, /不完全等义/);
   assert.equal(pack.status, 'SOURCE_QUESTION_PILOT_UNREVIEWED_NOT_OFFICIAL');
 
   const changedNote = structuredClone(pack);

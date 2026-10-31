@@ -25,6 +25,8 @@ test('standalone original-question page is published only as an unreviewed draft
   assert.doesNotMatch(standaloneHtml, /独立人工复核通过/);
   assert.match(standaloneHtml, /项目核对来源版本、双语能力依据与独立性后才会计入正式复核/);
   assert.match(standaloneHtml, /github\.com\/mykcs\/the-community-lab\/issues\/new/);
+  assert.match(standaloneHtml, /本页不会自动发送译文修改或审校标记/);
+  assert.doesNotMatch(standaloneHtml, /此工具不联网/);
   assert.match(standaloneHtml, /<link rel="icon" type="image\/svg\+xml" href="data:image\/svg\+xml,/);
   assert.doesNotMatch(standaloneHtml, /<script\b[^>]*\bsrc\s*=|<link\b[^>]*\bhref\s*=\s*"https?:/i);
   assert.doesNotMatch(standaloneHtml, /LOCAL_RESEARCH_CANDIDATE_NOT_FOR_PUBLICATION/);
@@ -219,6 +221,35 @@ test('s1-gender-17 translates 믿음 as belief while remaining an unreviewed dra
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('s1-gender-02 keeps both comparison subjects explicit as an unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-gender-02');
+  assert.ok(question, 's1-gender-02 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '자본주의 시장에서 일반적으로 남성의 능력은 여성의 능력보다 더 높게 평가된다.');
+  assert.equal(question.translation_zh_cn, '在资本主义市场中，男性的能力通常比女性的能力受到更高评价。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.deepEqual(standaloneData.questions, data.questions, 'both reviewer pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
+test('s1-gender-21 keeps 엄살 as exaggerated suffering in the unreviewed draft', () => {
+  const question = data.questions.find(item => item.id === 's1-gender-21');
+  assert.ok(question, 's1-gender-21 must remain in the source dataset');
+  assert.equal(question.source_text_ko, '여성이 우울증과 같은 정신질환을 호소할 때는 엄살인 경우가 많다.');
+  assert.equal(question.translation_zh_cn, '女性诉说自己受抑郁症等精神疾病困扰时，很多时候是在夸大自己的痛苦。');
+  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.match(question.translator_note, /엄살.*虚构或夸大疼痛、痛苦/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr\/kor\/dicSearch\/SearchView\?ParaWordNo=67230/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /s1-gender-21.*draft-0\.1\.2/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('a pass status requires a review note and remains self-reported', () => {
   assert.match(html, /if\(status\.value==='pass'&&!note\.value\.trim\(\)\)/);
   assert.match(html, /note\.reportValidity\(\)/);
@@ -407,7 +438,11 @@ test('review search finds Korean and Chinese option texts including local edits'
 test('both reviewer pages expose the same separately marked, unreviewed idiom note', () => {
   const idiom = data.questions.find(q => q.id === 's1-openness-11');
   assert.ok(idiom);
-  assert.equal(idiom.translation_version, 'draft-0.1.1');
+  assert.equal(idiom.translation_version, 'draft-0.1.3');
+  assert.match(idiom.reader_note_zh_cn, /《戏赠沈后》/);
+  assert.match(idiom.reader_note_zh_cn, /尚未查到可核验的最早文学出处/);
+  assert.match(idiom.reader_note_zh_cn, /《警世通言/);
+  assert.match(idiom.reader_note_zh_cn, /不完全等义/);
   assert.match(idiom.reader_note_zh_cn, /AI 译注（待独立人工核对）/);
   assert.deepEqual(standaloneData.questions, data.questions);
   assert.match(html, /if\(q.reader_note_zh_cn\)zp.append/);

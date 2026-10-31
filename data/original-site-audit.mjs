@@ -24,11 +24,11 @@ export const ORIGINAL_SITE_AUDIT = Object.freeze({
   }),
 });
 
-// Two already-public, anonymous *synthetic* results. These observations are a
-// read-only evidence subset: never copy the API's referral code, timestamp,
-// nickname or a real participant's answers into this public repository.
-// In particular, the second UI session did NOT verify its submitted choices.
-// A version string and one checked input/output pair are not a scoring rule.
+// Three already-public, anonymous *synthetic* results. These observations are
+// a narrow evidence subset: never copy referral codes, nicknames or real
+// participant answers into this repository. One historical UI session did NOT
+// verify its submitted choices. A version string and two checked pairs are
+// not a scoring rule.
 const observedSeason2Output = Object.freeze({
   season: 'season-2',
   questionnaireVersion: 'season-2@2026-08',
@@ -46,6 +46,7 @@ export const OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS = Object.freeze([
   Object.freeze({
     origin: 'anonymous_synthetic',
     publicResultId: 'jNEcQ1XSk2uFGGyi',
+    resultCreatedAt: '2026-10-30T11:39:31.678Z',
     inputVerification: 'verified',
     input: Object.freeze({ pattern: 'uniform', choice: 'O', questionCount: 37 }),
     output: observedSeason2Output,
@@ -53,8 +54,24 @@ export const OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS = Object.freeze([
   Object.freeze({
     origin: 'anonymous_synthetic',
     publicResultId: '0JR4VZqW4PrpCqv7',
+    resultCreatedAt: '2026-10-30T11:42:12.666Z',
     inputVerification: 'unverified',
     input: null,
+    output: observedSeason2Output,
+  }),
+  Object.freeze({
+    origin: 'anonymous_synthetic',
+    publicResultId: 'SWh2Vsfu3fltLZVI',
+    resultCreatedAt: '2026-10-31T16:12:32.732Z',
+    inputVerification: 'verified',
+    input: Object.freeze({
+      pattern: 'by_source_group',
+      questionCount: 37,
+      questionIdsByChoice: Object.freeze({
+        O: Object.freeze(['rp01', 'rp02', 'rp03', 'rp04', 'rp05', 'rp06', 'rp07', 'rp08', 'rp09', 'rp10', 'rp11', 'rp12', 'rp13']),
+        X: Object.freeze(['sa01', 'sa02', 'sa03', 'sa04', 'sa05', 'sa06', 'sa07', 'sa08', 'sa09', 'sa10', 'sa11', 'sa12', 'sa13', 'ms01', 'ms02', 'ms03', 'ms04', 'ms05', 'ms06', 'ms07', 'ms08', 'ms10', 'ms11', 'ms13']),
+      }),
+    }),
     output: observedSeason2Output,
   }),
 ]);

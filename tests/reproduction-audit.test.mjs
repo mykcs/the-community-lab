@@ -22,10 +22,10 @@ test('source item counts and independent demo item counts are never conflated', 
   assert.ok(audit.rows.every(x => !x.originalBranchingVerified && !x.originalScoringVerified));
 });
 
-test('official synthetic readbacks distinguish one checked all-O pair from the unchecked second input', () => {
+test('official synthetic readbacks distinguish two checked pairs from the unchecked historical input', () => {
   const summary = summarizeOfficialSyntheticScoreObservations();
-  assert.equal(summary.observedAnonymousSyntheticResults, 2);
-  assert.equal(summary.verifiedInputOutputPairs, 1);
+  assert.equal(summary.observedAnonymousSyntheticResults, 3);
+  assert.equal(summary.verifiedInputOutputPairs, 2);
   assert.equal(summary.inputUnverifiedResults, 1);
   assert.deepEqual(summary.observedVersionTuples, ['season-2@2026-08 / season-2-score@2 / 2e4ed483b6b79197']);
   assert.equal(summary.officialAlgorithmVerified, false);
@@ -36,6 +36,13 @@ test('official synthetic readbacks distinguish one checked all-O pair from the u
   assert.deepEqual(checked.output.axes.map(({ leftPercent, rightPercent, intensity }) =>
     [leftPercent, rightPercent, intensity]), [[50, 50, 1], [50, 50, 1], [50, 50, 1]]);
   assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[1].input, null);
+  const grouped = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[2];
+  assert.equal(grouped.resultCreatedAt, '2026-10-31T16:12:32.732Z');
+  assert.deepEqual(grouped.input.questionIdsByChoice.O,
+    Array.from({ length: 13 }, (_, i) => `rp${String(i + 1).padStart(2, '0')}`));
+  assert.deepEqual(grouped.input.questionIdsByChoice.X,
+    [...Array.from({ length: 13 }, (_, i) => `sa${String(i + 1).padStart(2, '0')}`),
+      ...Array.from({ length: 8 }, (_, i) => `ms${String(i + 1).padStart(2, '0')}`), 'ms10', 'ms11', 'ms13']);
   assert.equal(buildReproductionAudit().originalEquivalenceVerified, false);
 });
 
@@ -83,10 +90,19 @@ test('optional official readback uses only GET and never prints or compares priv
   };
   const result = await verifyOfficialSyntheticScoreReadbacks(fixtures, fetchMock);
   assert.equal(result.allMatch, true);
-  assert.equal(result.checked.length, 2);
-  assert.deepEqual(calls.map(x => x.method), ['GET', 'GET']);
+  assert.equal(result.checked.length, 3);
+  assert.deepEqual(calls.map(x => x.method), ['GET', 'GET', 'GET']);
   assert.ok(calls.every(x => x.url.startsWith('https://thecommunity.co.kr/api/v1/results/')));
   assert.doesNotMatch(JSON.stringify(result), /DO_NOT_COPY|referralCode|answers|nickname/);
+});
+
+test('grouped synthetic inputs must cover every S2 source ID and follow the recorded source groups', () => {
+  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  samples[2].input.questionIdsByChoice.O.pop();
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /完整输入未经逐题验收/);
+  const valid = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  valid[2].input.questionIdsByChoice.X.push(valid[2].input.questionIdsByChoice.O.pop());
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(valid), /完整输入未经逐题验收/);
 });
 
 test('official readback compares named axes and fields, ignoring harmless API ordering', async () => {
@@ -106,7 +122,7 @@ test('official readback compares named axes and fields, ignoring harmless API or
   } });
   const result = await verifyOfficialSyntheticScoreReadbacks(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, fetchMock);
   assert.equal(result.allMatch, true, 'JSON property order and axes array order are not score changes');
-  assert.deepEqual(result.checked.map(row => row.matchesRecordedReadback), [true, true]);
+  assert.deepEqual(result.checked.map(row => row.matchesRecordedReadback), [true, true, true]);
 });
 
 test('official readback rejects an axis drift even when all other axes agree', async () => {
@@ -139,7 +155,7 @@ test('optional official readback detects scoring-version drift without updating 
   }) });
   const result = await verifyOfficialSyntheticScoreReadbacks(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, fetchMock);
   assert.equal(result.allMatch, false);
-  assert.deepEqual(result.checked.map(row => row.matchesRecordedReadback), [false, false]);
+  assert.deepEqual(result.checked.map(row => row.matchesRecordedReadback), [false, false, false]);
   assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[0].output.scoringVersion, 'season-2-score@2');
 });
 
