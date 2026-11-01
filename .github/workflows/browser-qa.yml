@@ -2,10 +2,10 @@ name: Browser acceptance · desktop and 440x956
 
 on:
   pull_request:
-    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'e2e/**', 'lib/**', 'public/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'package*.json', 'playwright.config.mjs', '.github/workflows/browser-qa.yml']
+    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'e2e/**', 'lib/**', 'public/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'package*.json', 'playwright.config.mjs', '.github/workflows/browser-qa.yml']
   push:
     branches: [main]
-    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'e2e/**', 'lib/**', 'public/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'package*.json', 'playwright.config.mjs', '.github/workflows/browser-qa.yml']
+    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'e2e/**', 'lib/**', 'public/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'package*.json', 'playwright.config.mjs', '.github/workflows/browser-qa.yml']
 
 permissions:
   contents: read
