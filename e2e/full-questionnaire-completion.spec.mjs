@@ -189,3 +189,33 @@ test('a complete older-translation backup cannot regenerate a receipt until revi
     .toEqual(questions.slice(1).map(q => q.options[0].value));
   expect(postedToOfficial).toEqual([]);
 });
+
+test('completed answer review supports Enter-to-jump without discarding private choices', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const synthetic = createPrivateProgressReceipt(pack, 2, answers, questions.length - 1);
+  page.on('dialog', dialog => { void dialog.accept(); });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-complete-answers.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(synthetic)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  await page.locator('#full-edit').click();
+  await expect(page.locator('#full-review-tools')).toBeVisible();
+  await expect(page.locator('#full-position')).toContainText(`第 ${questions.length} / ${questions.length} 题`);
+  await page.locator('#full-jump-position').fill('1');
+  await page.locator('#full-jump-position').press('Enter');
+  await expect(page.locator('#full-group')).toContainText(`原题编号 ${questions[0].id}`);
+  await expect(page.locator('#full-finish-review')).toBeEnabled();
+  await page.locator('#full-finish-review').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  const restored = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(restored.selections.map(x => [x.questionId, x.selectedValue]))
+    .toEqual(questions.map(q => [q.id, q.options[0].value]));
+});
