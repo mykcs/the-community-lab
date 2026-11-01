@@ -73,6 +73,34 @@ test('source provenance, reported permission, unreviewed status and question cou
   mutate((_d, m) => { m.questions[0].displayPositionDerivedFromClient = 2; });
 });
 
+test('S2 draft group labels cannot split or merge source domains in answer summaries', () => {
+  const source = pack.seasons[2];
+  assert.equal(new Set(source.map(q => q.group)).size, 3);
+  const allAnswers = Object.fromEntries(source.map(q => [q.id, q.options[0].value]));
+  const groups = summarizeUnscoredAnswers(pack, 2, allAnswers).groups;
+  assert.equal(groups.length, 3);
+  assert.equal(groups.reduce((sum, row) => sum + row.answered, 0), 37);
+
+  const reject = change => {
+    const draft = structuredClone(raw);
+    change(draft.questions.filter(q => q.season === 2));
+    assert.throws(() => buildFullQuestionnaire(draft, index), /题组韩中映射不一致/);
+  };
+  reject(questions => { questions[0].source_group_zh_cn_draft = ''; });
+  reject(questions => { questions[0].source_group_zh_cn_draft = '额外的错误中文题组'; });
+  reject(questions => {
+    const other = questions.find(q => q.source_group_ko !== questions[0].source_group_ko);
+    other.source_group_zh_cn_draft = questions[0].source_group_zh_cn_draft;
+  });
+  // Legitimate consistent editorial updates to a whole group remain possible.
+  const updated = structuredClone(raw);
+  const members = updated.questions.filter(q => q.season === 2);
+  for (const q of members) {
+    if (q.source_group_ko === members[0].source_group_ko) q.source_group_zh_cn_draft = '同组统一的新中文草稿标签';
+  }
+  assert.equal(buildFullQuestionnaire(updated, index).seasons[2].length, 37);
+});
+
 test('all answers can be completed as a receipt, but never produce invented official axes or matches', () => {
   for (const season of [1, 2]) {
     const answer = Object.fromEntries(pack.seasons[season].map(q => [q.id, q.options[0].value]));
