@@ -111,6 +111,22 @@ test('second-season AI wording revisions preserve degree, referent, and priority
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('S2 sa10 preserves Korean comparative 보다 without inventing categorical exclusion', () => {
+  const q = data.questions.find(item => item.id === 'sa10');
+  assert.ok(q);
+  assert.match(q.source_text_ko, /개인의 도덕적 결함보다.*처했던 환경과 사회 구조/);
+  assert.equal(q.translation_zh_cn,
+    '犯罪的成因，与其归结为个人道德缺陷，更应从当事人当时所处的环境与社会结构中寻找。');
+  assert.equal(q.translation_version, 'draft-0.1.1');
+  assert.match(q.translator_note, /보다.*而不是.*独立韩中人工复核/);
+  assert.equal(q.review_status, 'draft');
+  assert.equal(q.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+  assert.match(data.translation_review.editorial_pass, /sa10.*보다/);
+  assert.deepEqual(standaloneData.questions.find(item => item.id === 'sa10'), q);
+});
+
 test('Korean-speaker references name Korea for Chinese readers and remain unreviewed', () => {
   const expected = new Map([
     ['s1-openness-08', ['우리 사회에서는', '韩国社会需要执行死刑。']],
