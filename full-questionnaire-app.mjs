@@ -4,6 +4,7 @@ import {
   restorePrivateProgressReceipt,
   wouldDiscardLocalAnswers,
   countReplacedLocalAnswerProvenance,
+  hasUnsavedPrivateChoices,
 } from './lib/full-questionnaire.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
@@ -14,6 +15,20 @@ const groupNames = {
   politics: '公共与政治', gender: '性别观念', openness: '开放与变化', class: '阶级与生活经历',
 };
 let active = null;
+
+function confirmLeavingWithUnsavedChoices(event) {
+  if (!hasUnsavedPrivateChoices(saved.values())) return;
+  event.preventDefault();
+  event.returnValue = ''; // Legacy browsers; modern browsers display their own wording.
+}
+
+function syncUnloadGuard() {
+  // Avoid disabling Firefox's back/forward cache when there is no data at risk.
+  window.removeEventListener('beforeunload', confirmLeavingWithUnsavedChoices);
+  if (hasUnsavedPrivateChoices(saved.values())) {
+    window.addEventListener('beforeunload', confirmLeavingWithUnsavedChoices);
+  }
+}
 
 function make(tag, className = '', text = null) {
   const element = document.createElement(tag);
@@ -34,8 +49,10 @@ function begin(season, fresh = false) {
   if (fresh || !saved.has(season)) saved.set(season, {
     season, index: 0, answers: Object.create(null),
     answerVersions: Object.create(null), answerFingerprints: Object.create(null), needsReview: new Set(),
+    backupStale: false,
   });
   active = saved.get(season);
+  syncUnloadGuard();
   render();
   view('quiz');
 }
@@ -88,6 +105,8 @@ function render() {
       active.answers[q.id] = choice.value;
       active.answerVersions[q.id] = q.translationVersion;
       active.answerFingerprints[q.id] = q.translationFingerprint;
+      active.backupStale = true;
+      syncUnloadGuard();
       active.needsReview?.delete(q.id);
       for (const entry of list.children) entry.setAttribute('aria-pressed', String(entry === btn));
       $('full-next').disabled = false;
@@ -157,6 +176,8 @@ function download() {
     ...active.receipt,
     notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
   }, `community-source-draft-season-${active.season}-answers.json`);
+  active.backupStale = false;
+  syncUnloadGuard();
 }
 
 function saveProgress() {
@@ -166,6 +187,8 @@ function saveProgress() {
     ...record,
     notice: '此 JSON 含个人敏感观点，仅供本人恢复本机试填；非官方成绩，请勿上传公开仓库。',
   }, `community-private-season-${active.season}-progress.json`);
+  active.backupStale = false;
+  syncUnloadGuard();
   $('full-save-status').textContent = '已生成本机进度文件 · 请妥善保管';
 }
 
@@ -210,8 +233,10 @@ async function importProgress(file) {
       answerVersions: session.answerVersions,
       answerFingerprints: session.answerFingerprints,
       needsReview: new Set(session.changedQuestionIds),
+      backupStale: false, // The imported file remains the backup until a new choice.
     });
     active = saved.get(session.season);
+    syncUnloadGuard();
     if (session.complete && !changed) finish();
     else {
       render();

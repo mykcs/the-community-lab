@@ -5,6 +5,7 @@ import {
   extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
   PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
   wouldDiscardLocalAnswers, countReplacedLocalAnswerProvenance,
+  hasUnsavedPrivateChoices,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -183,6 +184,22 @@ test('import conflict gate distinguishes a safe superset from lost or changed lo
   assert.equal(wouldDiscardLocalAnswers(existing, { first: 'X', second: 'X' }), true);
   assert.equal(wouldDiscardLocalAnswers(Object.create(null), Object.create(null)), false);
   assert.throws(() => wouldDiscardLocalAnswers(existing, null));
+});
+
+test('unload protection considers unbacked changes in either season, not just the visible quiz', () => {
+  const sessions = new Map([
+    [1, { answers: { 's1-a': 1 }, backupStale: false }],
+    [2, { answers: {}, backupStale: true }],
+  ]);
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
+  sessions.get(2).answers['s2-a'] = 'O';
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), true);
+  sessions.get(2).backupStale = false; // User downloaded a current JSON backup.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
+  sessions.get(1).backupStale = true; // Changes after that season's earlier backup.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), true);
+  sessions.get(1).answers = {}; // A confirmed restart clears the at-risk answers.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
 });
 
 test('importing an identical choice cannot silently erase a recorded wording fingerprint', () => {
