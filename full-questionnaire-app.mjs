@@ -86,7 +86,19 @@ function render() {
   $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
   $('full-progress').max = questions.length;
   $('full-progress').value = answered;
-  $('full-group').textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
+  const group = $('full-group');
+  if (q.season === 2) {
+    // The S2 domains are part of the official client's Korean wording.
+    // Keep them visible ahead of the AI Chinese draft, with language metadata.
+    const koreanGroup = make('span', '', q.groupKo);
+    koreanGroup.lang = 'ko';
+    group.replaceChildren(
+      make('span', '', '题组 · '), koreanGroup,
+      make('span', '', ` / ${q.group} · 原题编号 ${q.id}`),
+    );
+  } else {
+    group.textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
+  }
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
   const note = $('full-reader-note');
