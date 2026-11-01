@@ -265,6 +265,15 @@ $('full-next').addEventListener('click', () => {
   else finish();
 });
 $('full-download').addEventListener('click', download);
+$('full-edit').addEventListener('click', () => {
+  if (!active?.receipt) return;
+  // Keep all original source option values and translation fingerprints.
+  // Any later edit must create a new completed receipt before downloading.
+  active.index = pack.seasons[active.season].length - 1;
+  active.receipt = null;
+  render();
+  view('quiz');
+});
 $('full-save').addEventListener('click', saveProgress);
 $('full-import').addEventListener('click', () => $('full-import-file').click());
 $('full-import-file').addEventListener('change', event => {
