@@ -93,6 +93,9 @@ test('official synthetic fixture rejects participant data, invalid percentages a
 
 test('recorded S2 official score fields must agree with the observed display contract', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  // The first three fixtures intentionally share one frozen output object.
+  // structuredClone preserves that alias; isolate each sample before mutation.
+  for (const sample of samples) sample.output = structuredClone(sample.output);
   const original = structuredClone(samples[0].output);
   const reset = () => { samples[0].output = structuredClone(original); };
 
