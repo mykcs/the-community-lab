@@ -6,6 +6,18 @@ import { createPrivateProgressReceipt } from '../lib/full-questionnaire.mjs';
 
 const sourceIndex = JSON.parse(readFileSync(new URL('../data/original-question-index.json', import.meta.url), 'utf8'));
 
+test('S2 title displays pinned Korean source group before its unreviewed Chinese translation', async ({ page }) => {
+  const question = loadFullQuestionnaire().seasons[2][0];
+  const source = sourceIndex.questions.find(q => q.sourceQuestionId === question.id);
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const heading = page.locator('#full-group');
+  await expect(heading.locator('[lang="ko"]')).toHaveText(source.sourceGroup);
+  await expect(heading).toContainText(` / ${question.group} · 原题编号 ${question.id}`);
+  const label = await heading.textContent();
+  expect(label.indexOf(source.sourceGroup)).toBeLessThan(label.indexOf(question.group));
+  await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');
+});
+
 test('both complete seasons preserve every official source ID and raw option value through export and restore', async ({ page }) => {
   // Synthetic option choices only; this browser never submits to the official website.
   const officialSubmissions = [];

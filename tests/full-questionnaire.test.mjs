@@ -73,6 +73,16 @@ test('source provenance, reported permission, unreviewed status and question cou
   mutate((_d, m) => { m.questions[0].displayPositionDerivedFromClient = 2; });
 });
 
+test('S2 questionnaire retains the pinned Korean source group beside the unreviewed Chinese label', () => {
+  const originalGroups = new Map(index.questions.filter(q => q.season === 2)
+    .map(q => [q.sourceQuestionId, q.sourceGroup]));
+  assert.equal(new Set(pack.seasons[2].map(q => q.groupKo)).size, 3);
+  for (const q of pack.seasons[2]) {
+    assert.equal(q.groupKo, originalGroups.get(q.id), `source group missing for ${q.id}`);
+    assert.ok(q.group && q.group !== q.groupKo);
+  }
+});
+
 test('S2 draft group labels cannot split or merge source domains in answer summaries', () => {
   const source = pack.seasons[2];
   assert.equal(new Set(source.map(q => q.group)).size, 3);
