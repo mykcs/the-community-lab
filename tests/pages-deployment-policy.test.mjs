@@ -53,6 +53,10 @@ test('browser acceptance runs Chromium at both viewport widths without publishin
   assert.match(browserWorkflow, /name: Browser acceptance/);
   assert.match(browserWorkflow, /pull_request:/);
   assert.match(browserWorkflow, /['"]full-questionnaire-app\.mjs['"]/);
+  for (const path of ['docs/translation-review/**', 'docs/original-question-translation-review/**']) {
+    assert.equal(browserWorkflow.split(`'${path}'`).length - 1, 2,
+      `${path} must trigger Chromium QA both on PR and on main`);
+  }
   assert.match(browserWorkflow, /npx playwright install --with-deps --only-shell chromium/);
   assert.match(browserWorkflow, /- run: npm run test:browser/);
   assert.doesNotMatch(browserWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);

@@ -111,6 +111,31 @@ test('second-season AI wording revisions preserve degree, referent, and priority
   assert.equal(data.translation_review.publishable, false);
 });
 
+test('Korean-speaker references name Korea for Chinese readers and remain unreviewed', () => {
+  const expected = new Map([
+    ['s1-openness-08', ['우리 사회에서는', '韩国社会需要执行死刑。']],
+    ['s1-openness-17', ['한국 사회에 온 이주민은 우리 문화에', '让来到韩国的移民同化于韩国文化比较好。']],
+    ['s1-openness-18', ['우리나라로 들어오는 이민자는', '应将进入韩国的移民人数降到最低。']],
+  ]);
+  for (const [id, [sourceFragment, zh]] of expected) {
+    const question = data.questions.find(item => item.id === id);
+    assert.ok(question, `${id} must remain in the Korean source dataset`);
+    assert.match(question.source_text_ko, new RegExp(sourceFragment));
+    assert.equal(question.translation_zh_cn, zh, id);
+    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.match(question.translator_note, /AI 语境预审.*(?:待|未获).*人工复核/);
+    assert.equal(question.review_status, 'draft', id);
+    assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
+    assert.deepEqual(standaloneData.questions.find(item => item.id === id), question);
+    assert.match(data.translation_review.editorial_pass, new RegExp(id));
+  }
+  const lexicalReference = data.questions.find(item => item.id === 's1-openness-18');
+  assert.match(lexicalReference.reader_note_zh_cn, /우리나라.*韩国.*中国/);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+  assert.deepEqual(standaloneData.questions, data.questions);
+});
+
 test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
   const expected = new Map([
     ['rp06', '一座聚集数万人的综合体育场收到炸弹威胁。若唯一能查明炸弹确切位置的方法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，就应该对他们施以酷刑。'],
