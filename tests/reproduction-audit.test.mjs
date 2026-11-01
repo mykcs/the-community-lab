@@ -91,6 +91,40 @@ test('official synthetic fixture rejects participant data, invalid percentages a
   assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /版本/);
 });
 
+test('recorded S2 official score fields must agree with the observed display contract', () => {
+  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  const original = structuredClone(samples[0].output);
+  const reset = () => { samples[0].output = structuredClone(original); };
+
+  samples[0].output.resultType = '결과·구조·의미';
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /结果类型.*三轴方向/);
+  reset();
+
+  // At 50/50 the observed client chooses the left label, not the right.
+  samples[0].output.axes[0].dominant = '결과';
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /方向或强度/);
+  reset();
+
+  // Under the observed 25-point threshold, a 62/38 split stays at 1.
+  samples[0].output.axes[0].leftPercent = 62;
+  samples[0].output.axes[0].rightPercent = 38;
+  assert.equal(summarizeOfficialSyntheticScoreObservations(samples).verifiedInputOutputPairs, 3);
+  samples[0].output.axes[0].intensity = 2;
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /方向或强度/);
+  reset();
+
+  // Beyond the threshold, 63/37 must render as strength 2.
+  samples[0].output.axes[0].leftPercent = 63;
+  samples[0].output.axes[0].rightPercent = 37;
+  assert.throws(() => summarizeOfficialSyntheticScoreObservations(samples), /方向或强度/);
+  samples[0].output.axes[0].intensity = 2;
+  assert.equal(summarizeOfficialSyntheticScoreObservations(samples).verifiedInputOutputPairs, 3);
+  reset();
+
+  // A right-side 49/51 result is valid when its type and dominant agree.
+  assert.equal(summarizeOfficialSyntheticScoreObservations(samples).verifiedInputOutputPairs, 3);
+});
+
 test('optional official readback uses only GET and never prints or compares private API metadata', async () => {
   const calls = [];
   const fixtures = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS;
