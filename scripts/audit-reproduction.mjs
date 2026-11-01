@@ -1,4 +1,5 @@
 import { buildReproductionAudit, summarizeOfficialSyntheticScoreObservations, verifyOfficialSyntheticScoreReadbacks } from '../lib/reproduction-audit.mjs';
+import { compareCandidateAgainstRecordedOfficialPairs } from '../lib/official-score-parity.mjs';
 
 console.log('最终愿望：不懂韩文也能忠实理解同一套官方题目，且同季、同版本、同一份实际答卷得到与官网逐字段相同的结果。');
 const result = buildReproductionAudit();
@@ -10,6 +11,8 @@ console.log('原站同题、同路径、同结果：', result.originalEquivalenc
 const scoreEvidence = summarizeOfficialSyntheticScoreObservations();
 console.log('官方 S2 匿名合成结果读回 ' + scoreEvidence.observedAnonymousSyntheticResults + ' 份；完整输入→输出样本 ' + scoreEvidence.verifiedInputOutputPairs + ' 份；输入未验收 ' + scoreEvidence.inputUnverifiedResults + ' 份。官方算法仍为 UNKNOWN。');
 console.log('观测到的题库／评分版本／题集指纹：' + scoreEvidence.observedVersionTuples.join('；'));
+const parity = await compareCandidateAgainstRecordedOfficialPairs();
+console.log('严格逐字段评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
 if (process.argv.includes('--verify-live-readbacks')) {
   try {
     const fresh = await verifyOfficialSyntheticScoreReadbacks();
