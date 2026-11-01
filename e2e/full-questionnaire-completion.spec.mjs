@@ -73,6 +73,35 @@ test('both complete seasons preserve every official source ID and raw option val
     await page.locator('#full-import-file').setInputFiles(filePath);
     await expect(page.locator('#full-done')).toBeVisible();
     await expect(page.locator('#full-done-description')).toContainText(`第 ${season} 季 ${questionCount} 道题已全部作答`);
+
+    // A finished private receipt must not trap users in an immutable summary.
+    // Re-open without losing any earlier choices, edit the final source value,
+    // and ensure the next export is recomputed rather than the stale receipt.
+    await page.locator('#full-edit').click();
+    await expect(page.locator('#full-quiz')).toBeVisible();
+    await expect(page.locator('#full-position')).toContainText(
+      `第 ${questionCount} / ${questionCount} 题`,
+    );
+    await expect(page.locator('#full-count')).toContainText(`已答 ${questionCount} / ${questionCount}`);
+    const lastQuestion = questions.at(-1);
+    const oldChoiceIndex = (questionCount - 1) % lastQuestion.optionCount;
+    const revisedChoiceIndex = (oldChoiceIndex + 1) % lastQuestion.optionCount;
+    await expect(page.locator('.full-choice').nth(oldChoiceIndex)).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('.full-choice').nth(revisedChoiceIndex).click();
+    await page.locator('#full-next').click();
+    await expect(page.locator('#full-done')).toBeVisible();
+    const [revisedDownload] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('#full-download').click(),
+    ]);
+    const revised = JSON.parse(await readFile(await revisedDownload.path(), 'utf8'));
+    expect(revised.selections).toHaveLength(questionCount);
+    expect(revised.selections.slice(0, -1).map(({ questionId, selectedValue }) => ({ questionId, selectedValue })))
+      .toEqual(expectedSelections.slice(0, -1));
+    expect(revised.selections.at(-1)).toMatchObject({
+      questionId: lastQuestion.sourceQuestionId,
+      selectedValue: lastQuestion.optionValues[revisedChoiceIndex],
+    });
   }
 
   expect(officialSubmissions).toEqual([]);
