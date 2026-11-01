@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const verifyWorkflow = readFileSync(new URL('../.github/workflows/verify.yml', import.meta.url), 'utf8');
+const browserWorkflow = readFileSync(new URL('../.github/workflows/browser-qa.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
 const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
@@ -27,7 +28,7 @@ test('Pages builds static site from main after all project checks', () => {
 });
 
 test('GitHub workflows use pinned Node 24 action releases and a fixed Ubuntu LTS image', () => {
-  const workflows = [workflow, verifyWorkflow, translationWorkflow];
+  const workflows = [workflow, verifyWorkflow, translationWorkflow, browserWorkflow];
   for (const yaml of workflows) {
     assert.match(yaml, /runs-on: ubuntu-24\.04/);
     assert.match(yaml, /uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\.0\.1/);
@@ -46,6 +47,19 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.match(translationWorkflow, /name: Validate translation review draft/);
   assert.match(translationWorkflow, /- run: node --test tests\/translation-review-page\.test\.mjs/);
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+});
+
+test('browser acceptance runs Chromium at both viewport widths without publishing the site', () => {
+  assert.match(browserWorkflow, /name: Browser acceptance/);
+  assert.match(browserWorkflow, /pull_request:/);
+  assert.match(browserWorkflow, /['"]full-questionnaire-app\.mjs['"]/);
+  assert.match(browserWorkflow, /npx playwright install --with-deps --only-shell chromium/);
+  assert.match(browserWorkflow, /- run: npm run test:browser/);
+  assert.doesNotMatch(browserWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+  const config = readFileSync(new URL('../playwright.config.mjs', import.meta.url), 'utf8');
+  assert.match(config, /width: 1440, height: 900/);
+  assert.match(config, /width: 440, height: 956/);
+  assert.match(config, /COMMUNITY_DEPLOY_TARGET: 'github-pages'/);
 });
 
 test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
