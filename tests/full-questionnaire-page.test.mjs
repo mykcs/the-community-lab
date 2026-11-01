@@ -42,6 +42,21 @@ test('in-memory sessions support revisiting, changes, season isolation and local
   assert.doesNotMatch(app, /\.results\b|api\/v1\/results/);
 });
 
+test('completed-answer review can jump to any valid position and recalculate without changing fresh paths', () => {
+  for (const id of ['full-review-tools', 'full-jump-position', 'full-jump', 'full-jump-status', 'full-finish-review']) {
+    assert.match(page, new RegExp(`id="${id}"`));
+  }
+  assert.match(page, /只在修改已完成答卷或核对更新译文时开放/);
+  assert.match(app, /reviewMode: false/);
+  assert.match(app, /reviewMode: session\.complete/);
+  assert.match(app, /active\.reviewMode = true/);
+  assert.match(app, /\$\('full-review-tools'\)\.hidden = !active\.reviewMode/);
+  assert.match(app, /if \(!active\?\.reviewMode\) return/);
+  assert.match(app, /Number\.isSafeInteger\(position\)/);
+  assert.match(app, /finish\(\); \/\/ Recompute from current selections/);
+  assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
 test('private opt-in backup/restoration is local-only, version-checked and available before finishing', () => {
   assert.match(page, /id="full-save"/);
   assert.match(page, /id="full-import"/);

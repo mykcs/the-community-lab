@@ -51,6 +51,12 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-progress-head{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:12px;color:#b8bec8}
       .full-progress-head strong{color:#ffb4a5}
       .full-progress{display:block;width:100%;height:4px;margin:14px 0 51px;accent-color:var(--red)}
+      .full-review-tools{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;background:#1b222b;border:1px solid #485565;padding:16px 18px;margin:-23px 0 35px}
+      .full-review-tools[hidden]{display:none!important}
+      .full-review-tools label{font-size:12px;color:#d0d8e3}
+      .full-review-tools input{width:78px;min-height:42px;padding:7px 9px;background:#111820;border:1px solid #8290a3;border-radius:3px;color:#fff;font:inherit}
+      .full-review-tools button{font-size:12px;min-height:42px}
+      .full-review-tools p{font-size:11px;color:#aeb8c7;line-height:1.8;margin:0;flex-basis:100%}
       .full-question{max-width:850px;margin:auto}
       .full-group{font-size:11px;color:var(--red);letter-spacing:.08em}
       .full-question h1{font:600 clamp(27px,3.3vw,42px)/1.55 var(--ko);letter-spacing:-.035em;word-break:keep-all;margin:19px 0 34px}
@@ -78,7 +84,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
       .full-actions .button{font-size:12px}
       .full-footer{border-top:1px solid var(--line);padding:30px clamp(22px,6vw,65px);font-size:11px;color:#929ba6;line-height:1.9}
-      @media(max-width:630px){.full-shell{padding-top:18px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-quiz-disclosure{padding:9px 12px;margin-bottom:10px;line-height:1.65}.full-progress{margin-bottom:22px}.full-question h1{font-size:27px;margin:12px 0 18px}.full-translation{padding-top:13px}.full-question-zh{font-size:20px;line-height:1.6;margin:10px 0 14px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:12px;min-height:72px}.full-choices{gap:9px;margin:12px 0 16px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin:10px 0 17px}.full-quiz-backup{justify-content:flex-start}}
+      @media(max-width:630px){.full-shell{padding-top:18px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-quiz-disclosure{padding:9px 12px;margin-bottom:10px;line-height:1.65}.full-progress{margin-bottom:22px}.full-review-tools{margin:0 0 24px;padding:12px}.full-review-tools button{padding:0 11px}.full-question h1{font-size:27px;margin:12px 0 18px}.full-translation{padding-top:13px}.full-question-zh{font-size:20px;line-height:1.6;margin:10px 0 14px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:12px;min-height:72px}.full-choices{gap:9px;margin:12px 0 16px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin:10px 0 17px}.full-quiz-backup{justify-content:flex-start}}
     </style>
   </head>
   <body>
@@ -106,6 +112,10 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
           <div class="full-quiz-top"><button id="full-exit" class="full-muted-button" type="button">← 暂停 / 返回选择</button><span class="full-kicker" id="full-season-tag"></span><div class="full-quiz-backup"><button id="full-save" class="full-muted-button" type="button" disabled>↓ 下载本机进度 JSON</button><span id="full-save-status" class="full-feedback" role="status" aria-live="polite"></span></div></div>
           <div class="full-progress-head"><span id="full-position">第 01 / 37 题</span><strong id="full-count">已答 0 / 37</strong></div>
           <progress id="full-progress" class="full-progress" value="0" max="37" aria-label="本季作答进度"></progress>
+          <div id="full-review-tools" class="full-review-tools" aria-label="已完成答卷的本机修订工具" hidden>
+            <label for="full-jump-position">修改已完成答卷 · 跳到第</label><input id="full-jump-position" type="number" min="1" step="1" inputmode="numeric" aria-describedby="full-jump-status" /><button id="full-jump" class="button button-outline" type="button">跳转题位</button><button id="full-finish-review" class="button button-primary" type="button">重新生成本机答题记录</button>
+            <p>只在修改已完成答卷或核对更新译文时开放；新答卷仍按顺序作答。这是本站本机编辑功能，不代表官网允许跳题。<span id="full-jump-status" class="full-feedback" role="status" aria-live="polite"></span></p>
+          </div>
           <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p id="full-reader-note" class="full-reader-note" role="note" hidden></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
             <div class="full-quiz-actions"><button id="full-prev" class="button button-outline" type="button">← 上一题</button><button id="full-next" class="button button-primary" type="button" disabled>确认，继续 →</button></div>
             <p class="full-evidence">本题来源：<a id="full-source" target="_blank" rel="noopener noreferrer">公开客户端同季题目</a>。题序依据该版本客户端的可核查展示位置；这不证明所有官方版本或服务端结果一致。页面不会向原站发送答案。</p>
@@ -117,7 +127,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
           <aside class="full-warning"><strong>这里不显示官方分数或嘉宾匹配</strong><p>我们尚未获得可独立验证的逐题权重、反向计分、归一化及服务端结果金标准。下面仅统计每组答了多少道题，不推算政治倾向、心理标签或嘉宾相似度。</p></aside>
           <div id="full-group-summary" class="full-summary" aria-label="各题组作答数量"></div>
           <div class="full-actions"><button id="full-download" class="button button-primary" type="button">下载本机答案 JSON ↓</button><button id="full-edit" class="button button-outline" type="button">返回修改已答选项 ↶</button><button id="full-restart" class="button button-outline" type="button">重新开始本季</button><button id="full-back" class="button button-text" type="button">返回两季入口 →</button></div>
-          <p class="full-feedback">返回修改会保留本季全部答案，从最后一题开始，可按「上一题」复查。重新开始本季会清空本页答案，须先确认。建议先下载 JSON 备份。</p>
+          <p class="full-feedback">返回修改会保留本季全部答案。可以直接跳转到第 1–87／1–37 题，修改后点击「重新生成本机答题记录」，不必逐题点回末尾。重新开始本季会清空本页答案，须先确认。建议先下载 JSON 备份。</p>
           <p class="full-local">下载的 JSON 含逐题选项与来源版本，可能涉及你的私人价值观。文件只在你点击后生成；本站不会保存或上传。</p>
         </section>
       </main>

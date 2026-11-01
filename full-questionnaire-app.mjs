@@ -49,7 +49,7 @@ function begin(season, fresh = false) {
   if (fresh || !saved.has(season)) saved.set(season, {
     season, index: 0, answers: Object.create(null),
     answerVersions: Object.create(null), answerFingerprints: Object.create(null), needsReview: new Set(),
-    backupStale: false,
+    backupStale: false, reviewMode: false,
   });
   active = saved.get(season);
   syncUnloadGuard();
@@ -114,12 +114,17 @@ function render() {
       $('full-progress').value = Object.keys(active.answers).length;
       $('full-save').disabled = false;
       $('full-save-status').textContent = '';
+      $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
     });
     list.append(btn);
   }
   $('full-prev').disabled = active.index === 0;
   $('full-next').disabled = !Object.hasOwn(active.answers, q.id) || active.needsReview?.has(q.id);
   $('full-next').textContent = active.index === questions.length - 1 ? '完成本季答题 →' : '确认，继续 →';
+  $('full-review-tools').hidden = !active.reviewMode;
+  $('full-jump-position').max = String(questions.length);
+  $('full-jump-position').value = String(active.index + 1);
+  $('full-finish-review').disabled = answered !== questions.length || Boolean(active.needsReview?.size);
   $('full-save').disabled = answered === 0;
   $('full-save-status').textContent = active.needsReview?.has(q.id)
     ? '这道题的中文 AI 译文已经更新；请阅读韩文和新中文后重新点击选项，才能继续。'
@@ -151,6 +156,7 @@ function finish() {
   }
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
   active.receipt = summary;
+  active.reviewMode = false;
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。`;
   const panel = $('full-group-summary');
   panel.replaceChildren();
@@ -233,6 +239,7 @@ async function importProgress(file) {
       answerVersions: session.answerVersions,
       answerFingerprints: session.answerFingerprints,
       needsReview: new Set(session.changedQuestionIds),
+      reviewMode: session.complete,
       backupStale: false, // The imported file remains the backup until a new choice.
     });
     active = saved.get(session.season);
@@ -258,6 +265,23 @@ $('full-exit').addEventListener('click', selectSeason);
 $('full-prev').addEventListener('click', () => {
   if (active.index > 0) { active.index -= 1; render(); }
 });
+$('full-jump').addEventListener('click', () => {
+  if (!active?.reviewMode) return;
+  const raw = $('full-jump-position').value.trim();
+  const position = Number(raw);
+  const length = pack.seasons[active.season].length;
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(position) || position < 1 || position > length) {
+    $('full-jump-status').textContent = `请输入 1 至 ${length} 之间的整数题位。`;
+    return;
+  }
+  active.index = position - 1;
+  $('full-jump-status').textContent = '';
+  render();
+});
+$('full-finish-review').addEventListener('click', () => {
+  if (!active?.reviewMode) return;
+  finish(); // Recompute from current selections; never reuse an old completed receipt.
+});
 $('full-next').addEventListener('click', () => {
   const q = pack.seasons[active.season][active.index];
   if (!Object.hasOwn(active.answers, q.id)) return;
@@ -271,6 +295,8 @@ $('full-edit').addEventListener('click', () => {
   // Any later edit must create a new completed receipt before downloading.
   active.index = pack.seasons[active.season].length - 1;
   active.receipt = null;
+  active.reviewMode = true;
+  $('full-jump-status').textContent = '';
   render();
   view('quiz');
 });
