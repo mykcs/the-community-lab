@@ -45,6 +45,24 @@ test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-va
     'never infer an unverified historical answer vector from its official output');
 });
 
+test('official fixtures refuse source-index reordering or raw-value drift even with 37 valid rows', () => {
+  const changedOrder = structuredClone(SOURCE_INDEX);
+  const rows = changedOrder.questions.filter(q => q.season === 2)
+    .sort((a, b) => a.displayPositionDerivedFromClient - b.displayPositionDerivedFromClient);
+  [rows[0].displayPositionDerivedFromClient, rows[1].displayPositionDerivedFromClient] =
+    [rows[1].displayPositionDerivedFromClient, rows[0].displayPositionDerivedFromClient];
+  // Both rows remain structurally valid and all 37 questions still exist;
+  // silently accepting the swapped order would corrupt input→output evidence.
+  assert.throws(() => buildVerifiedOfficialScoreFixtures(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, changedOrder),
+    /源题元数据指纹不匹配/);
+
+  const changedValueOrder = structuredClone(SOURCE_INDEX);
+  changedValueOrder.questions.find(q => q.season === 2).optionValues.reverse();
+  assert.throws(() => buildVerifiedOfficialScoreFixtures(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, changedValueOrder),
+    /源题元数据指纹不匹配/);
+  assert.equal(buildVerifiedOfficialScoreFixtures().length, 3, 'untouched pinned index must remain usable');
+});
+
 test('official score fixtures detach and deeply freeze expected outputs', () => {
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   const snapshots = buildVerifiedOfficialScoreFixtures(observations);
