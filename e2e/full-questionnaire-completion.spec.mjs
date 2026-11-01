@@ -219,3 +219,59 @@ test('completed answer review supports Enter-to-jump without discarding private 
   expect(restored.selections.map(x => [x.questionId, x.selectedValue]))
     .toEqual(questions.map(q => [q.id, q.options[0].value]));
 });
+
+
+test('legacy complete backup warns that Chinese wording is UNKNOWN until the answer is clicked again', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const synthetic = createPrivateProgressReceipt(pack, 2, answers, questions.length - 1);
+  delete synthetic.selections[0].translationFingerprint; // Older format did not capture text SHA.
+  const warnings = [];
+  page.on('dialog', dialog => {
+    warnings.push(dialog.message());
+    void dialog.accept();
+  });
+  const officialPosts = [];
+  page.on('request', request => {
+    if (request.method() === 'POST' && /thecommunity\.co\.kr/.test(request.url())) {
+      officialPosts.push(request.url());
+    }
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-legacy-with-unknown-wording.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(synthetic)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  expect(warnings).toHaveLength(1);
+  expect(warnings[0]).toContain('1 道答案没有历史中文文字指纹');
+  await expect(page.locator('#full-done-description')).toContainText('1 道旧答案缺少历史中文文字指纹');
+
+  const [legacyDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  const legacyReceipt = JSON.parse(await readFile(await legacyDownload.path(), 'utf8'));
+  expect(legacyReceipt.selections[0].translationFingerprint).toBeNull();
+  expect(legacyReceipt.selections.map(s => s.selectedValue))
+    .toEqual(questions.map(q => q.options[0].value));
+
+  await page.locator('#full-edit').click();
+  await page.locator('#full-jump-position').fill('1');
+  await page.locator('#full-jump').click();
+  await expect(page.locator('#full-save-status')).toContainText('缺少历史中文文字指纹');
+  await page.locator('.full-choice').first().click(); // Genuine reconfirmation, not synthetic backfill.
+  await expect(page.locator('#full-count')).not.toContainText('历史译文未知');
+  await page.locator('#full-finish-review').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  await expect(page.locator('#full-done-description')).not.toContainText('缺少历史中文文字指纹');
+  const [updatedDownload] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  const updated = JSON.parse(await readFile(await updatedDownload.path(), 'utf8'));
+  expect(updated.selections[0].translationFingerprint).toBe(questions[0].translationFingerprint);
+  expect(updated.selections.map(s => s.selectedValue))
+    .toEqual(questions.map(q => q.options[0].value));
+  expect(officialPosts).toEqual([]);
+});

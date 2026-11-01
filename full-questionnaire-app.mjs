@@ -16,6 +16,12 @@ const groupNames = {
 };
 let active = null;
 
+function unknownWordingCount(session) {
+  return Object.keys(session?.answers ?? {}).filter(
+    id => session.answerFingerprints?.[id] === null,
+  ).length;
+}
+
 function confirmLeavingWithUnsavedChoices(event) {
   if (!hasUnsavedPrivateChoices(saved.values())) return;
   event.preventDefault();
@@ -62,8 +68,9 @@ function selectSeason() {
     const session = saved.get(season);
     const answered = session ? Object.keys(session.answers).length : 0;
     const pending = session?.needsReview?.size || 0;
+    const unknown = unknownWordingCount(session);
     document.querySelector(`[data-season-progress="${season}"]`).textContent = answered
-      ? `本页已答 ${answered} / ${pack.seasons[season].length}${pending ? ` · ${pending} 道译文需重新确认` : ''} · 继续 ↗`
+      ? `本页已答 ${answered} / ${pack.seasons[season].length}${pending ? ` · ${pending} 道译文需重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''} · 继续 ↗`
       : '开始完整试填 ↗';
   }
   view('select');
@@ -73,9 +80,10 @@ function render() {
   const questions = pack.seasons[active.season];
   const q = questions[active.index];
   const answered = Object.keys(active.answers).length;
+  const unknown = unknownWordingCount(active);
   $('full-season-tag').textContent = `SEASON 0${active.season} / SOURCE DRAFT`;
   $('full-position').textContent = `第 ${String(active.index + 1).padStart(2, '0')} / ${questions.length} 题`;
-  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}`;
+  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
   $('full-progress').max = questions.length;
   $('full-progress').value = answered;
   $('full-group').textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
@@ -110,7 +118,7 @@ function render() {
       active.needsReview?.delete(q.id);
       for (const entry of list.children) entry.setAttribute('aria-pressed', String(entry === btn));
       $('full-next').disabled = false;
-      $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}`;
+      $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknownWordingCount(active) ? ` · ${unknownWordingCount(active)} 道历史译文未知` : ''}`;
       $('full-progress').value = Object.keys(active.answers).length;
       $('full-save').disabled = false;
       $('full-save-status').textContent = '';
@@ -128,7 +136,13 @@ function render() {
   $('full-save').disabled = answered === 0;
   $('full-save-status').textContent = active.needsReview?.has(q.id)
     ? '这道题的中文 AI 译文已经更新；请阅读韩文和新中文后重新点击选项，才能继续。'
-    : (active.needsReview?.size ? `还有 ${active.needsReview.size} 道旧译文答案待重新确认。` : '');
+    : Object.hasOwn(active.answers, q.id) && active.answerFingerprints?.[q.id] === null
+      ? '这道旧答案缺少历史中文文字指纹，无法核验当时读过的译文；重新点击选项可确认当前译文。'
+      : active.needsReview?.size
+        ? `还有 ${active.needsReview.size} 道旧译文答案待重新确认。`
+        : unknown
+          ? `还有 ${unknown} 道旧答案的历史中文文字不可核验，可返回对应题目重新确认。`
+          : '';
   if (!panes.quiz.hidden) {
     window.scrollTo({ top: 0, behavior: 'instant' });
     $('full-ko').focus({ preventScroll: true });
@@ -157,7 +171,8 @@ function finish() {
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
   active.receipt = summary;
   active.reviewMode = false;
-  $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。`;
+  const unknown = unknownWordingCount(active);
+  $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。${unknown ? ` 其中 ${unknown} 道旧答案缺少历史中文文字指纹，无法核验当时所见译文；可返回修改并重新点击选项确认当前译文。` : ''}`;
   const panel = $('full-group-summary');
   panel.replaceChildren();
   for (const group of summary.groups) {
@@ -212,7 +227,8 @@ async function importProgress(file) {
     const discardsLocal = previous && wouldDiscardLocalAnswers(previous.answers, session.answers);
     const overwrittenProvenance = previous ? countReplacedLocalAnswerProvenance(previous, session) : 0;
     const changed = session.changedQuestionIds.length;
-    if (discardsLocal || changed || overwrittenProvenance) {
+    const unknown = session.unknownWordingQuestionIds.length;
+    if (discardsLocal || changed || overwrittenProvenance || unknown) {
       const reasons = [
         discardsLocal
           ? `第 ${session.season} 季已有 ${Object.keys(previous.answers).length} 道答案；导入会覆盖或删除部分选择，无法撤销。`
@@ -222,6 +238,9 @@ async function importProgress(file) {
           : '',
         overwrittenProvenance
           ? `还有 ${overwrittenProvenance} 道已有答案的选项值相同，但导入会替换本页记录的中文译文版本或文字指纹（旧备份可能使指纹变成历史未知）。建议先下载当前进度 JSON 备份。`
+          : '',
+        unknown
+          ? `有 ${unknown} 道答案没有历史中文文字指纹，无法证明当时看过的译文与现在相同；导入后保留原始选项值及 UNKNOWN，不会伪造新指纹。可逐题重新点击确认当前译文。`
           : '',
       ].filter(Boolean);
       if (!window.confirm(`${reasons.join('\n')}
@@ -250,7 +269,9 @@ async function importProgress(file) {
       view('quiz');
       $('full-save-status').textContent = changed
         ? `已保留 ${session.answeredCount} 道旧答案；请重新确认 ${changed} 道更新译文的选择。`
-        : `已恢复第 ${session.season} 季 ${session.answeredCount} 道答案`;
+        : unknown
+          ? `已恢复 ${session.answeredCount} 道答案；其中 ${unknown} 道缺少历史中文文字指纹。旧答案没有被改写，可逐题重新确认当前译文。`
+          : `已恢复第 ${session.season} 季 ${session.answeredCount} 道答案`;
     }
     status.textContent = '';
   } catch {
