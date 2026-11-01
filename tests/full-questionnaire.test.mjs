@@ -307,7 +307,7 @@ test('translation-only draft updates allow safe opt-in resume while retaining ea
 test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
   const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
   assert.match(app, /const changed = session\.changedQuestionIds\.length/);
-  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance\)/);
+  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance \|\| unknown\)/);
   assert.match(app, /window\.confirm/);
   assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
   assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);
@@ -360,6 +360,8 @@ test('legacy backup without wording fingerprint stays UNKNOWN across imports and
   const legacy = createPrivateProgressReceipt(current, 2, answers, 0);
   delete legacy.selections[0].translationFingerprint;
   const restored = restorePrivateProgressReceipt(current, legacy);
+  assert.deepEqual(restored.unknownWordingQuestionIds, [q.id],
+    'legacy answers must be surfaced as historical text UNKNOWN');
   assert.equal(restored.answerFingerprints[q.id], null, 'missing historic fingerprint must stay unknown');
 
   const next = createPrivateProgressReceipt(current, 2, restored.answers, 0,
