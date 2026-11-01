@@ -45,6 +45,26 @@ test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-va
     'never infer an unverified historical answer vector from its official output');
 });
 
+test('official score fixtures detach and deeply freeze expected outputs', () => {
+  const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  const snapshots = buildVerifiedOfficialScoreFixtures(observations);
+  const gold = snapshots[0].expectedOutput;
+  const before = structuredClone(gold);
+  assert.notStrictEqual(gold, observations[0].output);
+  assert.notStrictEqual(gold.axes, observations[0].output.axes);
+  assert.notStrictEqual(gold.axes[0], observations[0].output.axes[0]);
+  assert.ok(Object.isFrozen(gold));
+  assert.ok(Object.isFrozen(gold.axes));
+  assert.ok(gold.axes.every(Object.isFrozen));
+  assert.throws(() => { gold.resultType = 'changed'; }, TypeError);
+  assert.throws(() => { gold.axes[0].leftPercent = 99; }, TypeError);
+  assert.throws(() => { gold.axes.pop(); }, TypeError);
+  observations[0].output.resultType = 'external-edit';
+  observations[0].output.axes[0].leftPercent = 99;
+  assert.deepEqual(gold, before, 'mutating mutable source evidence must not rewrite the frozen gold');
+  assert.deepEqual(compareRecordedOfficialScoreFields(before, gold), { matches: true, mismatches: [] });
+});
+
 test('official comparisons cover every public field exactly, regardless of axis order', () => {
   const expected = fixtures[0].expectedOutput;
   assert.deepEqual(compareRecordedOfficialScoreFields(expected, structuredClone(expected)),
