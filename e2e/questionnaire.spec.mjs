@@ -65,3 +65,31 @@ test('season one local download works and a reload never restores it automatical
   await expect(page.locator('#full-count')).toContainText('已答 0 / 87');
   await expectNoHorizontalOverflow(page);
 });
+
+test('a new unbacked choice warns on reload, but downloading a backup clears the warning', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('[data-start-season="2"]').click();
+  await page.locator('.full-choice').first().click();
+
+  const dialogs = [];
+  page.on('dialog', dialog => {
+    dialogs.push(dialog.type());
+    void dialog.accept();
+  });
+  await page.reload();
+  expect(dialogs).toEqual(['beforeunload']);
+  await expect(page.locator('#full-select')).toBeVisible();
+
+  await page.locator('[data-start-season="2"]').click();
+  await page.locator('.full-choice').first().click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#full-save').click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('community-private-season-2-progress.json');
+
+  dialogs.length = 0;
+  await page.reload();
+  expect(dialogs).toHaveLength(0);
+  await expect(page.locator('#full-select')).toBeVisible();
+});

@@ -65,6 +65,18 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
 });
 
+test('unsaved choices guard refresh/navigation without silently persisting sensitive answers', () => {
+  assert.match(app, /window\.addEventListener\('beforeunload', confirmLeavingWithUnsavedChoices\)/);
+  assert.match(app, /window\.removeEventListener\('beforeunload', confirmLeavingWithUnsavedChoices\)/);
+  assert.match(app, /event\.preventDefault\(\)/);
+  assert.match(app, /event\.returnValue = ''/);
+  assert.match(app, /active\.backupStale = true/);
+  assert.match(app, /active\.backupStale = false/);
+  assert.match(app, /backupStale: false, \/\/ The imported file remains the backup/);
+  assert.match(page, /提醒不等于自动保存/);
+  assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
 test('build uses the already-published single draft source rather than duplicating source questions', () => {
   assert.match(loader, /docs\/translation-review\/index\.html/);
   assert.match(loader, /data\/original-question-index\.json/);
