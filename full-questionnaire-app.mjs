@@ -265,7 +265,7 @@ $('full-exit').addEventListener('click', selectSeason);
 $('full-prev').addEventListener('click', () => {
   if (active.index > 0) { active.index -= 1; render(); }
 });
-$('full-jump').addEventListener('click', () => {
+function jumpToReviewedQuestion() {
   if (!active?.reviewMode) return;
   const raw = $('full-jump-position').value.trim();
   const position = Number(raw);
@@ -277,6 +277,12 @@ $('full-jump').addEventListener('click', () => {
   active.index = position - 1;
   $('full-jump-status').textContent = '';
   render();
+}
+$('full-jump').addEventListener('click', jumpToReviewedQuestion);
+$('full-jump-position').addEventListener('keydown', event => {
+  if (event.key !== 'Enter') return;
+  event.preventDefault();
+  jumpToReviewedQuestion();
 });
 $('full-finish-review').addEventListener('click', () => {
   if (!active?.reviewMode) return;
