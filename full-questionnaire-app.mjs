@@ -110,13 +110,14 @@ function render() {
   $('full-source').href = q.sourceUrl;
   const list = $('full-choices');
   list.replaceChildren();
-  for (const [index, choice] of q.options.entries()) {
+  for (const choice of q.options) {
     const btn = make('button', 'full-choice');
     btn.type = 'button';
     btn.setAttribute('aria-pressed', String(active.answers[q.id] === choice.value));
-    btn.setAttribute('aria-label', `${choice.ko} / ${choice.zh}`);
-    const mark = make('span', 'full-choice-mark', q.options.length === 2 ? (index === 0 ? 'O' : 'X') : index + 1);
-    mark.setAttribute('aria-hidden', 'true');
+    // The accessible name must expose the ORIGINAL source option value (O/X
+    // or 1-6). Let nested text provide the name: aria-label would override
+    // this value and the Korean span's lang=ko for screen readers.
+    const mark = make('span', 'full-choice-mark', choice.value);
     const copy = make('span', 'full-choice-copy');
     const ko = make('span', 'full-choice-ko', choice.ko); ko.lang = 'ko';
     copy.append(ko, make('span', 'full-choice-zh', choice.zh));
