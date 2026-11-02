@@ -34,6 +34,8 @@ test('unverified historical results cannot be counted as input diversity', () =>
 test('duplicate verified input lowers diversity instead of inflating coverage', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   samples[3].input = structuredClone(samples[2].input);
+  // A repeated official input may corroborate reliability only with the same output.
+  samples[3].output = structuredClone(samples[2].output);
   const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
   assert.equal(result.verifiedPairs, 3);
   assert.equal(result.uniqueInputVectors, 2);
@@ -79,4 +81,13 @@ test('no verified inputs means UNKNOWN rather than 37 questions with one value',
   assert.equal(result.comparedInputPairs, 0);
   assert.equal(result.minPairwiseHammingDistance, null);
   assert.equal(result.officialAlgorithmVerified, false);
+});
+
+test('identical source choices with contradictory official scores are rejected as a gold standard', () => {
+  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  // Synthesize a duplicate verified input with a DIFFERENT official readback.
+  // Existing evidence has no such contradiction; this is a fail-closed guard.
+  samples[3].input = structuredClone(samples[2].input);
+  assert.throws(() => summarizeVerifiedOfficialScoreInputCoverage(samples),
+    /同一原始答卷.*结果冲突/);
 });
