@@ -1,6 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
 const baseURL = 'http://127.0.0.1:4321/the-community-lab/';
+const previewCommand = 'npm run preview -- --host 127.0.0.1 --port 4321';
+// CI already built the exact PR head with GitHub Pages paths. Locally, an
+// ordinary Astro build defaults to the old Vercel root, making every
+// Pages-path browser test time out. Build the correct target before preview.
+const webServerCommand = process.env.CI ? previewCommand : `npm run build && ${previewCommand}`;
 
 export default defineConfig({
   testDir: './e2e',
@@ -31,9 +36,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run preview -- --host 127.0.0.1 --port 4321',
+    command: webServerCommand,
     url: `${baseURL}questionnaire/`,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
     env: { COMMUNITY_DEPLOY_TARGET: 'github-pages' },
   },
