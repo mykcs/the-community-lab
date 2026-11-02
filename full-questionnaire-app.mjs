@@ -187,9 +187,23 @@ function finish() {
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。${unknown ? ` 其中 ${unknown} 道旧答案缺少历史中文文字指纹，无法核验当时所见译文；可返回修改并重新点击选项确认当前译文。` : ''}`;
   const panel = $('full-group-summary');
   panel.replaceChildren();
+  // Source group names remain part of the S2 Korean-first reading contract,
+  // including the completed answer-count summary. Do not replace them with
+  // unreviewed Chinese draft labels or imply an official scored result.
+  const originalGroupNames = active.season === 2
+    ? new Map(questions.map(q => [q.group, q.groupKo]))
+    : null;
   for (const group of summary.groups) {
     const item = make('div');
-    item.append(make('span', '', groupNames[group.label] || group.label), make('strong', '', `${group.answered} 道已答`));
+    const label = make('span');
+    if (originalGroupNames?.has(group.label)) {
+      const ko = make('span', '', originalGroupNames.get(group.label));
+      ko.lang = 'ko';
+      label.append(ko, make('span', '', ` / ${group.label}`));
+    } else {
+      label.textContent = groupNames[group.label] || group.label;
+    }
+    item.append(label, make('strong', '', `${group.answered} 道已答`));
     panel.append(item);
   }
   view('done');
