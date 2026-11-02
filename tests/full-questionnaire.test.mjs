@@ -83,6 +83,29 @@ test('S2 questionnaire retains the pinned Korean source group beside the unrevie
   }
 });
 
+test('S2 Chinese group headings participate in historical wording fingerprints', () => {
+  const original = pack.seasons[2][0];
+  const oldHash = original.translationFingerprint;
+  const oldReceipt = createPrivateProgressReceipt(
+    pack, 2, { [original.id]: original.options[0].value }, 0,
+  );
+  const changed = structuredClone(pack);
+  const revised = changed.seasons[2][0];
+  revised.group += '（供回归测试的合成修订）';
+  attachTranslationFingerprints(changed);
+  assert.notEqual(revised.translationFingerprint, oldHash,
+    'editing visible S2 Chinese group copy must change the receipt wording hash');
+  const restored = restorePrivateProgressReceipt(changed, oldReceipt);
+  assert.deepEqual(restored.changedQuestionIds, [original.id],
+    'a prior selection must be re-confirmed after the displayed group is edited');
+  assert.equal(changed.seasons[2][1].translationFingerprint,
+    pack.seasons[2][1].translationFingerprint,
+    'unrelated group choices must keep their wording hashes');
+  assert.equal(changed.seasons[1][0].translationFingerprint,
+    pack.seasons[1][0].translationFingerprint,
+    'S1 historical receipt hashes must not change due to the S2-only fix');
+});
+
 test('S2 draft group labels cannot split or merge source domains in answer summaries', () => {
   const source = pack.seasons[2];
   assert.equal(new Set(source.map(q => q.group)).size, 3);

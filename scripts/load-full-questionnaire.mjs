@@ -4,14 +4,18 @@ import { createHash } from 'node:crypto';
 import { extractDraftPack, buildFullQuestionnaire } from '../lib/full-questionnaire.mjs';
 import { verifyKoreanSourceSnapshot, verifySourceMetadataSnapshot } from './verify-korean-source-snapshot.mjs';
 
-// SHA-256 of the exact Chinese wording shown to a respondent, including each
-// option's stable source value. Built into the static pack; no browser hashing,
-// server call, or answer upload is needed for safe local progress restoration.
+// SHA-256 of the Chinese wording shown to a respondent, including each
+// option's stable source value and the S2 AI-draft group heading. Previously,
+// group-heading edits could leave old choices appearing to match unchanged text.
+// Existing S2 receipts must be reconfirmed after this stricter fingerprint
+// because earlier hashes cannot establish the historical group heading.
+// Built into the static pack; no browser hashing or answer upload is needed.
 export function attachTranslationFingerprints(pack) {
   for (const q of [...pack.seasons[1], ...pack.seasons[2]]) {
     q.translationFingerprint = createHash('sha256')
       .update(JSON.stringify([q.draftZh, q.options.map(o => [o.value, o.zh]),
-        ...(q.readerNote ? [q.readerNote] : [])]))
+        ...(q.readerNote ? [q.readerNote] : []),
+        ...(q.season === 2 ? [q.group] : [])]))
       .digest('hex');
   }
   return pack;
