@@ -14,6 +14,12 @@ test('verified S2 inputs do not contain any isolated one-question score contrast
     questionsObservedWithNoVerifiedValues: 0,
     comparedInputPairs: 3,
     singleQuestionContrastPairs: 0,
+    groupLocalContrastPairs: 1,
+    groupLocalContrasts: [{
+      sourceGroup: '원칙-결과',
+      differingQuestions: 2,
+      changedScoreAxisIds: ['원칙-결과'],
+    }],
     minPairwiseHammingDistance: 2,
     maxPairwiseHammingDistance: 26,
     officialAlgorithmVerified: false,
@@ -42,6 +48,7 @@ test('duplicate verified input lowers diversity instead of inflating coverage', 
   assert.equal(result.questionsObservedWithBothValues, 24);
   assert.equal(result.questionsObservedWithOnlyOneValue, 13);
   assert.equal(result.comparedInputPairs, 1);
+  assert.equal(result.groupLocalContrastPairs, 0, 'a repeated input cannot invent a group-local contrast');
   assert.equal(result.minPairwiseHammingDistance, 24);
   assert.equal(result.maxPairwiseHammingDistance, 24);
 });
@@ -72,6 +79,8 @@ test('synthetic one-question contrast is detected but does not establish algorit
   };
   const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
   assert.equal(result.singleQuestionContrastPairs, 1);
+  assert.ok(result.groupLocalContrasts.some(row =>
+    row.sourceGroup === '원칙-결과' && row.differingQuestions === 1));
   assert.equal(result.minPairwiseHammingDistance, 1);
   assert.equal(result.questionsObservedWithBothValues, 25);
   assert.equal(result.officialAlgorithmVerified, false);
@@ -93,6 +102,8 @@ test('no verified inputs means UNKNOWN rather than 37 questions with one value',
   assert.equal(result.questionsObservedWithOnlyOneValue, 0);
   assert.equal(result.questionsObservedWithNoVerifiedValues, 37);
   assert.equal(result.comparedInputPairs, 0);
+  assert.equal(result.groupLocalContrastPairs, 0);
+  assert.deepEqual(result.groupLocalContrasts, []);
   assert.equal(result.minPairwiseHammingDistance, null);
   assert.equal(result.officialAlgorithmVerified, false);
 });

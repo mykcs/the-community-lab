@@ -28,6 +28,11 @@ console.log('不同输入向量两两对比（重复答卷不重复计数）：'
   (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
   (inputCoverage.maxPairwiseHammingDistance ?? 'UNKNOWN') +
   ' 题。多题一起变化不能推断每题权重或评分公式。');
+console.log('单一客户端题组内的输入对照：' + inputCoverage.groupLocalContrastPairs +
+  ' 对。' + inputCoverage.groupLocalContrasts.map(row =>
+    row.sourceGroup + '组内差 ' + row.differingQuestions + ' 题、官方显示变化轴 ' +
+    (row.changedScoreAxisIds.join('、') || '无')).join('；') +
+  '。这是已记录样本的组级观察，不证明单题权重或其他输入下的轴独立性。');
 const parity = await compareCandidateAgainstRecordedOfficialPairs();
 console.log('严格逐字段评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
 if (process.argv.includes('--verify-live-readbacks')) {

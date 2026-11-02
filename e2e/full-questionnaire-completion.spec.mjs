@@ -19,6 +19,10 @@ test('S2 title displays pinned Korean source group before its unreviewed Chinese
 });
 
 test('both complete seasons preserve every official source ID and raw option value through export and restore', async ({ page }) => {
+  // 124 questions plus two export/import/edit cycles exceed Playwright's
+  // 30-second unit-style default on real desktop/mobile CI browsers. Keep the
+  // exhaustive privacy and source-value assertion instead of truncating it.
+  test.setTimeout(180_000);
   // Synthetic option choices only; this browser never submits to the official website.
   const officialSubmissions = [];
   page.on('request', request => {
