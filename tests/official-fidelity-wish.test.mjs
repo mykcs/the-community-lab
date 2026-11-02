@@ -44,3 +44,15 @@ test('the public front door puts current 37-question source pilot before the unr
   assert.match(home, /不能获得官方分数/);
   assert.match(read('src/pages/questionnaire/index.astro'), /这里不显示官方分数或嘉宾匹配/);
 });
+
+
+test('the public Korean-source links use the currently observed canonical host', () => {
+  // This only verifies navigation to the observed canonical site,
+  // not official ownership, translation permission, or scoring parity.
+  const home = read('src/pages/index.astro');
+  for (const season of [1, 2]) {
+    const href = 'href="https://thecommunity.co.kr/season/' + season + '"';
+    assert.ok(home.includes(href), 'S' + season + ' must link to the canonical Korean test');
+  }
+  assert.doesNotMatch(home, /href="https:\/\/the-community-survey\.web\.app\/season\/[12]"/);
+});
