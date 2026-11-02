@@ -1,5 +1,6 @@
 import { buildReproductionAudit, summarizeOfficialSyntheticScoreObservations, summarizeVerifiedOfficialScoreOutputCoverage, verifyOfficialSyntheticScoreReadbacks } from '../lib/reproduction-audit.mjs';
 import { compareCandidateAgainstRecordedOfficialPairs, summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
+import { summarizeOfficialResultDisplayDigestCoverage } from '../lib/official-result-display-audit.mjs';
 
 console.log('最终愿望：不懂韩文也能忠实理解同一套官方题目，且同季、同版本、同一份实际答卷得到与官网逐字段相同的结果。');
 const result = buildReproductionAudit();
@@ -34,12 +35,19 @@ console.log('单一客户端题组内的输入对照：' + inputCoverage.groupLo
     (row.changedScoreAxisIds.join('、') || '无')).join('；') +
   '。这是已记录样本的组级观察，不证明单题权重或其他输入下的轴独立性。');
 const parity = await compareCandidateAgainstRecordedOfficialPairs();
-console.log('严格逐字段评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
+console.log('严格逐字段数值评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
+const displayCoverage = summarizeOfficialResultDisplayDigestCoverage();
+console.log('官方结果文字额外核查：既有 ' + displayCoverage.observedResultReadbacksWithDisplayDigests +
+  ' 份匿名合成读回已记录韩文标题/说明 SHA-256（' +
+  displayCoverage.distinctResultDisplayTextSignatures + ' 种不同文本指纹）；中文结果解释独立人工审核 ' +
+  displayCoverage.independentlyReviewedChineseResultExplanations + ' 份。指纹只检测原文变动，不代表原文可转载或中文解释等价。');
 if (process.argv.includes('--verify-live-readbacks')) {
   try {
-    const fresh = await verifyOfficialSyntheticScoreReadbacks();
+    const fresh = await verifyOfficialSyntheticScoreReadbacks(undefined, undefined, { verifyDisplayText: true });
     for (const row of fresh.checked) {
-      console.log('只读官方结果 ' + row.publicResultId + '：' + (row.matchesRecordedReadback ? '与既有记录吻合' : '发现差异，需人工复查'));
+      console.log('只读官方结果 ' + row.publicResultId + '：' + (row.matchesRecordedReadback
+        ? '数值、韩文标题/说明指纹及轴标签均吻合'
+        : '数值或公开显示文字发生差异，需人工复查'));
     }
     if (!fresh.allMatch) process.exitCode = 1;
   } catch (error) {
