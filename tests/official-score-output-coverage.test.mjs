@@ -44,3 +44,17 @@ test('more diverse same-version synthetic evidence affects coverage, never estab
   samples[0].output.scoringVersion = 'season-2-score@3';
   assert.throws(() => summarizeVerifiedOfficialScoreOutputCoverage(samples), /不能跨题库或评分版本/);
 });
+
+test('output-only audit must also reject contradictory scores for the same verified input', () => {
+  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  samples[3].input = structuredClone(samples[2].input);
+  // Same source IDs, raw O/X choices and version, but one different axis.
+  // Only full-vector parity used to reject this; output coverage stayed misleading.
+  assert.throws(() => summarizeVerifiedOfficialScoreOutputCoverage(samples),
+    /同一原始答卷.*结果冲突/);
+  // A genuine repeated observation with exactly the same score is valid.
+  samples[3].output = structuredClone(samples[2].output);
+  const coverage = summarizeVerifiedOfficialScoreOutputCoverage(samples);
+  assert.equal(coverage.verifiedPairs, 3);
+  assert.equal(coverage.distinctRecordedOutputSignatures, 1);
+});
