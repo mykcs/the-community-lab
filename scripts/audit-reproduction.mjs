@@ -1,5 +1,5 @@
 import { buildReproductionAudit, summarizeOfficialSyntheticScoreObservations, summarizeVerifiedOfficialScoreOutputCoverage, verifyOfficialSyntheticScoreReadbacks } from '../lib/reproduction-audit.mjs';
-import { compareCandidateAgainstRecordedOfficialPairs } from '../lib/official-score-parity.mjs';
+import { compareCandidateAgainstRecordedOfficialPairs, summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
 
 console.log('最终愿望：不懂韩文也能忠实理解同一套官方题目，且同季、同版本、同一份实际答卷得到与官网逐字段相同的结果。');
 const result = buildReproductionAudit();
@@ -17,6 +17,17 @@ console.log('官方结果样本覆盖：' + coverage.verifiedPairs + ' 份完整
   coverage.axesWithAnyNonTie + ' 个曾出现非 50/50，' +
   coverage.axesWithBothNonTieSides + ' 个左右两侧都出现过非平局，' +
   coverage.axesWithIntensityTwo + ' 个曾出现强度 2。这是证据覆盖统计，不是算法验收。');
+const inputCoverage = summarizeVerifiedOfficialScoreInputCoverage();
+console.log('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 份金标准中有 ' +
+  inputCoverage.uniqueInputVectors + ' 种不同原始答案向量；' +
+  inputCoverage.questionsObservedWithBothValues + '/' + inputCoverage.questionCount +
+  ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
+  inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择。');
+console.log('已验收输入两两对比：' + inputCoverage.comparedInputPairs + ' 对；' +
+  inputCoverage.singleQuestionContrastPairs + ' 对只差 1 题；最少/最多相差 ' +
+  (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
+  (inputCoverage.maxPairwiseHammingDistance ?? 'UNKNOWN') +
+  ' 题。多题一起变化不能推断每题权重或评分公式。');
 const parity = await compareCandidateAgainstRecordedOfficialPairs();
 console.log('严格逐字段评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
 if (process.argv.includes('--verify-live-readbacks')) {
