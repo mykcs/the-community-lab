@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import playwrightConfig from '../playwright.config.mjs';
 
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const verifyWorkflow = readFileSync(new URL('../.github/workflows/verify.yml', import.meta.url), 'utf8');
@@ -9,6 +10,15 @@ const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pa
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
 const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+
+test('Playwright locally rebuilds Pages paths but CI uses its exact-head build', () => {
+  const preview = 'npm run preview -- --host 127.0.0.1 --port 4321';
+  assert.equal(playwrightConfig.webServer.command,
+    process.env.CI ? preview : `npm run build && ${preview}`);
+  assert.equal(playwrightConfig.webServer.env.COMMUNITY_DEPLOY_TARGET, 'github-pages');
+  assert.equal(playwrightConfig.webServer.reuseExistingServer, false,
+    'never reuse a potentially stale preview with different base paths');
+});
 
 test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /branches:\s*\[main\]/);
