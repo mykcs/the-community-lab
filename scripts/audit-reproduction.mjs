@@ -23,7 +23,7 @@ console.log('官方完整输入的区分力：' + inputCoverage.verifiedPairs + 
   inputCoverage.questionsObservedWithBothValues + '/' + inputCoverage.questionCount +
   ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
   inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择。');
-console.log('已验收输入两两对比：' + inputCoverage.comparedInputPairs + ' 对；' +
+console.log('不同输入向量两两对比（重复答卷不重复计数）：' + inputCoverage.comparedInputPairs + ' 对；' +
   inputCoverage.singleQuestionContrastPairs + ' 对只差 1 题；最少/最多相差 ' +
   (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
   (inputCoverage.maxPairwiseHammingDistance ?? 'UNKNOWN') +
