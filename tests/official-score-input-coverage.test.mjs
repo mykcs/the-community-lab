@@ -41,8 +41,22 @@ test('duplicate verified input lowers diversity instead of inflating coverage', 
   assert.equal(result.uniqueInputVectors, 2);
   assert.equal(result.questionsObservedWithBothValues, 24);
   assert.equal(result.questionsObservedWithOnlyOneValue, 13);
-  assert.equal(result.minPairwiseHammingDistance, 0);
+  assert.equal(result.comparedInputPairs, 1);
+  assert.equal(result.minPairwiseHammingDistance, 24);
   assert.equal(result.maxPairwiseHammingDistance, 24);
+});
+
+test('repeating a verified input cannot manufacture new independent contrast pairs', () => {
+  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
+  samples[3].input = structuredClone(samples[2].input);
+  samples[3].output = structuredClone(samples[2].output);
+  const coverage = summarizeVerifiedOfficialScoreInputCoverage(samples);
+  assert.equal(coverage.verifiedPairs, 3, 'repeats remain auditable as observations');
+  assert.equal(coverage.uniqueInputVectors, 2);
+  assert.equal(coverage.comparedInputPairs, 1, 'only two distinct vectors yield one independent contrast');
+  assert.equal(coverage.singleQuestionContrastPairs, 0);
+  assert.equal(coverage.minPairwiseHammingDistance, 24);
+  assert.equal(coverage.maxPairwiseHammingDistance, 24);
 });
 
 test('synthetic one-question contrast is detected but does not establish algorithm parity', () => {
