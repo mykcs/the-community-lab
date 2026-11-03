@@ -367,7 +367,7 @@ test('exported review JSON can be safely restored without changing source eviden
     note: q.human_review_note,
     reviewNoteStale: false
   });
-  assert.match(html, /localStorage\.setItem\(key,JSON\.stringify\(imported\)\)/);
+  assert.match(html, /const serialized=JSON\.stringify\(imported\);\s*localStorage\.setItem\(key,serialized\);\s*lastPersistedDraftRaw=serialized/);
   assert.match(html, /id="import-file" type="file"/);
   assert.match(html, /human_review_note_stale=e\.reviewNoteStale===true/);
 });
