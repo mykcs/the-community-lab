@@ -63,13 +63,17 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-translation{border-top:1px solid #4b535e;padding-top:17px;font-size:11px;color:#acb5c1}
       .full-question-zh{font-size:clamp(19px,2.4vw,29px);font-weight:570;line-height:1.75;margin:13px 0 20px}
       .full-reader-note{font-size:13px;line-height:1.85;color:#cbd5e1;background:#202936;border-left:3px solid #b0c6dc;padding:12px 16px;margin:0 0 24px}
-      .full-choices{display:grid;gap:12px;margin:18px 0 22px}
+      .full-choices{display:grid;gap:10px;margin:18px 0 22px}
+      /* Source order stays 1→6; visually group negative (1–3) and positive (4–6). */
+      .full-choices[data-option-count="6"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,auto));grid-auto-flow:column}
+      .full-choices[data-option-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,auto));grid-auto-flow:column}
+      .full-choices[data-option-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
       .full-choice{display:flex;gap:16px;align-items:center;width:100%;min-height:74px;padding:16px 20px;text-align:left;color:var(--text);background:#1b222b;border:1px solid #414852}
       .full-choice:hover{border-color:#b9857d}.full-choice[aria-pressed=true]{background:#392b31;border-color:var(--red);box-shadow:inset 3px 0 var(--red)}
       .full-choice-mark{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;border:1px solid #7b8692;font-size:12px;color:#c5cad0}
       .full-choice[aria-pressed=true] .full-choice-mark{background:var(--red);color:#101319;border-color:var(--red)}
       .full-choice-copy{display:flex;flex-direction:column;gap:5px;min-width:0;word-break:keep-all}
-      .full-choice-ko{font:500 15px/1.6 var(--ko)}.full-choice-zh{color:#b6bec8;font-size:13px;line-height:1.6}
+      .full-choice-ko{font:500 15px/1.6 var(--ko)}.full-choice-zh{color:#e1e6eb;font-size:14px;line-height:1.6}.full-choice-hint{color:#a7b2bf;font-size:11px;line-height:1.55}
       .full-quiz-actions{display:flex;justify-content:space-between;gap:12px;margin:35px 0}
       .full-quiz-actions button{min-width:122px}
       .full-evidence{font-size:11px;line-height:1.8;color:#8793a1;border-top:1px solid var(--line);padding-top:18px}
@@ -84,7 +88,9 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:32px}
       .full-actions .button{font-size:12px}
       .full-footer{border-top:1px solid var(--line);padding:30px clamp(22px,6vw,65px);font-size:11px;color:#929ba6;line-height:1.9}
-      @media(max-width:630px){.full-shell{padding-top:18px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-quiz-disclosure{padding:9px 12px;margin-bottom:10px;line-height:1.65}.full-progress{margin-bottom:22px}.full-review-tools{margin:0 0 24px;padding:12px}.full-review-tools button{padding:0 11px}.full-question h1{font-size:27px;margin:12px 0 18px}.full-translation{padding-top:13px}.full-question-zh{font-size:20px;line-height:1.6;margin:10px 0 14px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:12px;min-height:72px}.full-choices{gap:9px;margin:12px 0 16px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin:10px 0 17px}.full-quiz-backup{justify-content:flex-start}}
+      @media(max-width:630px){
+        .full-choices[data-option-count="6"],.full-choices[data-option-count="4"],.full-choices[data-option-count="2"]{grid-template-columns:minmax(0,1fr);grid-template-rows:none;grid-auto-flow:row}
+.full-shell{padding-top:18px}.full-lead{padding-top:35px}.full-lead h1{font-size:44px}.full-season-grid,.full-summary{grid-template-columns:1fr}.full-season{min-height:170px}.full-quiz-disclosure{padding:9px 12px;margin-bottom:10px;line-height:1.65}.full-progress{margin-bottom:22px}.full-review-tools{margin:0 0 24px;padding:12px}.full-review-tools button{padding:0 11px}.full-question h1{font-size:27px;margin:12px 0 18px}.full-translation{padding-top:13px}.full-question-zh{font-size:20px;line-height:1.6;margin:10px 0 14px}.full-quiz-actions button{min-width:0;padding:0 14px}.full-nav{gap:12px}.full-choice{padding:12px;min-height:72px}.full-choices{gap:9px;margin:12px 0 16px}.full-quiz-top{align-items:flex-start;flex-wrap:wrap;margin:10px 0 17px}.full-quiz-backup{justify-content:flex-start}}
     </style>
   </head>
   <body>
