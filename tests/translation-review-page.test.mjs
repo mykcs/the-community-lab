@@ -395,7 +395,9 @@ test('reject forged, incompatible or incomplete imported evidence without changi
   oldExport.questions[0].human_review_status = 'pending';
   oldExport.questions[0].human_review_note = '之前的备注';
   assert.equal(restore(oldExport,data)[oldExport.questions[0].id].reviewNoteStale,true);
-  assert.match(html, /文件超过 1 MiB 上限/);
+  assert.match(html, /const MAX_REVIEW_JSON_BYTES=8\*1024\*1024/);
+  assert.match(html, /if\(file\.size>MAX_REVIEW_JSON_BYTES\)throw new Error\('文件超过 8 MiB 上限'\)/);
+  assert.match(html, /if\(files\.some\(file=>file\.size>MAX_REVIEW_JSON_BYTES\)\)throw new Error\('每份文件不得超过 8 MiB'\)/);
   assert.match(html, /原有草稿未被覆盖/);
 });
 

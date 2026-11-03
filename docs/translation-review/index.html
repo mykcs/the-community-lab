@@ -30,6 +30,9 @@
 <script>
 const data=JSON.parse(document.querySelector('#embedded-data').textContent);
 const key='community-lab-question-review-v1:'+data.source.asset_sha256;
+// A valid 124-item draft with substantial review notes can exceed 1 MiB.
+// Keep a finite offline-only limit while allowing ordinary full-pack backups.
+const MAX_REVIEW_JSON_BYTES=8*1024*1024;
 let edits={};try{edits=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
 const list=document.querySelector('#list'),search=document.querySelector('#search'),season=document.querySelector('#season'),group=document.querySelector('#group'),reviewFilter=document.querySelector('#reviewFilter'),count=document.querySelector('#count');
 const axis=new Map();for(const q of data.questions){const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;if(g)axis.set(q.season+':'+g,g)}
@@ -167,7 +170,7 @@ document.querySelector('#import').addEventListener('click',()=>importFile.click(
 importFile.addEventListener('change',async()=>{
  const file=importFile.files?.[0];if(!file)return;
  try{
-  if(file.size>1024*1024)throw new Error('文件超过 1 MiB 上限');
+  if(file.size>MAX_REVIEW_JSON_BYTES)throw new Error('文件超过 8 MiB 上限');
   const imported=validateReviewImport(JSON.parse(await file.text()),data);
   const total=Object.keys(imported).length;
   if(!confirm('将导入 '+total+' 道题的审校草稿，覆盖此设备现有的 '+Object.keys(edits).length+' 道编辑。不会上传至服务器。是否继续？'))return;
@@ -184,7 +187,7 @@ compareFiles.addEventListener('change',async()=>{
  try{
   const files=Array.from(compareFiles.files||[]);
   if(files.length!==2)throw new Error('请一次选择两份本页导出的 JSON');
-  if(files.some(file=>file.size>1024*1024))throw new Error('每份文件不得超过 1 MiB');
+  if(files.some(file=>file.size>MAX_REVIEW_JSON_BYTES))throw new Error('每份文件不得超过 8 MiB');
   const [left,right]=await Promise.all(files.map(async file=>JSON.parse(await file.text())));
   showReviewComparison(compareReviewExports(left,right,data));
  }catch(error){alert('无法比对审校文件：'+(error instanceof Error?error.message:'文件无效'))}
