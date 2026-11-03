@@ -18,6 +18,72 @@ test('S2 title displays pinned Korean source group before its unreviewed Chinese
   await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');
 });
 
+test('latest selected import wins when an older local JSON file finishes reading later', async ({ page }) => {
+  // Synthetic private backups only; no official endpoint is contacted.
+  const questions = loadFullQuestionnaire().seasons[2];
+  const first = questions[0];
+  const second = questions[1];
+  const oneAnswer = { [first.id]: first.options[0].value };
+  const twoAnswers = { ...oneAnswer, [second.id]: second.options[1].value };
+  const pack = loadFullQuestionnaire();
+  const slow = createPrivateProgressReceipt(pack, 2, oneAnswer, 0);
+  const newest = createPrivateProgressReceipt(pack, 2, twoAnswers, 1);
+
+  // Hold the first File.text() promise until the second file has imported.
+  // A stale completion formerly presented an overwrite prompt and could
+  // erase the newer file's answer if the visitor accepted that prompt.
+  await page.addInitScript(() => {
+    const original = File.prototype.text;
+    File.prototype.text = function () {
+      if (this.name !== 'delayed-first.json') return original.call(this);
+      return new Promise((resolve, reject) => {
+        window.releaseDelayedImport = () => original.call(this).then(resolve, reject);
+      });
+    };
+  });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const unexpectedPrompts = [];
+  page.on('dialog', async dialog => {
+    unexpectedPrompts.push(dialog.message());
+    await dialog.accept(); // Expose destructive behavior in the old implementation.
+  });
+
+  const importInput = page.locator('#full-import-file');
+  await importInput.setInputFiles({
+    name: 'delayed-first.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(slow)),
+  });
+  await expect.poll(() => page.evaluate(() => typeof window.releaseDelayedImport)).toBe('function');
+
+  await importInput.setInputFiles({
+    name: 'newest.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(newest)),
+  });
+  await expect(page.locator('#full-count')).toContainText('已答 2 / 37');
+  await expect(page.locator('#full-position')).toContainText('02 / 37');
+
+  await page.evaluate(async () => {
+    await window.releaseDelayedImport();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('#full-count')).toContainText('已答 2 / 37');
+  await expect(page.locator('#full-position')).toContainText('02 / 37');
+  expect(unexpectedPrompts).toEqual([]);
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#full-save').click(),
+  ]);
+  const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(exported.selections.map(({ questionId, selectedValue }) => ({ questionId, selectedValue })))
+    .toEqual([
+      { questionId: first.id, selectedValue: first.options[0].value },
+      { questionId: second.id, selectedValue: second.options[1].value },
+    ]);
+});
+
 test('both complete seasons preserve every official source ID and raw option value through export and restore', async ({ page }) => {
   // 124 questions plus two export/import/edit cycles exceed Playwright's
   // 30-second unit-style default on real desktop/mobile CI browsers. Keep the
