@@ -19,12 +19,27 @@ for (const season of [2, 1]) {
       await expect(visibleMark).toHaveText(String(option.value));
       await expect(ko).toHaveAttribute("lang", "ko");
       await expect(ko).toHaveText(option.ko);
-      await expect(zh).toHaveText(option.zh);
+      const numericOnly = season === 1 && first.options.length === 6 &&
+        (option.value === 2 || option.value === 5) &&
+        (option.ko === '2점' || option.ko === '5점');
+      const friendly = numericOnly
+        ? `${option.value === 2 ? '反对侧' : '赞同侧'} · 第 ${option.value} 档`
+        : option.zh;
+      await expect(zh).toHaveText(friendly);
+      const hint = button.locator('.full-choice-hint');
+      if (numericOnly) {
+        await expect(hint).toContainText(`中文直译：${option.zh}`);
+        await expect(hint).toContainText('不是官网命名');
+      } else {
+        await expect(hint).toHaveCount(0);
+      }
       // An overriding aria-label loses the source O/X or scale value AND
       // the nested Korean language metadata in assistive technology.
       await expect(button).not.toHaveAttribute("aria-label", /.+/);
       await expect(visibleMark).not.toHaveAttribute("aria-hidden", "true");
-      const accessibleName = [String(option.value), option.ko, option.zh].join(" ");
+      const accessibleName = [String(option.value), option.ko, friendly,
+        ...(numericOnly ? [`中文直译：${option.zh}。方向是根据六级顺序的辅助说明，不是官网命名。`] : []),
+      ].join(" ");
       await expect(button).toHaveAccessibleName(accessibleName);
     }
     await choices.first().click();
@@ -32,3 +47,29 @@ for (const season of [2, 1]) {
     await expect(choices.last()).toHaveAttribute("aria-pressed", "false");
   });
 }
+
+test('S1 six-step scale is grouped by direction on desktop but stays a single readable column on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/the-community-lab/questionnaire/?season=1');
+  const choices = page.locator('.full-choice');
+  await expect(choices).toHaveCount(6);
+  const positions = await choices.evaluateAll(elements => elements.map(el => {
+    const rect = el.getBoundingClientRect();
+    return { x: rect.x, y: rect.y, width: rect.width };
+  }));
+  for (let i = 1; i < 3; i++) {
+    expect(positions[i].x).toBe(positions[0].x);
+    expect(positions[i].y).toBeGreaterThan(positions[i - 1].y);
+  }
+  for (let i = 3; i < 6; i++) expect(positions[i].x).toBeGreaterThan(positions[0].x);
+  await page.setViewportSize({ width: 440, height: 956 });
+  const narrow = await choices.evaluateAll(elements => elements.map(el => {
+    const rect = el.getBoundingClientRect();
+    return { x: rect.x, y: rect.y };
+  }));
+  for (let i = 1; i < narrow.length; i++) {
+    expect(narrow[i].x).toBe(narrow[0].x);
+    expect(narrow[i].y).toBeGreaterThan(narrow[i - 1].y);
+  }
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(440);
+});
