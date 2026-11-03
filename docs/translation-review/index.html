@@ -206,7 +206,7 @@ compareFiles.addEventListener('change',async()=>{
  }catch(error){alert('无法比对审校文件：'+(error instanceof Error?error.message:'文件无效'))}
  finally{compareFiles.value=''}
 });
-document.querySelector('#clear').addEventListener('click',()=>{if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;localStorage.removeItem(key);edits={};render()});
+document.querySelector('#clear').addEventListener('click',()=>{if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;try{localStorage.removeItem(key)}catch{alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');return}edits={};window.removeEventListener('beforeunload',warnUnexportedReview);render();document.querySelector('.statusline').textContent='此设备的审校记录已清除'});
 render();
 </script>
 </body>
