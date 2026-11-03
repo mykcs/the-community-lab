@@ -93,6 +93,31 @@ test('S1 six-step scale is grouped by direction on desktop but stays a single re
 });
 
 
+
+for (const season of [1, 2]) {
+  test(`season ${season} announces the Korean and Chinese question in the answer group's accessible name`, async ({ page }) => {
+    const question = pack.seasons[season][0];
+    await page.goto(`/the-community-lab/questionnaire/?season=${season}`);
+    const group = page.getByRole('radiogroup');
+    // The previous generic label omitted both question texts. People moving
+    // between answer groups with assistive technology need the current question.
+    await expect(group).toHaveAttribute('aria-labelledby', 'full-ko full-zh full-choice-prompt');
+    const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    await expect(group).toHaveAccessibleName(new RegExp(escape(question.sourceKo)));
+    await expect(group).toHaveAccessibleName(new RegExp(escape(question.draftZh)));
+    await expect(group).toHaveAccessibleName(/请选择一个/);
+    await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');
+
+    await page.locator('.full-choice').first().click();
+    await page.locator('#full-next').click();
+    const nextQuestion = pack.seasons[season][1];
+    await expect(group).toHaveAccessibleName(new RegExp(escape(nextQuestion.draftZh)));
+    await expect(group).not.toHaveAccessibleName(new RegExp(escape(question.draftZh)));
+    // The question-context fix must not change the source option selection.
+    await expect(group.getByRole('radio')).toHaveCount(nextQuestion.options.length);
+  });
+}
+
 test('S2 radio options expose one keyboard tab stop, arrow keys select a source value and back navigation retains it', async ({ page }) => {
   await page.setViewportSize({ width: 440, height: 956 });
   await page.goto('/the-community-lab/questionnaire/?season=2');
