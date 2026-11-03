@@ -137,3 +137,28 @@ test('an edit after a requested download invalidates the old backup confirmation
   await page.reload();
   expect(dialogs).toEqual(['beforeunload']);
 });
+
+for (const season of [1, 2]) {
+  test(`season ${season} keeps legal warning visible and offers source provenance on demand`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/the-community-lab/questionnaire/?season=${season}`);
+    await expect(page.locator('.full-quiz-disclosure')).toBeVisible();
+    const details = page.locator('details.full-evidence');
+    const digest = details.locator('#full-source-fingerprint');
+    await expect(details).toHaveCount(1);
+    await expect(details).not.toHaveAttribute('open', '');
+    await expect(digest).toBeHidden();
+    await details.locator('summary').click();
+    await expect(details).toHaveAttribute('open', '');
+    await expect(digest).toHaveText(/^[a-f0-9]{64} · 2026-10-30$/);
+    await expect(details.locator('#full-source')).toHaveAttribute(
+      'href', `https://thecommunity.co.kr/season/${season}/test`,
+    );
+    await page.setViewportSize({ width: 440, height: 956 });
+    await expect(page.locator('.full-quiz-disclosure')).toBeVisible();
+    await expect(digest).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(440);
+    await details.locator('summary').click();
+    await expect(digest).toBeHidden();
+  });
+}
