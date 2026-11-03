@@ -69,7 +69,7 @@ function begin(season, fresh = false) {
   if (fresh || !saved.has(season)) saved.set(season, {
     season, index: 0, answers: Object.create(null),
     answerVersions: Object.create(null), answerFingerprints: Object.create(null), needsReview: new Set(),
-    backupStale: false, reviewMode: false,
+    backupStale: false, reviewMode: false, pendingBackupKind: null,
   });
   active = saved.get(season);
   syncUnloadGuard();
@@ -145,6 +145,9 @@ function render() {
       active.answerVersions[q.id] = q.translationVersion;
       active.answerFingerprints[q.id] = q.translationFingerprint;
       active.backupStale = true;
+      active.pendingBackupKind = null; // A new choice invalidates any unconfirmed download.
+      $('full-confirm-progress-backup').hidden = true;
+      $('full-confirm-complete-backup').hidden = true;
       syncUnloadGuard();
       active.needsReview?.delete(q.id);
       for (const entry of list.children) entry.setAttribute('aria-pressed', String(entry === btn));
@@ -165,7 +168,10 @@ function render() {
   $('full-jump-position').value = String(active.index + 1);
   $('full-finish-review').disabled = answered !== questions.length || Boolean(active.needsReview?.size);
   $('full-save').disabled = answered === 0;
-  $('full-save-status').textContent = active.needsReview?.has(q.id)
+  $('full-confirm-progress-backup').hidden = active.pendingBackupKind !== 'progress';
+  $('full-save-status').textContent = active.pendingBackupKind === 'progress'
+    ? '已请求浏览器下载。请先核对 JSON 文件确实保存，再点击“我已确认文件保存”；否则离开页面仍会提示未备份。'
+    : active.needsReview?.has(q.id)
     ? '这道题的中文 AI 译文已经更新；请阅读韩文和新中文后重新点击选项，才能继续。'
     : Object.hasOwn(active.answers, q.id) && active.answerFingerprints?.[q.id] === null
       ? '这道旧答案缺少历史中文文字指纹，无法核验当时读过的译文；重新点击选项可确认当前译文。'
@@ -202,6 +208,9 @@ function finish() {
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
   active.receipt = summary;
   active.reviewMode = false;
+  active.pendingBackupKind = null;
+  $('full-confirm-complete-backup').hidden = true;
+  $('full-complete-backup-status').textContent = '';
   const unknown = unknownWordingCount(active);
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。${unknown ? ` 其中 ${unknown} 道旧答案缺少历史中文文字指纹，无法核验当时所见译文；可返回修改并重新点击选项确认当前译文。` : ''}`;
   const panel = $('full-group-summary');
@@ -232,8 +241,10 @@ function downloadJson(record, filename) {
   const blob = new Blob([JSON.stringify(record, null, 2) + '\n'], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = make('a'); a.href = url; a.download = filename;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // WebKit may ignore a detached anchor; keep it in the document for the click.
+  document.body.append(a);
+  try { a.click(); } finally { a.remove(); }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 function download() {
@@ -242,8 +253,11 @@ function download() {
     ...active.receipt,
     notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
   }, `community-source-draft-season-${active.season}-answers.json`);
-  active.backupStale = false;
-  syncUnloadGuard();
+  // A programmatic click cannot prove that a browser/OS actually saved a file.
+  // Never silence the unsaved-answer warning until the visitor checks it.
+  active.pendingBackupKind = 'complete';
+  $('full-confirm-complete-backup').hidden = false;
+  $('full-complete-backup-status').textContent = '已请求浏览器下载。请检查文件确实存在，再点击“我已确认文件保存”。';
 }
 
 function saveProgress() {
@@ -253,9 +267,9 @@ function saveProgress() {
     ...record,
     notice: '此 JSON 含个人敏感观点，仅供本人恢复本机试填；非官方成绩，请勿上传公开仓库。',
   }, `community-private-season-${active.season}-progress.json`);
-  active.backupStale = false;
-  syncUnloadGuard();
-  $('full-save-status').textContent = '已生成本机进度文件 · 请妥善保管';
+  active.pendingBackupKind = 'progress';
+  $('full-confirm-progress-backup').hidden = false;
+  $('full-save-status').textContent = '已请求浏览器下载。请先核对 JSON 文件确实保存，再点击“我已确认文件保存”；否则离开页面仍会提示未备份。';
 }
 
 async function importProgress(file) {
@@ -310,6 +324,7 @@ async function importProgress(file) {
       needsReview: new Set(session.changedQuestionIds),
       reviewMode: session.complete,
       backupStale: false, // The imported file remains the backup until a new choice.
+      pendingBackupKind: null,
     });
     active = saved.get(session.season);
     syncUnloadGuard();
@@ -380,11 +395,30 @@ $('full-edit').addEventListener('click', () => {
   active.index = pack.seasons[active.season].length - 1;
   active.receipt = null;
   active.reviewMode = true;
+  active.pendingBackupKind = null;
+  $('full-confirm-complete-backup').hidden = true;
   $('full-jump-status').textContent = '';
   render();
   view('quiz');
 });
 $('full-save').addEventListener('click', saveProgress);
+function confirmDownloadedBackup(kind) {
+  if (!active || active.pendingBackupKind !== kind) return;
+  // A confirmation belongs to this exact in-memory season and to the last
+  // download request. Answer edits clear pendingBackupKind before this point.
+  active.pendingBackupKind = null;
+  active.backupStale = false;
+  syncUnloadGuard();
+  if (kind === 'progress') {
+    $('full-confirm-progress-backup').hidden = true;
+    $('full-save-status').textContent = '已按你的确认标记为已备份；请保管私人 JSON 文件。';
+  } else {
+    $('full-confirm-complete-backup').hidden = true;
+    $('full-complete-backup-status').textContent = '已按你的确认标记为已备份；请保管私人 JSON 文件。';
+  }
+}
+$('full-confirm-progress-backup').addEventListener('click', () => confirmDownloadedBackup('progress'));
+$('full-confirm-complete-backup').addEventListener('click', () => confirmDownloadedBackup('complete'));
 $('full-import').addEventListener('click', () => $('full-import-file').click());
 $('full-import-file').addEventListener('change', event => {
   const file = event.target.files?.[0];
