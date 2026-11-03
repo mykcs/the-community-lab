@@ -27,7 +27,7 @@ test('S1 class-22 unreviewed study-abroad copy renders Korean-first with raw opt
   const chineseBelow = await page.locator('#full-zh').boundingBox();
   expect(chineseBelow.y).toBeGreaterThan(koreanTop.y);
   await page.locator('.full-choice').first().click();
-  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('#full-count')).toContainText('已答 1 / 87');
   const scroll = await page.evaluate(() => ({width: document.documentElement.scrollWidth, viewport: innerWidth}));
   expect(scroll.width).toBeLessThanOrEqual(scroll.viewport + 1);

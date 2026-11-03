@@ -39,11 +39,11 @@ test('season two answers, navigation, and in-memory resume work', async ({ page 
 
   await page.locator('.full-choice').first().click();
   await expect(page.locator('#full-count')).toContainText('已答 1 / 37');
-  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
   await page.locator('#full-next').click();
   await expect(page.locator('#full-position')).toContainText('第 02 / 37 题');
   await page.locator('#full-prev').click();
-  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
 
   await page.locator('#full-exit').click();
   await expect(page.locator('#full-select')).toBeVisible();

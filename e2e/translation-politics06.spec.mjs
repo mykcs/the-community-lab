@@ -29,7 +29,7 @@ test('S1 private education draft preserves the full Korean category and original
     await expect(buttons.nth(i)).toContainText(String(question.options[i].value));
   }
   await buttons.first().click();
-  await expect(buttons.first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(buttons.first()).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('#full-count')).toContainText('已答 1 / 87');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   expect(posts).toEqual([]);
