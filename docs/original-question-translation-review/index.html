@@ -24,14 +24,30 @@
 <script>
 const data=JSON.parse(document.querySelector('#embedded-data').textContent);
 const key='community-lab-question-review-v1:'+data.source.asset_sha256;
-let edits={};try{edits=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
+// A denied/corrupt storage READ is not the same as an empty draft.
+// Fail closed until the user explicitly clears the inaccessible old record.
+let edits={},storedDraftUnreadable=false;
+try{
+ const restored=JSON.parse(localStorage.getItem(key)||'{}');
+ if(!restored||typeof restored!=='object'||Array.isArray(restored))throw new Error('invalid stored draft');
+ edits=restored;
+}catch{storedDraftUnreadable=true}
 const list=document.querySelector('#list'),search=document.querySelector('#search'),season=document.querySelector('#season'),group=document.querySelector('#group'),reviewFilter=document.querySelector('#reviewFilter'),count=document.querySelector('#count');
 const axis=new Map();for(const q of data.questions){const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;if(g)axis.set(q.season+':'+g,g)}
 for(const [value,label] of axis){const o=document.createElement('option');o.value=value;o.textContent=(value.startsWith('1:')?'S1 · ':'S2 · ')+label;group.append(o)}
 // Keep edits in memory and warn on navigation if the browser rejects persistence.
 // The independently accessible review HTML needs the same quota protection as the main reviewer.
 function warnUnexportedReview(event){event.preventDefault();event.returnValue=''}
+function showUnreadableDraftWarning(){
+ document.querySelector('.statusline').textContent='⚠ 无法读取本机历史审校记录：原有草稿可能仍在此设备。本页新修改未保存到此设备；请先导出 JSON，再检查浏览器存储权限或明确清除旧记录。';
+}
 function save(){
+ if(storedDraftUnreadable){
+  // Recovered storage access mid-session must not overwrite unreadable history.
+  window.addEventListener('beforeunload',warnUnexportedReview);
+  showUnreadableDraftWarning();
+  return;
+ }
  try{
   localStorage.setItem(key,JSON.stringify(edits));
   window.removeEventListener('beforeunload',warnUnexportedReview);
@@ -94,11 +110,13 @@ document.querySelector('#clear').addEventListener('click',()=>{
   return;
  }
  edits={};
+ storedDraftUnreadable=false;
  window.removeEventListener('beforeunload',warnUnexportedReview);
  render();
  document.querySelector('.statusline').textContent='此设备的审校记录已清除';
 });
 render();
+if(storedDraftUnreadable)showUnreadableDraftWarning();
 </script>
 </body>
 </html>
