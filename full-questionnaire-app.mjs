@@ -15,6 +15,9 @@ const groupNames = {
   politics: '公共与政治', gender: '性别观念', openness: '开放与变化', class: '阶级与生活经历',
 };
 let active = null;
+// Reading a local JSON file is async. A previously chosen, slower file must
+// never overwrite the more recent import selection or prompt to erase it.
+let latestImportRequest = 0;
 
 function unknownWordingCount(session) {
   return Object.keys(session?.answers ?? {}).filter(
@@ -243,12 +246,15 @@ function saveProgress() {
 async function importProgress(file) {
   const status = $('full-import-status');
   if (!file) return;
+  const requestId = ++latestImportRequest;
   if (file.size > 128 * 1024) {
     status.textContent = '文件过大；只接受本站导出的 128 KB 以内 JSON。';
     return;
   }
   try {
-    const record = JSON.parse(await file.text());
+    const content = await file.text();
+    if (requestId !== latestImportRequest) return; // Superseded while reading.
+    const record = JSON.parse(content);
     const session = restorePrivateProgressReceipt(pack, record);
     const previous = saved.get(session.season);
     const discardsLocal = previous && wouldDiscardLocalAnswers(previous.answers, session.answers);
@@ -302,6 +308,7 @@ async function importProgress(file) {
     }
     status.textContent = '';
   } catch {
+    if (requestId !== latestImportRequest) return; // Do not replace newer status.
     status.textContent = '恢复失败：文件可能损坏，或题目来源、选项值或文件格式不匹配。原有进度未改动。';
   }
 }
