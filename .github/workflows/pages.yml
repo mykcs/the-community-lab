@@ -46,7 +46,7 @@ jobs:
       # Same Git SHA for the uploaded artifact and live Pages smoke check.
       # This is a public release marker, never a survey answer or credential.
       - name: Stamp build commit for exact-release verification
-        run: printf '%s\\n' "$GITHUB_SHA" > dist/release-commit.txt
+        run: printf '%s\n' "$GITHUB_SHA" > dist/release-commit.txt
       - name: Include the unreviewed bilingual translation draft on a separate route
         run: |
           mkdir -p dist/translation-review
