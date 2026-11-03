@@ -70,3 +70,32 @@ test('review edits remain exportable and visibly unsaved when local browser stor
   await translation.fill(editedText + '，存储恢复');
   await expect(page.locator('.statusline')).toContainText('已保存到此设备');
 });
+
+test("reviewer clear fails closed when browser storage rejects removal, then recovers", async ({ page }) => {
+  await page.goto(reviewUrl);
+  const errors = [];
+  const messages = [];
+  page.on("pageerror", error => errors.push(error.message));
+  page.on("dialog", async dialog => { messages.push(dialog.type() + ": " + dialog.message()); await dialog.accept(); });
+  const translation = page.locator("#list .card").first().getByLabel(/中文翻译/);
+  const baseline = await translation.inputValue();
+  await translation.fill("合成待清除审校信息");
+  await expect(page.locator(".statusline")).toContainText("已保存到此设备");
+  await page.evaluate(() => {
+    const realRemove = Storage.prototype.removeItem;
+    window.restoreReviewRemove = () => { Storage.prototype.removeItem = realRemove; };
+    Storage.prototype.removeItem = function(key) {
+      if (key.startsWith("community-lab-question-review-v1:")) throw new DOMException("Synthetic storage blocked", "SecurityError");
+      return realRemove.call(this,key);
+    };
+  });
+  await page.locator("#clear").click();
+  expect(messages.some(message => message.startsWith("alert: 清除失败"))).toBe(true);
+  await expect(translation).toHaveValue("合成待清除审校信息");
+  expect(errors).toEqual([]);
+  await page.evaluate(() => window.restoreReviewRemove());
+  await page.locator("#clear").click();
+  await expect(translation).toHaveValue(baseline);
+  await expect(page.locator(".statusline")).toContainText("审校记录已清除");
+  expect(errors).toEqual([]);
+});
