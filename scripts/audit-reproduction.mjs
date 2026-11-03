@@ -1,6 +1,9 @@
 import { buildReproductionAudit, summarizeOfficialSyntheticScoreObservations, summarizeVerifiedOfficialScoreOutputCoverage, verifyOfficialSyntheticScoreReadbacks } from '../lib/reproduction-audit.mjs';
 import { compareCandidateAgainstRecordedOfficialPairs, summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
 import { summarizeOfficialResultDisplayDigestCoverage } from '../lib/official-result-display-audit.mjs';
+import { loadFullQuestionnaire } from './load-full-questionnaire.mjs';
+import { PILOT_STATUS } from '../lib/full-questionnaire.mjs';
+import SOURCE_INDEX from '../data/original-question-index.json' with { type: 'json' };
 
 const jsonOutput = process.argv.includes('--json');
 // Human-readable diagnostics belong to normal stdout; --json is a strict,
@@ -15,6 +18,45 @@ for (const row of result.rows) {
   emitHuman('S' + row.season + ': 原站观察 ' + row.sourceObservedQuestionCount + ' 题；本站原创演示 ' + row.independentDemoQuestionCount + ' 题；官方复刻资格 ' + (row.reproductionReady ? '已验证' : '未验证'));
   emitHuman('  当前客户端源题标识 ' + row.observedSourceIdentityCount + ' 条；获许可且独立复核的原题 ' + row.licensedReviewedOfficialQuestionCount + ' 道（不同验收项，不折算复刻进度）');
 }
+// The 124 published AI drafts are neither original-client observations nor
+// the 8+6 independently authored demos. Count them separately from the SAME
+// build-time pack used by /questionnaire/, with its rights/review gates intact.
+// No question text or individual answers are exported by this audit.
+const pilot = loadFullQuestionnaire();
+if (pilot.status !== PILOT_STATUS ||
+    pilot.rightsEvidence !== 'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED' ||
+    pilot.scoringVersion !== 'UNKNOWN') {
+  throw new Error('非官方公开试填状态异常；禁止报告为已验证原版');
+}
+const publicUnreviewedDraftCoverage = {
+  status: pilot.status,
+  rightsEvidence: pilot.rightsEvidence,
+  bilingualReviewStatus: 'NOT_INDEPENDENTLY_REVIEWED',
+  scoringVersion: pilot.scoringVersion,
+  seasons: result.rows.map(row => {
+    const questions = pilot.seasons[row.season];
+    if (!Array.isArray(questions) ||
+        questions.length !== row.observedSourceIdentityCount ||
+        pilot.sourceSha256 !== SOURCE_INDEX.sourceAssetSha256) {
+      throw new Error('公开试填与审计源题身份／版本不一致');
+    }
+    return {
+      season: row.season,
+      publishedUnreviewedDraftQuestions: questions.length,
+      publishedUnreviewedDraftOptions: questions.reduce((n, q) => n + q.options.length, 0),
+    };
+  }),
+};
+const draftQuestionCount = publicUnreviewedDraftCoverage.seasons.reduce(
+  (n, row) => n + row.publishedUnreviewedDraftQuestions, 0);
+const draftOptionCount = publicUnreviewedDraftCoverage.seasons.reduce(
+  (n, row) => n + row.publishedUnreviewedDraftOptions, 0);
+emitHuman('本站公开 AI 初译试填：' +
+  publicUnreviewedDraftCoverage.seasons.map(row =>
+    'S' + row.season + ' ' + row.publishedUnreviewedDraftQuestions +
+    ' 题／' + row.publishedUnreviewedDraftOptions + ' 选项').join('；') +
+  '；合计 ' + draftQuestionCount + ' 题／' + draftOptionCount +
+  ' 选项。许可原件未独立核验、真人双语审校未完成，不计入官方等价验收。');
 emitHuman('原站同题、同路径、同结果：', result.originalEquivalenceVerified ? '全部已验证' : '尚无充分证据，不能宣称复刻完成');
 const scoreEvidence = summarizeOfficialSyntheticScoreObservations();
 emitHuman('官方 S2 匿名合成结果读回 ' + scoreEvidence.observedAnonymousSyntheticResults + ' 份；完整输入→输出样本 ' + scoreEvidence.verifiedInputOutputPairs + ' 份；输入未验收 ' + scoreEvidence.inputUnverifiedResults + ' 份。官方算法仍为 UNKNOWN。');
@@ -72,6 +114,7 @@ if (jsonOutput) {
   console.log(JSON.stringify({
     schemaVersion: 'reproduction-audit-report@1',
     reproductionAudit: result,
+    publicUnreviewedDraftCoverage,
     officialScoreEvidence: scoreEvidence,
     officialScoreOutputCoverage: coverage,
     officialScoreInputCoverage: inputCoverage,
