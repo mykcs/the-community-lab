@@ -28,7 +28,19 @@ let edits={};try{edits=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
 const list=document.querySelector('#list'),search=document.querySelector('#search'),season=document.querySelector('#season'),group=document.querySelector('#group'),reviewFilter=document.querySelector('#reviewFilter'),count=document.querySelector('#count');
 const axis=new Map();for(const q of data.questions){const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;if(g)axis.set(q.season+':'+g,g)}
 for(const [value,label] of axis){const o=document.createElement('option');o.value=value;o.textContent=(value.startsWith('1:')?'S1 · ':'S2 · ')+label;group.append(o)}
-function save(){localStorage.setItem(key,JSON.stringify(edits));document.querySelector('.statusline').textContent='已保存到此设备'}
+// Keep edits in memory and warn on navigation if the browser rejects persistence.
+// The independently accessible review HTML needs the same quota protection as the main reviewer.
+function warnUnexportedReview(event){event.preventDefault();event.returnValue=''}
+function save(){
+ try{
+  localStorage.setItem(key,JSON.stringify(edits));
+  window.removeEventListener('beforeunload',warnUnexportedReview);
+  document.querySelector('.statusline').textContent='已保存到此设备';
+ }catch{
+  window.addEventListener('beforeunload',warnUnexportedReview);
+  document.querySelector('.statusline').textContent='⚠ 未保存到此设备：浏览器存储空间不足或不可用。请立即导出审校 JSON 备份；刷新或关闭页面会丢失新修改。';
+ }
+}
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function groupLabel(q){return q.season===1?q.source_group:q.source_group_zh_cn_draft+'（'+q.source_group_ko+'）'}
 function reviewCues(q){const s=q.source_text_ko;const f=[];if(/않|안|아니|없|못|불법|금지|반대|싫/.test(s))f.push('否定/拒绝');if(/면|더라도|라도|경우|때문|이전|이후|위해/.test(s))f.push('条件/让步/范围');if(/더|가장|최소|최대한|매우|강력|많은|적은/.test(s))f.push('程度/比较');return f}
@@ -74,7 +86,18 @@ function render(){
 }
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
 document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='original-question-translation-review.json';a.click();URL.revokeObjectURL(a.href)});
-document.querySelector('#clear').addEventListener('click',()=>{if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;localStorage.removeItem(key);edits={};render()});
+document.querySelector('#clear').addEventListener('click',()=>{
+ if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;
+ try{localStorage.removeItem(key)}
+ catch{
+  alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');
+  return;
+ }
+ edits={};
+ window.removeEventListener('beforeunload',warnUnexportedReview);
+ render();
+ document.querySelector('.statusline').textContent='此设备的审校记录已清除';
+});
 render();
 </script>
 </body>
