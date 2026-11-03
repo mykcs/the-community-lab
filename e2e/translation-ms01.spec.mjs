@@ -29,7 +29,7 @@ test("S2 ms01 new modal copy appears below Korean with unchanged O/X options and
   await expect(page.locator("#full-choices > button").first()).toContainText("O");
   await expect(page.locator("#full-choices > button").last()).toContainText("X");
   await page.locator("#full-choices > button").first().click();
-  await expect(page.locator("#full-choices > button").first()).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#full-choices > button").first()).toHaveAttribute("aria-checked", "true");
   await expect(page.locator("#full-count")).toContainText("已答 1 / 37");
   const scroll = await page.evaluate(() => ({
     width: document.documentElement.scrollWidth, viewport: innerWidth,

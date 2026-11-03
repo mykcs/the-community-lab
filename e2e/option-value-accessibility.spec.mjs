@@ -43,8 +43,8 @@ for (const season of [2, 1]) {
       await expect(button).toHaveAccessibleName(accessibleName);
     }
     await choices.first().click();
-    await expect(choices.first()).toHaveAttribute("aria-pressed", "true");
-    await expect(choices.last()).toHaveAttribute("aria-pressed", "false");
+    await expect(choices.first()).toHaveAttribute("aria-checked", "true");
+    await expect(choices.last()).toHaveAttribute("aria-checked", "false");
   });
 }
 
@@ -90,4 +90,48 @@ test('S1 six-step scale is grouped by direction on desktop but stays a single re
     expect(narrow[i].y).toBeGreaterThan(narrow[i - 1].y);
   }
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(440);
+});
+
+
+test('S2 radio options expose one keyboard tab stop, arrow keys select a source value and back navigation retains it', async ({ page }) => {
+  await page.setViewportSize({ width: 440, height: 956 });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const group = page.getByRole('radiogroup', { name: /请选择一个/ });
+  await expect(group).toBeVisible();
+  const radio = group.getByRole('radio');
+  await expect(radio).toHaveCount(2);
+  await expect(radio.nth(0)).toHaveAttribute('tabindex', '0');
+  await expect(radio.nth(1)).toHaveAttribute('tabindex', '-1');
+  await radio.nth(0).focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(radio.nth(1)).toBeFocused();
+  await expect(radio.nth(1)).toHaveAttribute('aria-checked', 'true');
+  await expect(radio.nth(0)).toHaveAttribute('tabindex', '-1');
+  await expect(radio.nth(1)).toHaveAttribute('tabindex', '0');
+  await page.locator('#full-next').click();
+  await page.locator('#full-prev').click();
+  const revisit = page.getByRole('radiogroup').getByRole('radio');
+  await expect(revisit.nth(1)).toHaveAttribute('aria-checked', 'true');
+  await expect(revisit.nth(1)).toHaveAttribute('tabindex', '0');
+  await revisit.nth(1).focus();
+  await page.keyboard.press('ArrowDown'); // Wrap to the first source value.
+  await expect(revisit.nth(0)).toHaveAttribute('aria-checked', 'true');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(440);
+});
+
+test('S1 six-option source scale has one checked radio and retains all six numeric IDs under keyboard interaction', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=1');
+  await page.locator('.full-choice').first().click(); // Q1 is 4-option.
+  await page.locator('#full-next').click();
+  const radio = page.getByRole('radiogroup').getByRole('radio');
+  await expect(radio).toHaveCount(6);
+  for (let i = 0; i < 6; i++) {
+    await expect(radio.nth(i).locator('.full-choice-mark')).toHaveText(String(i + 1));
+  }
+  await radio.nth(0).focus();
+  await page.keyboard.press('ArrowLeft'); // Wrap to position 6.
+  await expect(radio.nth(5)).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('#full-next')).toBeEnabled();
+  await page.keyboard.press('Home');
+  await expect(radio.nth(0)).toHaveAttribute('aria-checked', 'true');
 });

@@ -128,12 +128,16 @@ function render() {
   $('full-source-fingerprint').textContent = `${pack.sourceSha256} · ${pack.observedAt}`;
   const list = $('full-choices');
   list.replaceChildren();
+  const selectedIndex = q.options.findIndex(option => active.answers[q.id] === option.value);
   // Keep the original source value and Korean wording; the layout hint is not an official label.
   list.dataset.optionCount = String(q.options.length);
-  for (const choice of q.options) {
+  for (const [index, choice] of q.options.entries()) {
     const btn = make('button', 'full-choice');
     btn.type = 'button';
-    btn.setAttribute('aria-pressed', String(active.answers[q.id] === choice.value));
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', String(active.answers[q.id] === choice.value));
+    // Roving tabindex: Tab enters the selected option, or the first if none.
+    btn.tabIndex = index === (selectedIndex >= 0 ? selectedIndex : 0) ? 0 : -1;
     // The accessible name must expose the ORIGINAL source option value (O/X
     // or 1-6). Let nested text provide the name: aria-label would override
     // this value and the Korean span's lang=ko for screen readers.
@@ -155,13 +159,29 @@ function render() {
       $('full-confirm-complete-backup').hidden = true;
       syncUnloadGuard();
       active.needsReview?.delete(q.id);
-      for (const entry of list.children) entry.setAttribute('aria-pressed', String(entry === btn));
+      for (const entry of list.children) {
+        entry.setAttribute('aria-checked', String(entry === btn));
+        entry.tabIndex = entry === btn ? 0 : -1;
+      }
       $('full-next').disabled = false;
       $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknownWordingCount(active) ? ` · ${unknownWordingCount(active)} 道历史译文未知` : ''}`;
       $('full-progress').value = Object.keys(active.answers).length;
       $('full-save').disabled = false;
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
+    });
+    // WAI-ARIA radio pattern: arrow keys change the single selected value.
+    // Space/Enter remain the button's native keyboard click handlers.
+    btn.addEventListener('keydown', event => {
+      const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1
+        : ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 0;
+      if (!direction && event.key !== 'Home' && event.key !== 'End') return;
+      event.preventDefault();
+      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? list.children.length - 1
+        : (index + direction + list.children.length) % list.children.length;
+      const target = list.children[nextIndex];
+      target.click();
+      target.focus();
     });
     list.append(btn);
   }

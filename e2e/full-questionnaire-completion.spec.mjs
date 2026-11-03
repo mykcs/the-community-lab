@@ -119,7 +119,7 @@ test('both complete seasons preserve every official source ID and raw option val
 
       const choiceIndex = position % question.optionCount;
       await choices.nth(choiceIndex).click();
-      await expect(choices.nth(choiceIndex)).toHaveAttribute('aria-pressed', 'true');
+      await expect(choices.nth(choiceIndex)).toHaveAttribute('aria-checked', 'true');
       expectedSelections.push({
         questionId: question.sourceQuestionId,
         selectedValue: question.optionValues[choiceIndex],
@@ -179,7 +179,7 @@ test('both complete seasons preserve every official source ID and raw option val
     const lastQuestion = questions.at(-1);
     const oldChoiceIndex = (questionCount - 1) % lastQuestion.optionCount;
     const revisedChoiceIndex = (oldChoiceIndex + 1) % lastQuestion.optionCount;
-    await expect(page.locator('.full-choice').nth(oldChoiceIndex)).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.full-choice').nth(oldChoiceIndex)).toHaveAttribute('aria-checked', 'true');
     await page.locator('.full-choice').nth(revisedChoiceIndex).click();
     await page.locator('#full-next').click();
     await expect(page.locator('#full-done')).toBeVisible();
@@ -209,7 +209,7 @@ test('both complete seasons preserve every official source ID and raw option val
     await page.locator('#full-jump').click();
     const firstQuestion = questions[0];
     await expect(page.locator('#full-group')).toContainText(`原题编号 ${firstQuestion.sourceQuestionId}`);
-    await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
     await page.locator('.full-choice').nth(1).click();
     await expect(page.locator('#full-finish-review')).toBeEnabled();
     await page.locator('#full-finish-review').click();
@@ -444,13 +444,13 @@ test('pending private import cannot overwrite a newer clicked option', async ({ 
   });
   await expect.poll(() => page.evaluate(() => typeof window.releaseDelayedImport)).toBe('function');
   await page.locator('.full-choice').first().click();
-  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
 
   await page.evaluate(async () => {
     await window.releaseDelayedImport();
     await new Promise(resolve => setTimeout(resolve, 0));
   });
-  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
   expect(prompts).toEqual([]);
 
   const [download] = await Promise.all([

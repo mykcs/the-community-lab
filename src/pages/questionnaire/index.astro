@@ -69,9 +69,10 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
       .full-choices[data-option-count="4"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,auto));grid-auto-flow:column}
       .full-choices[data-option-count="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
       .full-choice{display:flex;gap:16px;align-items:center;width:100%;min-height:74px;padding:16px 20px;text-align:left;color:var(--text);background:#1b222b;border:1px solid #414852}
-      .full-choice:hover{border-color:#b9857d}.full-choice[aria-pressed=true]{background:#392b31;border-color:var(--red);box-shadow:inset 3px 0 var(--red)}
+      .full-choice:focus-visible{outline:2px solid #ffb4a5;outline-offset:2px}
+      .full-choice:hover{border-color:#b9857d}.full-choice[aria-checked=true]{background:#392b31;border-color:var(--red);box-shadow:inset 3px 0 var(--red)}
       .full-choice-mark{display:grid;place-items:center;flex:0 0 30px;height:30px;border-radius:50%;border:1px solid #7b8692;font-size:12px;color:#c5cad0}
-      .full-choice[aria-pressed=true] .full-choice-mark{background:var(--red);color:#101319;border-color:var(--red)}
+      .full-choice[aria-checked=true] .full-choice-mark{background:var(--red);color:#101319;border-color:var(--red)}
       .full-choice-copy{display:flex;flex-direction:column;gap:5px;min-width:0;word-break:keep-all}
       .full-choice-ko{font:500 15px/1.6 var(--ko)}.full-choice-zh{color:#e1e6eb;font-size:14px;line-height:1.6}.full-choice-hint{color:#a7b2bf;font-size:11px;line-height:1.55}
       .full-quiz-actions{display:flex;justify-content:space-between;gap:12px;margin:35px 0}
@@ -122,7 +123,7 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
             <label for="full-jump-position">修改已完成答卷 · 跳到第</label><input id="full-jump-position" type="number" min="1" step="1" inputmode="numeric" aria-describedby="full-jump-status" /><button id="full-jump" class="button button-outline" type="button">跳转题位</button><button id="full-finish-review" class="button button-primary" type="button">重新生成本机答题记录</button>
             <p>只在修改已完成答卷或核对更新译文时开放；新答卷仍按顺序作答。这是本站本机编辑功能，不代表官网允许跳题。<span id="full-jump-status" class="full-feedback" role="status" aria-live="polite"></span></p>
           </div>
-          <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p id="full-reader-note" class="full-reader-note" role="note" hidden></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="group" aria-label="选择本题答案"></div>
+          <div class="full-question"><span class="full-group" id="full-group"></span><h1 id="full-ko" lang="ko" tabindex="-1"></h1><div class="full-translation">中文 · AI 初译，未经独立韩中复核</div><p class="full-question-zh" id="full-zh"></p><p id="full-reader-note" class="full-reader-note" role="note" hidden></p><p class="full-local" id="full-choice-prompt"></p><div id="full-choices" class="full-choices" role="radiogroup" aria-labelledby="full-choice-prompt"></div>
             <div class="full-quiz-actions"><button id="full-prev" class="button button-outline" type="button">← 上一题</button><button id="full-next" class="button button-primary" type="button" disabled>确认，继续 →</button></div>
             <p class="full-evidence">本题来源：<a id="full-source" target="_blank" rel="noopener noreferrer">公开客户端同季题目</a>。题序依据该版本客户端的可核查展示位置；这不证明所有官方版本或服务端结果一致。页面不会向原站发送答案。<br/>本页锁定的客户端 JS SHA-256 与资料观测日期：<code id="full-source-fingerprint"></code>。这不是官方题库或计分版本号。</p>
           </div>
