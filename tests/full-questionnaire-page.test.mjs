@@ -67,7 +67,9 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions, active\.answerFingerprints\)/);
   assert.match(app, /restorePrivateProgressReceipt\(pack, record\)/);
   assert.match(app, /file\.size > 128 \* 1024/);
-  assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
+  assert.match(app, /const content = await file\.text\(\)/);
+  assert.match(app, /if \(requestId !== latestImportRequest\) return/);
+  assert.match(app, /const record = JSON\.parse\(content\)/);
   assert.match(app, /saved\.set\(session\.season/);
   assert.match(page, /如导入会删除或覆盖本页已答选择，系统会先要求确认/);
   assert.match(page, /会保留原答案版本并要求你重新阅读题目/);
