@@ -19,6 +19,17 @@ test('public routes render without horizontal overflow', async ({ page }) => {
   await expectNoHorizontalOverflow(page);
 });
 
+test('each non-official source question shows a pinned client digest without claiming a scoring version', async ({ page }) => {
+  const sourceDigest = '59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e';
+  for (const season of [1, 2]) {
+    await page.goto(`/the-community-lab/questionnaire/?season=${season}`);
+    await expect(page.locator('#full-source-fingerprint')).toHaveText(`${sourceDigest} · 2026-10-30`);
+    await expect(page.locator('#full-source')).toHaveAttribute('href', `https://thecommunity.co.kr/season/${season}/test`);
+    await expect(page.locator('.full-evidence')).toContainText('这不是官方题库或计分版本号');
+    await expectNoHorizontalOverflow(page);
+  }
+});
+
 test('season two answers, navigation, and in-memory resume work', async ({ page }) => {
   await page.goto('/the-community-lab/questionnaire/');
   await page.locator('[data-start-season="2"]').click();

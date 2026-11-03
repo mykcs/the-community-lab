@@ -18,6 +18,8 @@ test('two source seasons, provenance and unreviewed pilot disclosures appear in 
   assert.match(page, /data-start-season="2"/);
   assert.match(page, /第一季 87 题/);
   assert.match(page, /第二季 37 题/);
+  assert.match(page, /公开客户端已观测的 124 道题/);
+  assert.doesNotMatch(page, /独立非官方完整原题试填/);
   assert.match(page, /AI 初译/);
   assert.match(page, /未经人工复核/);
   assert.match(page, /独立韩中复核尚未完成/);
@@ -26,6 +28,9 @@ test('two source seasons, provenance and unreviewed pilot disclosures appear in 
   assert.match(page, /许可原件/);
   assert.match(page, /不上传服务器/);
   assert.match(page, /官方计分/);
+  assert.match(page, /id="full-source-fingerprint"/);
+  assert.match(page, /这不是官方题库或计分版本号/);
+  assert.match(app, /full-source-fingerprint'\)\.textContent = `\$\{pack\.sourceSha256\} · \$\{pack\.observedAt\}`/);
   assert.match(page, /<script id="full-questionnaire-data" type="application\/json" set:html={embedded}>/);
   assert.match(page, /<script>import '\.\.\/\.\.\/\.\.\/full-questionnaire-app\.mjs';<\/script>/);
 });

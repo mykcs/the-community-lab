@@ -86,7 +86,7 @@ function selectSeason() {
     const unknown = unknownWordingCount(session);
     document.querySelector(`[data-season-progress="${season}"]`).textContent = answered
       ? `本页已答 ${answered} / ${pack.seasons[season].length}${pending ? ` · ${pending} 道译文需重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''} · 继续 ↗`
-      : '开始完整试填 ↗';
+      : '开始已观测题目试填 ↗';
   }
   view('select');
 }
@@ -123,6 +123,8 @@ function render() {
     ? '请选择一个更符合你观点的选项；下方韩文为公开客户端文字。'
     : `请选择一个选项（原题为 ${q.options.length} 级量表）。`;
   $('full-source').href = q.sourceUrl;
+  // Expose the pinned public client asset, not an invented questionnaire or scoring version.
+  $('full-source-fingerprint').textContent = `${pack.sourceSha256} · ${pack.observedAt}`;
   const list = $('full-choices');
   list.replaceChildren();
   for (const choice of q.options) {
