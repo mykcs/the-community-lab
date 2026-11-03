@@ -3,6 +3,7 @@ import { compareCandidateAgainstRecordedOfficialPairs, summarizeVerifiedOfficial
 import { summarizeOfficialResultDisplayDigestCoverage } from '../lib/official-result-display-audit.mjs';
 import { loadFullQuestionnaire } from './load-full-questionnaire.mjs';
 import { PILOT_STATUS } from '../lib/full-questionnaire.mjs';
+import SOURCE_INDEX from '../data/original-question-index.json' with { type: 'json' };
 
 const jsonOutput = process.argv.includes('--json');
 // Human-readable diagnostics belong to normal stdout; --json is a strict,
@@ -36,7 +37,7 @@ const publicUnreviewedDraftCoverage = {
     const questions = pilot.seasons[row.season];
     if (!Array.isArray(questions) ||
         questions.length !== row.observedSourceIdentityCount ||
-        pilot.sourceSha256 !== row.sourceAssetSha256) {
+        pilot.sourceSha256 !== SOURCE_INDEX.sourceAssetSha256) {
       throw new Error('公开试填与审计源题身份／版本不一致');
     }
     return {
