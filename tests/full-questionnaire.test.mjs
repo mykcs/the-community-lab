@@ -134,6 +134,43 @@ test('S2 draft group labels cannot split or merge source domains in answer summa
   assert.equal(buildFullQuestionnaire(updated, index).seasons[2].length, 37);
 });
 
+test('identical Korean response scales cannot silently diverge in Chinese across the same season', () => {
+  const captions = new Map();
+  for (const q of raw.questions) {
+    for (const option of q.options) {
+      const key = JSON.stringify([q.season, q.options.length, option.ko]);
+      if (captions.has(key)) {
+        assert.equal(option.zh_cn, captions.get(key), `inconsistent draft scale: ${q.id}`);
+      }
+      captions.set(key, option.zh_cn);
+    }
+  }
+
+  const rejectOne = (season, count) => {
+    const changed = structuredClone(raw);
+    const candidates = changed.questions.filter(q => q.season === season && q.options.length === count);
+    assert.ok(candidates.length >= 2);
+    candidates[1].options[0].zh_cn = '故意相反的 AI 草稿，仅用于测试';
+    assert.throws(() => buildFullQuestionnaire(changed, index),
+      /同一韩文量表选项存在不一致的中文 AI 初译/);
+  };
+  rejectOne(1, 6);
+  rejectOne(1, 4);
+  rejectOne(2, 2);
+
+  // One coordinated draft-wide editorial revision should remain possible.
+  // Consistency is a machine guard, never evidence of a correct translation.
+  const coordinated = structuredClone(raw);
+  for (const q of coordinated.questions.filter(q => q.season === 1 && q.options.length === 6)) {
+    q.options.find(option => option.ko === '2점').zh_cn = '第2档（待真人核对）';
+  }
+  const revised = buildFullQuestionnaire(coordinated, index);
+  assert.equal(revised.seasons[1].length, 87);
+  assert.equal(revised.seasons[2].length, 37);
+  assert.equal(revised.scoringVersion, 'UNKNOWN');
+  assert.equal(revised.rightsEvidence, 'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED');
+});
+
 test('all answers can be completed as a receipt, but never produce invented official axes or matches', () => {
   for (const season of [1, 2]) {
     const answer = Object.fromEntries(pack.seasons[season].map(q => [q.id, q.options[0].value]));
