@@ -31,6 +31,13 @@ test('nonempty Korean source or Korean option drift is rejected despite unchange
 test('Chinese AI draft revisions remain possible without changing Korean source fingerprint', () => {
   const copy = structuredClone(draft);
   copy.questions[0].translation_zh_cn += '（待双语审校的草稿修订）';
-  copy.questions[0].options[0].zh_cn += '（草稿）';
+  // Repeated scale captions are a single translation unit: revise the
+  // matching Korean response label in ALL same-season six-choice questions.
+  const example = copy.questions[0];
+  for (const q of copy.questions.filter(q => q.season === example.season &&
+       q.options.length === example.options.length)) {
+    const option = q.options.find(o => o.ko === example.options[0].ko);
+    if (option) option.zh_cn += '（草稿）';
+  }
   assert.equal(verifyKoreanSourceSnapshot(buildFullQuestionnaire(copy, index)), true);
 });
