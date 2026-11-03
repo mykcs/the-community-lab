@@ -18,6 +18,16 @@ let active = null;
 // Reading a local JSON file is async. A previously chosen, slower file must
 // never overwrite the more recent import selection or prompt to erase it.
 let latestImportRequest = 0;
+let pendingImportRequest = 0;
+
+// A later deliberate answer, restart, or navigation takes precedence over a
+// still-reading local file; never silently restore an obsolete snapshot.
+function cancelPendingImport() {
+  if (!pendingImportRequest) return;
+  latestImportRequest += 1;
+  pendingImportRequest = 0;
+  $('full-import-status').textContent = '已取消尚未完成的备份导入：你随后操作了答题页面。如需恢复，请重新选择文件。';
+}
 
 function unknownWordingCount(session) {
   return Object.keys(session?.answers ?? {}).filter(
@@ -55,6 +65,7 @@ function view(name) {
 
 function begin(season, fresh = false) {
   if (![1, 2].includes(season)) return;
+  cancelPendingImport();
   if (fresh || !saved.has(season)) saved.set(season, {
     season, index: 0, answers: Object.create(null),
     answerVersions: Object.create(null), answerFingerprints: Object.create(null), needsReview: new Set(),
@@ -67,6 +78,7 @@ function begin(season, fresh = false) {
 }
 
 function selectSeason() {
+  cancelPendingImport();
   for (const season of [1, 2]) {
     const session = saved.get(season);
     const answered = session ? Object.keys(session.answers).length : 0;
@@ -126,6 +138,7 @@ function render() {
     copy.append(ko, make('span', 'full-choice-zh', choice.zh));
     btn.append(mark, copy);
     btn.addEventListener('click', () => {
+      cancelPendingImport();
       active.answers[q.id] = choice.value;
       active.answerVersions[q.id] = q.translationVersion;
       active.answerFingerprints[q.id] = q.translationFingerprint;
@@ -247,7 +260,9 @@ async function importProgress(file) {
   const status = $('full-import-status');
   if (!file) return;
   const requestId = ++latestImportRequest;
+  pendingImportRequest = requestId;
   if (file.size > 128 * 1024) {
+    pendingImportRequest = 0;
     status.textContent = '文件过大；只接受本站导出的 128 KB 以内 JSON。';
     return;
   }
@@ -310,6 +325,8 @@ async function importProgress(file) {
   } catch {
     if (requestId !== latestImportRequest) return; // Do not replace newer status.
     status.textContent = '恢复失败：文件可能损坏，或题目来源、选项值或文件格式不匹配。原有进度未改动。';
+  } finally {
+    if (pendingImportRequest === requestId) pendingImportRequest = 0;
   }
 }
 
@@ -318,7 +335,7 @@ document.querySelectorAll('[data-start-season]').forEach(button => {
 });
 $('full-exit').addEventListener('click', selectSeason);
 $('full-prev').addEventListener('click', () => {
-  if (active.index > 0) { active.index -= 1; render(); }
+  if (active.index > 0) { cancelPendingImport(); active.index -= 1; render(); }
 });
 function jumpToReviewedQuestion() {
   if (!active?.reviewMode) return;
@@ -329,6 +346,7 @@ function jumpToReviewedQuestion() {
     $('full-jump-status').textContent = `请输入 1 至 ${length} 之间的整数题位。`;
     return;
   }
+  cancelPendingImport();
   active.index = position - 1;
   $('full-jump-status').textContent = '';
   render();
@@ -341,17 +359,20 @@ $('full-jump-position').addEventListener('keydown', event => {
 });
 $('full-finish-review').addEventListener('click', () => {
   if (!active?.reviewMode) return;
+  cancelPendingImport();
   finish(); // Recompute from current selections; never reuse an old completed receipt.
 });
 $('full-next').addEventListener('click', () => {
   const q = pack.seasons[active.season][active.index];
   if (!Object.hasOwn(active.answers, q.id)) return;
+  cancelPendingImport();
   if (active.index < pack.seasons[active.season].length - 1) { active.index += 1; render(); }
   else finish();
 });
 $('full-download').addEventListener('click', download);
 $('full-edit').addEventListener('click', () => {
   if (!active?.receipt) return;
+  cancelPendingImport();
   // Keep all original source option values and translation fingerprints.
   // Any later edit must create a new completed receipt before downloading.
   active.index = pack.seasons[active.season].length - 1;
