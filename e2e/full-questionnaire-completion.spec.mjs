@@ -151,6 +151,13 @@ test('both complete seasons preserve every official source ID and raw option val
     expect(new Set(receipt.selections.map(x => x.questionId)).size).toBe(questionCount);
     expect(receipt.groups.reduce((sum, group) => sum + group.answered, 0)).toBe(questionCount);
 
+    // A download event does not tell us whether the user kept the file.
+    // The private-answer unload guard remains until they explicitly confirm.
+    await expect(page.locator('#full-confirm-complete-backup')).toBeVisible();
+    await expect(page.locator('#full-complete-backup-status')).toContainText('请检查文件确实存在');
+    await page.locator('#full-confirm-complete-backup').click();
+    await expect(page.locator('#full-complete-backup-status')).toContainText('已按你的确认标记为已备份');
+
     // A local download is never auto-persisted; importing the exact completed
     // receipt is the only way to restore the full session after a refresh.
     await page.reload();

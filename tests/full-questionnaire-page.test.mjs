@@ -99,6 +99,24 @@ test('unsaved choices guard refresh/navigation without silently persisting sensi
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
 });
 
+test('a download request alone cannot silence the warning for unsaved private answers', () => {
+  // Browsers do not expose whether the download reached the user's disk.
+  // Only the visitor's explicit confirmation can mark the in-memory choices backed up.
+  assert.match(page, /id="full-confirm-progress-backup"[^>]*hidden/);
+  assert.match(page, /id="full-confirm-complete-backup"[^>]*hidden/);
+  assert.match(page, /浏览器发起下载不等于文件已保存/);
+  assert.match(app, /active\.pendingBackupKind = 'progress'/);
+  assert.match(app, /active\.pendingBackupKind = 'complete'/);
+  const downloadFlow = app.slice(app.indexOf('function download()'), app.indexOf('async function importProgress'));
+  assert.doesNotMatch(downloadFlow, /active\.backupStale = false/);
+  const confirm = app.slice(app.indexOf('function confirmDownloadedBackup(kind)'), app.indexOf("'full-confirm-progress-backup').addEventListener") + 60);
+  assert.match(confirm, /active\.pendingBackupKind !== kind/);
+  assert.match(confirm, /active\.backupStale = false/);
+  assert.match(confirm, /syncUnloadGuard\(\)/);
+  assert.match(app, /active\.pendingBackupKind = null; \/\/ A new choice invalidates any unconfirmed download/);
+  assert.match(app, /document\.body\.append\(a\)/);
+});
+
 test('build uses the already-published single draft source rather than duplicating source questions', () => {
   assert.match(loader, /docs\/translation-review\/index\.html/);
   assert.match(loader, /data\/original-question-index\.json/);

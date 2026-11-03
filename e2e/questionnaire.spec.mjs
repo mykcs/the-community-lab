@@ -66,7 +66,8 @@ test('season one local download works and a reload never restores it automatical
     page.locator('#full-save').click(),
   ]);
   expect(download.suggestedFilename()).toBe('community-private-season-1-progress.json');
-  await expect(page.locator('#full-save-status')).toContainText('已生成本机进度文件');
+  await expect(page.locator('#full-save-status')).toContainText('已请求浏览器下载');
+  await expect(page.locator('#full-confirm-progress-backup')).toBeVisible();
 
   // Both the old page and the unsaved-changes warning PR should leave storage opt-in.
   page.on('dialog', dialog => dialog.accept());
@@ -77,7 +78,7 @@ test('season one local download works and a reload never restores it automatical
   await expectNoHorizontalOverflow(page);
 });
 
-test('a new unbacked choice warns on reload, but downloading a backup clears the warning', async ({ page }) => {
+test('requesting a download does not clear a private-data warning until the visitor confirms the file exists', async ({ page }) => {
   await page.goto('/the-community-lab/questionnaire/');
   await page.locator('[data-start-season="2"]').click();
   await page.locator('.full-choice').first().click();
@@ -98,9 +99,41 @@ test('a new unbacked choice warns on reload, but downloading a backup clears the
     page.locator('#full-save').click(),
   ]);
   expect(download.suggestedFilename()).toBe('community-private-season-2-progress.json');
+  await expect(page.locator('#full-confirm-progress-backup')).toBeVisible();
+  await expect(page.locator('#full-save-status')).toContainText('请先核对 JSON 文件确实保存');
+  dialogs.length = 0;
+  await page.reload();
+  expect(dialogs).toEqual(['beforeunload']);
 
+  await page.locator('[data-start-season="2"]').click();
+  await page.locator('.full-choice').first().click();
+  const [confirmedDownload] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#full-save').click(),
+  ]);
+  expect(confirmedDownload.suggestedFilename()).toBe('community-private-season-2-progress.json');
+  await page.locator('#full-confirm-progress-backup').click();
+  await expect(page.locator('#full-save-status')).toContainText('已按你的确认标记为已备份');
   dialogs.length = 0;
   await page.reload();
   expect(dialogs).toHaveLength(0);
   await expect(page.locator('#full-select')).toBeVisible();
+});
+
+test('an edit after a requested download invalidates the old backup confirmation', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  await page.locator('.full-choice').first().click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#full-save').click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('community-private-season-2-progress.json');
+  await expect(page.locator('#full-confirm-progress-backup')).toBeVisible();
+  await page.locator('#full-next').click();
+  await page.locator('.full-choice').first().click();
+  await expect(page.locator('#full-confirm-progress-backup')).toBeHidden();
+  const dialogs = [];
+  page.on('dialog', dialog => { dialogs.push(dialog.type()); void dialog.accept(); });
+  await page.reload();
+  expect(dialogs).toEqual(['beforeunload']);
 });
