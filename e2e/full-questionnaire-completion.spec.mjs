@@ -357,3 +357,99 @@ test('legacy complete backup warns that Chinese wording is UNKNOWN until the ans
     .toEqual(questions.map(q => q.options[0].value));
   expect(officialPosts).toEqual([]);
 });
+
+test('pending private import cannot undo a deliberate restart after file selection', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const q = pack.seasons[2][0];
+  const previous = createPrivateProgressReceipt(
+    pack, 2, { [q.id]: q.options[1].value }, 0,
+    { [q.id]: q.translationVersion }, { [q.id]: q.translationFingerprint },
+  );
+  const completedAnswers = Object.fromEntries(pack.seasons[2].map(item => [item.id, item.options[0].value]));
+  const completedVersions = Object.fromEntries(pack.seasons[2].map(item => [item.id, item.translationVersion]));
+  const completedFingerprints = Object.fromEntries(pack.seasons[2].map(item => [item.id, item.translationFingerprint]));
+  const completed = createPrivateProgressReceipt(
+    pack, 2, completedAnswers, 36, completedVersions, completedFingerprints,
+  );
+  await page.addInitScript(() => {
+    const originalText = File.prototype.text;
+    File.prototype.text = function () {
+      if (this.name !== 'delayed-local.json') return originalText.call(this);
+      return new Promise((resolve, reject) => {
+        window.releaseDelayedImport = () => originalText.call(this).then(resolve, reject);
+      });
+    };
+  });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'completed-local.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(completed)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'delayed-local.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(previous)),
+  });
+  await expect.poll(() => page.evaluate(() => typeof window.releaseDelayedImport)).toBe('function');
+
+  const prompts = [];
+  page.on('dialog', async dialog => {
+    prompts.push(dialog.message());
+    await dialog.accept();
+  });
+  await page.locator('#full-restart').click();
+  await expect(page.locator('#full-count')).toContainText('已答 0 / 37');
+  await page.evaluate(async () => {
+    await window.releaseDelayedImport();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('#full-count')).toContainText('已答 0 / 37');
+  await expect(page.locator('#full-position')).toContainText('01 / 37');
+  await expect(page.locator('#full-save')).toBeDisabled();
+  expect(prompts).toHaveLength(1); // Only the deliberate restart, never a stale import.
+});
+
+test('pending private import cannot overwrite a newer clicked option', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const q = pack.seasons[2][0];
+  const previous = createPrivateProgressReceipt(
+    pack, 2, { [q.id]: q.options[1].value }, 0,
+    { [q.id]: q.translationVersion }, { [q.id]: q.translationFingerprint },
+  );
+  await page.addInitScript(() => {
+    const originalText = File.prototype.text;
+    File.prototype.text = function () {
+      if (this.name !== 'delayed-local.json') return originalText.call(this);
+      return new Promise((resolve, reject) => {
+        window.releaseDelayedImport = () => originalText.call(this).then(resolve, reject);
+      });
+    };
+  });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const prompts = [];
+  page.on('dialog', async dialog => {
+    prompts.push(dialog.message());
+    await dialog.accept(); // Would expose overwritten answers in the old code.
+  });
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'delayed-local.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(previous)),
+  });
+  await expect.poll(() => page.evaluate(() => typeof window.releaseDelayedImport)).toBe('function');
+  await page.locator('.full-choice').first().click();
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+
+  await page.evaluate(async () => {
+    await window.releaseDelayedImport();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-pressed', 'true');
+  expect(prompts).toEqual([]);
+
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#full-save').click(),
+  ]);
+  const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(exported.selections.find(x => x.questionId === q.id)?.selectedValue).toBe(q.options[0].value);
+});
