@@ -52,7 +52,25 @@ test('S1 six-step scale is grouped by direction on desktop but stays a single re
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/the-community-lab/questionnaire/?season=1');
   const choices = page.locator('.full-choice');
+  // First S1 questions use four options. Navigate to a real six-option
+  // question rather than assuming page position 1 already has six.
+  const sixPosition = pack.seasons[1].findIndex(q => q.options.length === 6);
+  expect(sixPosition).toBeGreaterThanOrEqual(0);
+  for (let i = 0; i < sixPosition; i++) {
+    await choices.first().click();
+    await page.locator('#full-next').click();
+  }
+  const question = pack.seasons[1][sixPosition];
   await expect(choices).toHaveCount(6);
+  for (const value of [2, 5]) {
+    const opt = question.options.find(option => option.value === value);
+    expect(opt).toBeTruthy();
+    const button = choices.filter({ has: page.locator('.full-choice-mark', { hasText: String(value) }) });
+    await expect(button).toHaveCount(1);
+    await expect(button.locator('.full-choice-ko')).toHaveText(opt.ko);
+    await expect(button.locator('.full-choice-zh')).toHaveText(`${value === 2 ? '反对侧' : '赞同侧'} · 第 ${value} 档`);
+    await expect(button.locator('.full-choice-hint')).toContainText(`中文直译：${opt.zh}`);
+  }
   const positions = await choices.evaluateAll(elements => elements.map(el => {
     const rect = el.getBoundingClientRect();
     return { x: rect.x, y: rect.y, width: rect.width };
