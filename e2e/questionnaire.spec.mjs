@@ -66,7 +66,8 @@ test('season one local download works and a reload never restores it automatical
     page.locator('#full-save').click(),
   ]);
   expect(download.suggestedFilename()).toBe('community-private-season-1-progress.json');
-  await expect(page.locator('#full-save-status')).toContainText('已生成本机进度文件');
+  await expect(page.locator('#full-save-status')).toContainText('已请求浏览器下载');
+  await expect(page.locator('#full-confirm-progress-backup')).toBeVisible();
 
   // Both the old page and the unsaved-changes warning PR should leave storage opt-in.
   page.on('dialog', dialog => dialog.accept());
