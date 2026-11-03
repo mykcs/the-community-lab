@@ -105,6 +105,18 @@ test('Astro keeps Vercel rollback origin and uses GitHub project subpath only fo
   assert.match(astro, /https:\/\/the-community-lab\.vercel\.app/);
 });
 
+test('PR Verify watches all publicly published translation and static assets', () => {
+  // A translation-only PR must exercise the same build gates that run after
+  // merge. Browser/review CI do not replace the exact-head npm check/build.
+  for (const path of ['docs/translation-review/**',
+    'docs/original-question-translation-review/**', 'public/**']) {
+    assert.equal(verifyWorkflow.split(`'${path}'`).length - 1, 2,
+      `${path} must trigger PR Verify and main Verify`);
+    assert.match(workflow, new RegExp(path.replace(/\\/g, '\\\\').replace(/\*/g, '\\*')),
+      `${path} must be among published Pages inputs`);
+  }
+});
+
 test('standalone questionnaire browser logic changes trigger PR Verify and Pages publication', () => {
   for (const [name, yaml] of [['PR/commit Verify', verifyWorkflow], ['production Pages', workflow]]) {
     assert.match(yaml, /['"]full-questionnaire-app\.mjs['"]/, name);
