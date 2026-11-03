@@ -6,6 +6,7 @@ import {
   countReplacedLocalAnswerProvenance,
   hasUnsavedPrivateChoices,
 } from './lib/full-questionnaire.mjs';
+import { displayedOptionCopy } from './lib/option-display.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
 const $ = id => document.getElementById(id);
@@ -139,18 +140,9 @@ function render() {
     const mark = make('span', 'full-choice-mark', choice.value);
     const copy = make('span', 'full-choice-copy');
     const ko = make('span', 'full-choice-ko', choice.ko); ko.lang = 'ko';
-    if (q.season === 1 && q.options.length === 6 &&
-        (choice.value === 2 || choice.value === 5) &&
-        (choice.ko === '2점' || choice.ko === '5점')) {
-      const side = choice.value === 2 ? '反对侧' : '赞同侧';
-      copy.append(
-        ko,
-        make('span', 'full-choice-zh', `${side} · 第 ${choice.value} 档`),
-        make('span', 'full-choice-hint', `中文直译：${choice.zh}。方向是根据六级顺序的辅助说明，不是官网命名。`),
-      );
-    } else {
-      copy.append(ko, make('span', 'full-choice-zh', choice.zh));
-    }
+    const display = displayedOptionCopy(q, choice);
+    copy.append(ko, make('span', 'full-choice-zh', display.zh));
+    if (display.hint) copy.append(make('span', 'full-choice-hint', display.hint));
     btn.append(mark, copy);
     btn.addEventListener('click', () => {
       cancelPendingImport();
