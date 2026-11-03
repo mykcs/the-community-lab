@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { Buffer } from 'node:buffer';
 import { expect, test } from '@playwright/test';
 
@@ -38,4 +39,34 @@ test('valid multi-question reviewer export above 1 MiB can be restored and compa
   await expect(page.locator('#comparison')).toBeVisible();
   await expect(page.locator('#comparison')).toContainText('同稿双份自报通过（未核验）');
   expect(dialogs.filter(message => message.startsWith('alert:'))).toEqual([]);
+});
+
+test('review edits remain exportable and visibly unsaved when local browser storage is full', async ({ page }) => {
+  await page.goto(reviewUrl);
+  await page.evaluate(() => {
+    const originalSetItem = Storage.prototype.setItem;
+    window.restoreReviewStorage = () => { Storage.prototype.setItem = originalSetItem; };
+    Storage.prototype.setItem = function (key, value) {
+      if (key.startsWith('community-lab-question-review-v1:')) {
+        throw new DOMException('Synthetic storage quota exceeded', 'QuotaExceededError');
+      }
+      return originalSetItem.call(this, key, value);
+    };
+  });
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  const translation = page.locator('#list .card').first().getByLabel(/中文翻译/);
+  const editedText = '合成译审：本机配额已满时仍可导出';
+  await translation.fill(editedText);
+  await expect(page.locator('.statusline')).toContainText('未保存到此设备');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#export').click(),
+  ]);
+  const backup = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(backup.questions[0].translation_zh_cn).toBe(editedText);
+  expect(pageErrors).toEqual([]);
+  await page.evaluate(() => window.restoreReviewStorage());
+  await translation.fill(editedText + '，存储恢复');
+  await expect(page.locator('.statusline')).toContainText('已保存到此设备');
 });
