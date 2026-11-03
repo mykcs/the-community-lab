@@ -42,3 +42,65 @@ test('standalone search indexes locally edited Chinese answer choices', async ({
   await expect(page.getByRole('heading', { name: new RegExp(questionId) })).toBeVisible();
   await expect(page.locator('#list .card')).toHaveCount(1);
 });
+
+
+// The independent offline HTML must protect edits just as the main review page does.
+test('standalone reviewer warns and can export edits when storage quota is exceeded', async ({ page }) => {
+  await page.goto(standaloneUrl);
+  await page.evaluate(() => {
+    const original = Storage.prototype.setItem;
+    window.restoreSyntheticSetItem = () => { Storage.prototype.setItem = original; };
+    Storage.prototype.setItem = function(key, value) {
+      if (key.startsWith('community-lab-question-review-v1:')) {
+        throw new DOMException('Synthetic storage full', 'QuotaExceededError');
+      }
+      return original.call(this, key, value);
+    };
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  const translation = page.getByLabel(`${questionId} 中文翻译`);
+  await translation.fill('独立审校页合成内容：配额不足');
+  await expect(page.locator('.statusline')).toContainText('未保存到此设备');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#export').click(),
+  ]);
+  const { readFile } = await import('node:fs/promises');
+  const record = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(record.questions.find(q => q.id === questionId).translation_zh_cn).toBe('独立审校页合成内容：配额不足');
+  expect(errors).toEqual([]);
+  await page.evaluate(() => window.restoreSyntheticSetItem());
+  await translation.fill('独立审校页合成内容：恢复保存');
+  await expect(page.locator('.statusline')).toContainText('已保存到此设备');
+});
+
+test('standalone reviewer cannot claim a blocked local clear succeeded', async ({ page }) => {
+  await page.goto(standaloneUrl);
+  const errors = [];
+  const messages = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', async dialog => { messages.push(dialog.type() + ': ' + dialog.message()); await dialog.accept(); });
+  const translation = page.getByLabel(`${questionId} 中文翻译`);
+  const baseline = await translation.inputValue();
+  await translation.fill('独立审校页合成草稿：不得误删');
+  await page.evaluate(() => {
+    const original = Storage.prototype.removeItem;
+    window.restoreSyntheticRemoveItem = () => { Storage.prototype.removeItem = original; };
+    Storage.prototype.removeItem = function(key) {
+      if (key.startsWith('community-lab-question-review-v1:')) {
+        throw new DOMException('Synthetic deletion denied', 'SecurityError');
+      }
+      return original.call(this, key);
+    };
+  });
+  await page.locator('#clear').click();
+  expect(messages.some(message => message.startsWith('alert: 清除失败'))).toBe(true);
+  await expect(translation).toHaveValue('独立审校页合成草稿：不得误删');
+  expect(errors).toEqual([]);
+  await page.evaluate(() => window.restoreSyntheticRemoveItem());
+  await page.locator('#clear').click();
+  await expect(page.getByLabel(`${questionId} 中文翻译`)).toHaveValue(baseline);
+  await expect(page.locator('.statusline')).toContainText('审校记录已清除');
+  expect(errors).toEqual([]);
+});
