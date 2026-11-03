@@ -37,7 +37,20 @@ let edits={};try{edits=JSON.parse(localStorage.getItem(key)||'{}')}catch{}
 const list=document.querySelector('#list'),search=document.querySelector('#search'),season=document.querySelector('#season'),group=document.querySelector('#group'),reviewFilter=document.querySelector('#reviewFilter'),count=document.querySelector('#count');
 const axis=new Map();for(const q of data.questions){const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;if(g)axis.set(q.season+':'+g,g)}
 for(const [value,label] of axis){const o=document.createElement('option');o.value=value;o.textContent=(value.startsWith('1:')?'S1 · ':'S2 · ')+label;group.append(o)}
-function save(){localStorage.setItem(key,JSON.stringify(edits));document.querySelector('.statusline').textContent='已保存到此设备'}
+// Browser storage is quota-limited (often less than our 8 MiB JSON import cap).
+// An edit must never look saved when setItem throws: keep it in memory,
+// point the reviewer to the offline JSON export, and warn before navigation.
+function warnUnexportedReview(event){event.preventDefault();event.returnValue=''}
+function save(){
+ try{
+  localStorage.setItem(key,JSON.stringify(edits));
+  window.removeEventListener('beforeunload',warnUnexportedReview);
+  document.querySelector('.statusline').textContent='已保存到此设备';
+ }catch{
+  window.addEventListener('beforeunload',warnUnexportedReview);
+  document.querySelector('.statusline').textContent='⚠ 未保存到此设备：浏览器存储空间不足或不可用。请立即导出审校 JSON 备份；刷新或关闭页面会丢失新修改。';
+ }
+}
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
 function groupLabel(q){return q.season===1?q.source_group:q.source_group_zh_cn_draft+'（'+q.source_group_ko+'）'}
 function reviewCues(q){const s=q.source_text_ko;const f=[];if(/않|안|아니|없|못|불법|금지|반대|싫/.test(s))f.push('否定/拒绝');if(/면|더라도|라도|경우|때문|이전|이후|위해/.test(s))f.push('条件/让步/范围');if(/더|가장|최소|최대한|매우|강력|많은|적은/.test(s))f.push('程度/比较');return f}
