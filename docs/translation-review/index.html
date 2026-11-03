@@ -189,6 +189,9 @@ importFile.addEventListener('change',async()=>{
   if(!confirm('将导入 '+total+' 道题的审校草稿，覆盖此设备现有的 '+Object.keys(edits).length+' 道编辑。不会上传至服务器。是否继续？'))return;
   // Persist before changing the in-memory editor; failure keeps the old draft intact.
   localStorage.setItem(key,JSON.stringify(imported));
+  // A successful import is now persisted; clear any warning left by an
+  // earlier quota failure before replacing the in-memory draft.
+  window.removeEventListener("beforeunload",warnUnexportedReview);
   edits=imported;render();
   document.querySelector('.statusline').textContent='已从同一来源版本恢复 '+total+' 道本机审校草稿（自报状态，未独立核验）';
  }catch(error){alert('导入失败，原有草稿未被覆盖：'+(error instanceof Error?error.message:'文件无效'))}
