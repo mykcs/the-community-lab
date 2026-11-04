@@ -46,6 +46,9 @@
   function install({ root, entries }) {
     if (!(root instanceof Element)) throw new TypeError('Missing fixture root');
     const byId = parseEntries(entries);
+    // Remember previously translated sections so an identity attribute removed
+    // by the host cannot strand Chinese labels on an unrecognized question.
+    const translatedSections = new Set();
 
     function removeOwnLabels(section) {
       for (const node of section.querySelectorAll('[' + MARKER + ']')) node.remove();
@@ -69,6 +72,12 @@
     }
 
     function sync() {
+      for (const section of translatedSections) {
+        if (!root.contains(section) || !section.hasAttribute('data-source-question-id')) {
+          removeOwnLabels(section);
+          translatedSections.delete(section);
+        }
+      }
       for (const section of root.querySelectorAll('[data-source-question-id]')) {
         const entry = byId.get(section.getAttribute('data-source-question-id'));
         const koreanQuestion = section.querySelector('[data-source-ko-question]');
@@ -84,9 +93,11 @@
           });
         if (!sameOptions) {
           removeOwnLabels(section); // Fail closed if the live DOM/source differs.
+          translatedSections.delete(section);
           continue;
         }
 
+        translatedSections.add(section);
         appendLabel(koreanQuestion, entry.zh);
         controls.forEach((control, index) => {
           appendLabel(control.querySelector('[data-source-ko-option]'), entry.options[index].zh);
@@ -106,6 +117,8 @@
       refresh: sync,
       stop() {
         observer.disconnect();
+        for (const section of translatedSections) removeOwnLabels(section);
+        translatedSections.clear();
         removeOwnLabels(root);
       },
     });
