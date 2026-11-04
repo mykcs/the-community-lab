@@ -58,6 +58,7 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
     perSeason[question.season]++;
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', question.id);
     assert.equal(question.review_status, 'draft', question.id);
+    assert.equal(question.rights_status, 'user_reported_permission_unverified', question.id);
     assert.ok(question.source_text_ko.trim(), `${question.id} Korean source is present`);
     assert.ok(question.translation_zh_cn.trim(), `${question.id} Chinese draft is present`);
     assert.match(question.source_url, /^https:\/\/thecommunity\.co\.kr\/season\/[12]\/test$/);
@@ -399,6 +400,23 @@ test('reject forged, incompatible or incomplete imported evidence without changi
   assert.match(html, /if\(file\.size>MAX_REVIEW_JSON_BYTES\)throw new Error\('文件超过 8 MiB 上限'\)/);
   assert.match(html, /if\(files\.some\(file=>file\.size>MAX_REVIEW_JSON_BYTES\)\)throw new Error\('每份文件不得超过 8 MiB'\)/);
   assert.match(html, /原有草稿未被覆盖/);
+});
+
+test('legacy offline review exports keep edits without promoting unverified permission', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const oldExport = structuredClone(data);
+  oldExport.questions.forEach(question => { question.rights_status = 'licensed'; });
+  oldExport.questions[0].translation_zh_cn = '本机合成修改，仍待独立人工审校';
+  const edits = restore(oldExport, data);
+  assert.equal(edits[oldExport.questions[0].id].translation, '本机合成修改，仍待独立人工审校');
+  assert.equal(data.questions[0].rights_status, 'user_reported_permission_unverified');
+  const forged = structuredClone(oldExport);
+  forged.reported_permission.status = 'INDEPENDENTLY_VERIFIED'; // No such evidence was supplied.
+  assert.throws(() => restore(forged, data), /许可记录/);
+  const altered = structuredClone(oldExport);
+  altered.questions[1].rights_status = 'independently_licensed';
+  assert.throws(() => restore(altered, data), /许可记录/);
 });
 
 test('two independently exported local reviews can be compared without promoting them to human verification', () => {
