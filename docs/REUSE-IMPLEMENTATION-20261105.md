@@ -56,6 +56,8 @@ all network requests were blocked *before* that local transition.
   It is not invoked by CI/Pages and is not an installable official-site script.
   `tests/probe-official-chrome.test.mjs` enforces its fail-closed adapter gate.
 
+**Research guard refinement (2026-11-05):** Even if a future official DOM exposes one source ID and as many raw-value attributes as buttons, those **counts are insufficient**: repeated, swapped, changed or fabricated option values could all pass a count-only check. The probe now requires an exact one-to-one match of the observed ID, Korean heading, ordered raw option values and Korean option labels to the pinned source pack, with synthetic negative regressions. This does **not** unlock the live overlay; current observed DOM still lacks IDs and raw values, and permission/review remain unverified.
+
 **Decision:** keep the official overlay **blocked**, not merely “untested”,
 until current-season/version source-question identity, exact original option
 values, copyright scope, bilingual human review and source DOM drift guards
