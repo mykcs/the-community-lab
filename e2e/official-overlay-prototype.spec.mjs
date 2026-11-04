@@ -148,3 +148,46 @@ test('removing a source question identity or unmounting a section clears stale C
   await page.evaluate(() => window.activeOverlayProbe.stop());
   await expect(labels).toHaveCount(0);
 });
+
+test('research overlay never changes or deletes host-owned nodes sharing its marker', async ({ page }) => {
+  await fixture(page);
+  const section = page.locator('[data-source-question-id]');
+  // A host component or another probe can legally use the same public attribute.
+  await section.locator('[data-source-ko-question]').evaluate(source => {
+    const host = document.createElement('span');
+    host.setAttribute('data-translation-overlay-probe', '');
+    host.id = 'host-owned-annotation';
+    host.textContent = 'HOST MUST REMAIN';
+    source.after(host);
+  });
+  await page.evaluate(data => {
+    window.activeOverlayProbe = window.CommunityOfficialOverlayProbe.install({
+      root: document.querySelector('#fixture'), entries: data,
+    });
+  }, entries);
+  await expect(page.locator('#host-owned-annotation')).toHaveText('HOST MUST REMAIN');
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(4);
+  await section.locator('[data-source-ko-question]').evaluate(source => { source.textContent = '변경'; });
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(1);
+  await expect(page.locator('#host-owned-annotation')).toHaveText('HOST MUST REMAIN');
+  await page.evaluate(() => window.activeOverlayProbe.stop());
+  await expect(page.locator('#host-owned-annotation')).toHaveText('HOST MUST REMAIN');
+});
+
+test('host reparenting an overlay label does not strand or duplicate its translation', async ({ page }) => {
+  await fixture(page);
+  await page.evaluate(data => {
+    window.activeOverlayProbe = window.CommunityOfficialOverlayProbe.install({
+      root: document.querySelector('#fixture'), entries: data,
+    });
+  }, entries);
+  const section = page.locator('[data-source-question-id]');
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(3);
+  await section.locator('[data-source-ko-question]').evaluate(source => {
+    document.getElementById('host-output').append(source.nextElementSibling);
+  });
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(3);
+  await expect(page.locator('#host-output [data-translation-overlay-probe]')).toHaveCount(0);
+  await page.evaluate(() => window.activeOverlayProbe.stop());
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(0);
+});
