@@ -121,3 +121,30 @@ test('rejects altered or duplicated original values and does not inject on a mis
   }, entries);
   await expect(page.locator('[data-translation-overlay-probe]')).toHaveCount(0);
 });
+
+test('removing a source question identity or unmounting a section clears stale Chinese labels', async ({ page }) => {
+  await fixture(page);
+  await page.evaluate(data => {
+    window.activeOverlayProbe = window.CommunityOfficialOverlayProbe.install({
+      root: document.querySelector('#fixture'), entries: data,
+    });
+  }, entries);
+  const section = page.locator('section');
+  const labels = section.locator('[data-translation-overlay-probe]');
+  await expect(labels).toHaveCount(3);
+
+  // A host re-render may temporarily remove, not merely change, the source ID.
+  // The overlay must not leave verified-looking Chinese text on an unknown item.
+  await section.evaluate(el => el.removeAttribute('data-source-question-id'));
+  await expect(labels).toHaveCount(0);
+
+  await section.evaluate(el => el.setAttribute('data-source-question-id', 'synthetic-s2-001'));
+  await expect(labels).toHaveCount(3);
+
+  // Host routing can move an already-translated section outside the observed root.
+  // Cleanup must cover that previously translated element as well.
+  await section.evaluate(el => document.body.append(el));
+  await expect(labels).toHaveCount(0);
+  await page.evaluate(() => window.activeOverlayProbe.stop());
+  await expect(labels).toHaveCount(0);
+});
