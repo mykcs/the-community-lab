@@ -38,6 +38,11 @@ all network requests were blocked *before* that local transition.
   `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`.
 - The first visible S2 question used `.question h1` and **2 option buttons**;
   the first S1 question used the same heading shape and **4 option buttons**.
+- The visible Korean first-question heading contained a **2-character display prefix**,
+  followed by an **exact, unique suffix match** to the *already public unreviewed*
+  local Korean source pack: S2 `ms10`, S1 `s1-class-15`. This is a first-screen,
+  source-text identity cross-check, **not** an ID or value that the live DOM
+  itself exposes. No original wording was added to source control.
 - Neither live first-question DOM exposed `[data-source-question-id]` nor a raw
   `value` / `data-source-option-value` on its option buttons. Hence the
   fixture overlay's declared ID/value selectors **do not work on the official site**.
@@ -47,7 +52,7 @@ all network requests were blocked *before* that local transition.
 - `scripts/probe-official-chrome.mjs --live-readonly` reproduces the narrow,
   opt-in observation, checks the pinned public asset, blocks non-GET requests,
   forbids all outgoing traffic after local start, and emits **structural metadata
-  and a question-text hash only**, never original wording or user responses.
+  plus question-text hashes and strictly matched source-ID candidates only**, never original wording or user responses.
   It is not invoked by CI/Pages and is not an installable official-site script.
   `tests/probe-official-chrome.test.mjs` enforces its fail-closed adapter gate.
 
