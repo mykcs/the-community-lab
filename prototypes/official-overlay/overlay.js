@@ -49,18 +49,31 @@
     // Remember previously translated sections so an identity attribute removed
     // by the host cannot strand Chinese labels on an unrecognized question.
     const translatedSections = new Set();
+    // The marker is not proof of ownership: a host or a second probe might
+    // use the same attribute. Never rewrite/remove a node we did not create.
+    const labelsBySource = new Map();
 
     function removeOwnLabels(section) {
-      for (const node of section.querySelectorAll('[' + MARKER + ']')) node.remove();
+      for (const [source, label] of labelsBySource) {
+        if (section.contains(source) || section.contains(label)) {
+          label.remove();
+          labelsBySource.delete(source);
+        }
+      }
     }
 
     function appendLabel(source, text) {
-      if (source.nextElementSibling?.hasAttribute(MARKER)) {
-        // A translation-only edit should not leave the previous label behind.
-        if (source.nextElementSibling.textContent !== text) {
-          source.nextElementSibling.textContent = text;
+      const previous = labelsBySource.get(source);
+      if (previous) {
+        if (previous.previousElementSibling === source &&
+            previous.parentElement === source.parentElement) {
+          // A translation-only edit replaces only our own injected text.
+          if (previous.textContent !== text) previous.textContent = text;
+          return;
         }
-        return;
+        // A host re-render may move the injected label away from its source.
+        previous.remove();
+        labelsBySource.delete(source);
       }
       const label = document.createElement('span');
       label.setAttribute(MARKER, '');
@@ -69,6 +82,7 @@
       label.textContent = text;
       label.style.cssText = 'display:block;max-width:100%;font-size:0.9em;line-height:1.6;color:inherit;pointer-events:none;white-space:normal;overflow-wrap:anywhere';
       source.after(label);
+      labelsBySource.set(source, label);
     }
 
     function sync() {
@@ -117,9 +131,11 @@
       refresh: sync,
       stop() {
         observer.disconnect();
-        for (const section of translatedSections) removeOwnLabels(section);
+        // Include detached or host-moved labels, but never delete a host node
+        // merely because it happens to share our public marker attribute.
+        for (const label of labelsBySource.values()) label.remove();
+        labelsBySource.clear();
         translatedSections.clear();
-        removeOwnLabels(root);
       },
     });
   }
