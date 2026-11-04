@@ -4,6 +4,7 @@ import { summarizeOfficialResultDisplayDigestCoverage } from '../lib/official-re
 import { loadFullQuestionnaire } from './load-full-questionnaire.mjs';
 import { PILOT_STATUS } from '../lib/full-questionnaire.mjs';
 import SOURCE_INDEX from '../data/original-question-index.json' with { type: 'json' };
+import { verifyLiveKoreanClientSnapshot } from './verify-korean-source-snapshot.mjs';
 
 const jsonOutput = process.argv.includes('--json');
 // Human-readable diagnostics belong to normal stdout; --json is a strict,
@@ -11,6 +12,8 @@ const jsonOutput = process.argv.includes('--json');
 const emitHuman = (...parts) => { if (!jsonOutput) console.log(...parts); };
 let liveReadbackStatus = 'NOT_REQUESTED';
 let liveReadbackReport = null;
+let liveClientSnapshotStatus = 'NOT_REQUESTED';
+let liveClientSnapshot = null;
 
 emitHuman('最终愿望：不懂韩文也能忠实理解同一套官方题目，且同季、同版本、同一份实际答卷得到与官网逐字段相同的结果。');
 const result = buildReproductionAudit();
@@ -107,6 +110,17 @@ if (process.argv.includes('--verify-live-readbacks')) {
     process.exitCode = 1;
   }
 }
+if (process.argv.includes('--verify-live-source')) {
+  try {
+    liveClientSnapshot = await verifyLiveKoreanClientSnapshot();
+    liveClientSnapshotStatus = liveClientSnapshot.status;
+    emitHuman('两季官方公开客户端实时来源校验：资源 SHA-256 与冻结版本一致；这不证明服务端评分或许可。');
+  } catch (error) {
+    liveClientSnapshotStatus = 'FAILED';
+    console.error('两季官方公开客户端来源只读核查未完成：' + error.message + '。冻结证据未被更新。');
+    process.exitCode = 1;
+  }
+}
 if (jsonOutput) {
   // Never print official answer vectors, arbitrary API payloads or private metadata.
   // These summaries are derived solely from the fixed, previously approved
@@ -122,5 +136,7 @@ if (jsonOutput) {
     officialResultDisplayEvidence: displayCoverage,
     liveReadbackStatus,
     ...(liveReadbackReport ? { liveReadbackReport } : {}),
+    liveClientSnapshotStatus,
+    ...(liveClientSnapshot ? { liveClientSnapshot } : {}),
   }, null, 2));
 }
