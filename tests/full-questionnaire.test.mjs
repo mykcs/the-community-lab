@@ -65,6 +65,7 @@ test('source provenance, reported permission, unreviewed status and question cou
   };
   mutate(d => { d.reported_permission.status = 'UNKNOWN'; });
   mutate(d => { d.questions[0].review_status = 'bilingual_reviewed'; });
+  mutate(d => { d.questions[0].rights_status = 'licensed'; }); // A user report is not independent licence proof.
   mutate(d => { d.questions[0].scoring_version = 'official'; });
   mutate(d => { d.questions[0].source_text_ko = ''; });
   mutate(d => { d.questions[0].options[1].value = d.questions[0].options[0].value; });
