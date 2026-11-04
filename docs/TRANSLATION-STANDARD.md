@@ -46,13 +46,15 @@
   ],
   "source_url": null,
   "source_checked_at": null,
-  "rights_status": "original_demo_or_pending_or_licensed",
+  "rights_status": "original_demo_or_pending_or_user_reported_permission_unverified_or_licensed",
   "translation_version": "demo-0.1.0",
   "review_status": "draft_or_bilingual_reviewed",
   "translator_note": null,
   "scoring_version": "independent-demo-0.1"
 }
 ```
+
+**权利证据层级**：现有 124 道公开 AI 草稿逐题的 `rights_status=user_reported_permission_unverified` 仅记录用户报告存在非营利翻译许可，**不能解释为已经独立核验权利人或许可证原件**。`licensed` 只保留给取得可审计授权证据、并独立核验授权范围的正式状态。历史离线译审 JSON 中旧字段值 `licensed` 是原先过强的标签，当前页面仅允许将这一旧值保守迁移用于恢复中文修改；不会提升授权资格或改写韩文来源。
 
 范例字符串用于说明字段，不代表真实节目题目。正式录入时 `origin` 与 `rights_status` 必须选择单一、真实的枚举值；节目原题需有明确来源证据、许可范围及可追溯版本。原题字段是准确引文而非 Agent 想象的韩文；遇到更新不得默默覆盖历史内容。
 
