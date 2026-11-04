@@ -46,6 +46,8 @@ test('reproduction audit --json emits one parseable document with honest scoring
   assert.equal(report.localOfficialScoreComparison.status, 'BLOCKED_NO_LOCAL_OFFICIAL_SCORER');
   assert.equal(report.officialResultDisplayEvidence.independentlyReviewedChineseResultExplanations, 0);
   assert.equal(report.liveReadbackStatus, 'NOT_REQUESTED');
+  assert.equal(report.liveClientSnapshotStatus, 'NOT_REQUESTED');
+  assert.ok(!Object.hasOwn(report, 'liveClientSnapshot'));
   assert.ok(!Object.hasOwn(report, 'liveReadbackReport'));
   assert.doesNotMatch(result.stdout, /(^最终愿望|^官方 S2 匿名合成结果)/m);
   // No full answer vectors or personal API payloads belong in this status report.

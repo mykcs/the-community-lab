@@ -50,6 +50,57 @@ export function verifySourceMetadataSnapshot(index) {
 }
 
 /**
+ * Optional read-only origin check. The build-time freeze protects our own
+ * files; this separate live probe detects when the PUBLIC Korean source site
+ * stops serving that same client. No questions, cookies or answers are sent,
+ * and it never upgrades translation rights or official scoring eligibility.
+ * Network errors are failures, not evidence that the official client changed.
+ */
+export async function verifyLiveKoreanClientSnapshot(
+  fetchClient = globalThis.fetch,
+  // The CLI uses ONLY pinned defaults; injecting a synthetic expectation lets
+  // offline tests exercise success/failure without shipping copyrighted JS.
+  expected = { sha256: KOREAN_SOURCE_SNAPSHOT.sourceAssetSha256, bytes: 331_501 },
+) {
+  const origin = 'https://thecommunity.co.kr';
+  const assets = [];
+  for (const season of [1, 2]) {
+    const page = await fetchClient(`${origin}/season/${season}/test`, {
+      signal: AbortSignal.timeout(15_000),
+      headers: { Accept: 'text/html' },
+    });
+    if (!page.ok || page.url !== `${origin}/season/${season}/test` ||
+        !/text\/html/i.test(page.headers.get('content-type') || '')) {
+      throw new Error('官方站点入口无法按预期读取，不能核验当前客户端');
+    }
+    const html = await page.text();
+    if (html.length > 1_000_000) throw new Error('官方入口体积异常，拒绝继续核验');
+    const matches = [...html.matchAll(/<script\b[^>]*\bsrc="(\/assets\/index-[A-Za-z0-9_-]+\.js)"[^>]*>/g)];
+    if (matches.length !== 1) throw new Error('官方入口 JS 路径不唯一或已变化，需人工重核来源');
+    assets.push(matches[0][1]);
+  }
+  if (assets[0] !== assets[1]) {
+    throw new Error('第一季和第二季正在使用不同客户端资源，来源身份需分别复核');
+  }
+  const script = await fetchClient(origin + assets[0], { signal: AbortSignal.timeout(15_000) });
+  if (!script.ok || script.url !== origin + assets[0] ||
+      !/javascript/i.test(script.headers.get('content-type') || '')) {
+    throw new Error('官方 JS 资源不可读或返回页面回退，不能核验来源指纹');
+  }
+  const bytes = Buffer.from(await script.arrayBuffer());
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  if (bytes.length !== expected.bytes || sha256 !== expected.sha256) {
+    throw new Error('官方站点当前客户端与已冻结来源不同：须重核两季题号、选项、题序与权利范围');
+  }
+  return Object.freeze({
+    status: 'MATCHED_PINNED_PUBLIC_CLIENT',
+    observedSeasonEntryCount: 2,
+    sourceAssetBytes: bytes.length,
+    sourceAssetSha256: sha256,
+  });
+}
+
+/**
  * Build-time-only gate. A translator may edit Chinese draft copy independently,
  * but changing Korean source text or Korean option captions requires a
  * deliberate re-evaluation of the pinned source snapshot.
