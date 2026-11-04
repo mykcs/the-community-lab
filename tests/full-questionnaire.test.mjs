@@ -23,7 +23,8 @@ test('124 source IDs, 550 bilingual choices and indexed client positions survive
   for (const season of [1, 2]) {
     assert.deepEqual(pack.seasons[season].map(q => q.order),
       Array.from({ length: season === 1 ? 87 : 37 }, (_, i) => i + 1));
-    assert.ok(pack.seasons[season].every(q => q.sourceKo.trim() && q.draftZh.trim() && q.options.every(o => o.ko.trim() && o.zh.trim())));
+    assert.ok(pack.seasons[season].every(q => q.sourceKo.trim() && q.draftZh.trim() && q.options.every(o =>
+      o.zh.trim() && (o.ko.trim() || (season === 1 && q.options.length === 6 && [2, 5].includes(o.value) && o.ko === '')))));
   }
   assert.equal(pack.seasons[1][0].id, index.questions.find(q => q.season === 1 && q.displayPositionDerivedFromClient === 1).sourceQuestionId);
   assert.equal(pack.seasons[2][0].id, index.questions.find(q => q.season === 2 && q.displayPositionDerivedFromClient === 1).sourceQuestionId);
@@ -139,7 +140,7 @@ test('identical Korean response scales cannot silently diverge in Chinese across
   const captions = new Map();
   for (const q of raw.questions) {
     for (const option of q.options) {
-      const key = JSON.stringify([q.season, q.options.length, option.ko]);
+      const key = JSON.stringify([q.season, q.options.length, option.value, option.ko]);
       if (captions.has(key)) {
         assert.equal(option.zh_cn, captions.get(key), `inconsistent draft scale: ${q.id}`);
       }
@@ -163,7 +164,7 @@ test('identical Korean response scales cannot silently diverge in Chinese across
   // Consistency is a machine guard, never evidence of a correct translation.
   const coordinated = structuredClone(raw);
   for (const q of coordinated.questions.filter(q => q.season === 1 && q.options.length === 6)) {
-    q.options.find(option => option.ko === '2점').zh_cn = '第2档（待真人核对）';
+    q.options.find(option => option.value === 2).zh_cn = '第2档（待真人核对）';
   }
   const revised = buildFullQuestionnaire(coordinated, index);
   assert.equal(revised.seasons[1].length, 87);

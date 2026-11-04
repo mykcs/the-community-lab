@@ -19,7 +19,7 @@ for (const season of [2, 1]) {
       await expect(visibleMark).toHaveText(String(option.value));
       const numericOnly = season === 1 && first.options.length === 6 &&
         (option.value === 2 || option.value === 5) &&
-        (option.ko === '2점' || option.ko === '5점');
+        option.ko === '';
       await expect(ko).toHaveAttribute('lang', numericOnly ? 'zh-CN' : 'ko');
       await expect(ko).toHaveText(numericOnly ? '当前客户端此档无韩文文字标签' : option.ko);
       const friendly = numericOnly
@@ -28,7 +28,7 @@ for (const season of [2, 1]) {
       await expect(zh).toHaveText(friendly);
       const hint = button.locator('.full-choice-hint');
       if (numericOnly) {
-        await expect(hint).toContainText(`旧 AI 草稿中的“${option.ko}”`);
+        await expect(hint).toContainText(`旧 AI 草稿中的“${option.value}점”`);
         await expect(hint).toContainText('没有韩文文字标签');
         await expect(hint).toContainText('不是官网原文');
         await expect(hint).toContainText('不是官网命名');
@@ -41,7 +41,7 @@ for (const season of [2, 1]) {
       await expect(visibleMark).not.toHaveAttribute("aria-hidden", "true");
       const accessibleName = [String(option.value),
         numericOnly ? '当前客户端此档无韩文文字标签' : option.ko, friendly,
-        ...(numericOnly ? [`当前冻结客户端此档没有韩文文字标签；旧 AI 草稿中的“${option.ko}”仅是本站按档位填写的占位，不是官网原文。原中文初译为“${option.zh}”；方向是本站根据六级顺序的辅助说明，不是官网命名。`] : []),
+        ...(numericOnly ? [`当前冻结客户端此档没有韩文文字标签；旧 AI 草稿中的“${option.value}점”仅是本站按档位填写的占位，不是官网原文。原中文初译为“${option.zh}”；方向是本站根据六级顺序的辅助说明，不是官网命名。`] : []),
       ].join(" ");
       await expect(button).toHaveAccessibleName(accessibleName);
     }
@@ -73,7 +73,7 @@ test('S1 six-step scale is grouped by direction on desktop but stays a single re
     await expect(button.locator('.full-choice-ko')).toHaveText('当前客户端此档无韩文文字标签');
     await expect(button.locator('.full-choice-ko')).toHaveAttribute('lang', 'zh-CN');
     await expect(button.locator('.full-choice-zh')).toHaveText(`${value === 2 ? '反对侧' : '赞同侧'} · 第 ${value} 档`);
-    await expect(button.locator('.full-choice-hint')).toContainText(`旧 AI 草稿中的“${opt.ko}”`);
+    await expect(button.locator('.full-choice-hint')).toContainText(`旧 AI 草稿中的“${opt.value}점”`);
   }
   const positions = await choices.evaluateAll(elements => elements.map(el => {
     const rect = el.getBoundingClientRect();

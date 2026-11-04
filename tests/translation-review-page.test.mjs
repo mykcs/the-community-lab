@@ -65,7 +65,11 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
     assert.ok(question.options.length > 0, `${question.id} has source options`);
     optionCount += question.options.length;
     for (const option of question.options) {
-      assert.ok(option.ko?.trim(), `${question.id} Korean option is present`);
+      if (question.season === 1 && question.options.length === 6 && [2, 5].includes(option.value)) {
+        assert.equal(option.ko, '', `${question.id} has no source caption at level ${option.value}`);
+      } else {
+        assert.ok(option.ko?.trim(), `${question.id} Korean option is present`);
+      }
       assert.ok(option.zh_cn?.trim(), `${question.id} Chinese option draft is present`);
     }
   }
@@ -73,11 +77,58 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
   assert.equal(optionCount, 550);
 });
 
+test('both reviewer packs preserve genuine empty Korean scale captions only at S1 six-choice levels 2/5', () => {
+  assert.deepEqual(standaloneData.questions, data.questions);
+  const six = data.questions.filter(q => q.season === 1 && q.options.length === 6);
+  assert.equal(six.length, 64);
+  let blanks = 0;
+  for (const q of data.questions) {
+    for (const option of q.options) {
+      const missing = q.season === 1 && q.options.length === 6 && [2, 5].includes(option.value);
+      if (missing) {
+        assert.equal(option.ko, '', `${q.id} value ${option.value} must be unlabeled`);
+        blanks++;
+      } else {
+        assert.ok(option.ko.trim(), `${q.id} unexpected blank Korean source`);
+      }
+    }
+  }
+  assert.equal(blanks, 128);
+});
+
+test('legacy reviewer export corrects only known placeholders and reopens old self-reported PASS', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const old = structuredClone(data);
+  for (const q of old.questions.filter(q => q.season === 1 && q.options.length === 6)) {
+    for (const o of q.options.filter(o => [2, 5].includes(o.value))) o.ko = o.value + '점';
+  }
+  const first = old.questions.find(q => q.season === 1 && q.options.length === 6);
+  first.human_review_status = 'pass';
+  first.human_review_note = '历史自报审核备忘，不代表独立复核';
+  first.translation_zh_cn += '（本机未上传的编辑）';
+  const edits = restore(old, data);
+  assert.equal(edits[first.id].translation, first.translation_zh_cn);
+  assert.equal(edits[first.id].review, 'pending');
+  assert.equal(edits[first.id].reviewNoteStale, true);
+  assert.equal(edits[first.id].note, first.human_review_note);
+  assert.equal(data.questions.find(q => q.id === first.id).options[1].ko, '', 'baseline is immutable');
+
+  const modified = structuredClone(old);
+  modified.questions.find(q => q.id === first.id).options[1].ko = '가짜 원문';
+  assert.throws(() => restore(modified, data), /韩文原文/);
+  const alteredSource = structuredClone(old);
+  alteredSource.source.asset_sha256 = '0'.repeat(64);
+  assert.throws(() => restore(alteredSource, data), /来源指纹/);
+});
+
 test('identical Korean answer labels keep a consistent Chinese draft', () => {
   const translations = new Map();
   for (const question of data.questions) {
     for (const option of question.options) {
-      const source = option.ko.normalize('NFC').trim();
+      // Two distinct numeric steps in the S1 six-point scale have EMPTY labels.
+      // A blank caption alone does not identify the choice: use the source value.
+      const source = JSON.stringify([question.season,question.options.length,option.value,option.ko.normalize('NFC').trim()]);
       const translation = option.zh_cn.normalize('NFC').trim();
       const existing = translations.get(source);
       assert.ok(

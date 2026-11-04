@@ -23,8 +23,8 @@ test('S1 six-choice guidance is hashed as seen, without rewriting original Korea
   assert.ok(six.length > 0);
   for (const question of six) {
     assert.deepEqual(question.options.map(o => o.value), [1, 2, 3, 4, 5, 6]);
-    assert.equal(question.options[1].ko, '2점');
-    assert.equal(question.options[4].ko, '5점');
+    assert.equal(question.options[1].ko, '');
+    assert.equal(question.options[4].ko, '');
     for (const index of [1, 4]) {
       const option = question.options[index];
       const display = displayedOptionCopy(question, option);
