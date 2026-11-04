@@ -403,7 +403,7 @@ test('reject forged, incompatible or incomplete imported evidence without changi
 });
 
 test('legacy offline review exports keep edits without promoting unverified permission', () => {
-  const source = html.match(/function validateReviewImport\\([^]*?\\n\\}/)?.[0];
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
   const restore = new Function(source + '; return validateReviewImport;')();
   const oldExport = structuredClone(data);
   oldExport.questions.forEach(question => { question.rights_status = 'licensed'; });
