@@ -23,7 +23,39 @@ The [synthetic overlay probe](../prototypes/official-overlay/overlay.js) and [tw
 - makes no request, submits no results, accesses no account and stores no answers;
 - lives outside production Astro routes/public assets, so Pages never serves it.
 
-Simulated browser tests cannot prove real-site DOM structure, permission, compatibility or official scoring parity. These remain **UNKNOWN**.
+Synthetic browser tests alone cannot prove real-site compatibility or official scoring parity. The narrow first-question DOM observation below now establishes a **specific incompatibility**; all-path behavior, permission, bilingual review and scoring parity remain **UNKNOWN**.
+
+## First live Chrome DOM observation (2026-11-05, SGT)
+
+An isolated **Google Chrome** browser, driven through the already authorized Mac and Playwright,
+read both official test entry routes (`/season/2/test`, `/season/1/test`).
+At desktop 1440×900 and mobile **440×956**, the public pages returned HTTP 200.
+Entering a deliberately fictional nickname only transitioned the client to its **first** question;
+all network requests were blocked *before* that local transition.
+**No answer was chosen, no official results were created, and no original question text was saved.**
+
+- Source script remained `/assets/index-C735ffg4.js`, matching the pinned source SHA-256
+  `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`.
+- The first visible S2 question used `.question h1` and **2 option buttons**;
+  the first S1 question used the same heading shape and **4 option buttons**.
+- Neither live first-question DOM exposed `[data-source-question-id]` nor a raw
+  `value` / `data-source-option-value` on its option buttons. Hence the
+  fixture overlay's declared ID/value selectors **do not work on the official site**.
+  Question text alone cannot prove original value identity or a scoring contract.
+- The page did not overflow horizontally in these two tested viewports. This is
+  **not** an all-path or real-device acceptance.
+- `scripts/probe-official-chrome.mjs --live-readonly` reproduces the narrow,
+  opt-in observation, checks the pinned public asset, blocks non-GET requests,
+  forbids all outgoing traffic after local start, and emits **structural metadata
+  and a question-text hash only**, never original wording or user responses.
+  It is not invoked by CI/Pages and is not an installable official-site script.
+  `tests/probe-official-chrome.test.mjs` enforces its fail-closed adapter gate.
+
+**Decision:** keep the official overlay **blocked**, not merely “untested”,
+until current-season/version source-question identity, exact original option
+values, copyright scope, bilingual human review and source DOM drift guards
+can all be independently established. The separate Astro site remains the
+mobile-friendly path.
 
 ## Smallest next experiments and acceptance gates
 
