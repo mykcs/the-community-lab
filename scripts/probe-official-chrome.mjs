@@ -16,12 +16,15 @@ const CASES = [
 ];
 const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 440, height: 956 }];
 
-export function overlayGate({ assetMatches, questionVisible, optionCount, expectedOptions, sourceIdCount, rawValueCount, textMatchCount }) {
+export function overlayGate({ assetMatches, questionVisible, optionCount, expectedOptions, sourceIdCount, rawValueCount, textMatchCount, exactSourceOptionMapping }) {
   if (!assetMatches) return 'BLOCKED_SOURCE_ASSET_DRIFT';
   if (!questionVisible || optionCount !== expectedOptions) return 'BLOCKED_QUESTION_DOM_DRIFT';
   if (textMatchCount !== 1) return 'BLOCKED_MISSING_OR_AMBIGUOUS_SOURCE_TEXT';
   if (sourceIdCount !== 1 || rawValueCount !== optionCount) return 'BLOCKED_MISSING_DOM_IDENTITY';
-  return 'CANDIDATE_ONLY_REQUIRES_EXACT_MAPPING_RIGHTS_AND_REVIEW';
+  // Counts alone never prove original ID/value mapping. Even a duplicated
+  // option value with correct attribute counts must fail closed.
+  if (exactSourceOptionMapping !== true) return 'BLOCKED_UNVERIFIED_SOURCE_OPTION_MAPPING';
+  return 'CANDIDATE_ONLY_REQUIRES_RIGHTS_AND_BILINGUAL_REVIEW';
 }
 
 /**
@@ -36,6 +39,25 @@ export function exactSuffixSourceMatches(liveText, entries) {
     liveText.endsWith(q.sourceKo) &&
     liveText.length - q.sourceKo.length <= 3
   ).map(q => ({ sourceId: q.id, prefixLength: liveText.length - q.sourceKo.length }));
+}
+
+/**
+ * Pure fail-closed comparison of an observed question to the pinned pack.
+ * No option value may be inferred from displayed order or Korean wording.
+ * True means only source identity, NOT rights, translation or scoring parity.
+ */
+export function exactDomSourceOptionMapping({ headingText, sourceQuestionId, choices } = {}, entries) {
+  const matches = exactSuffixSourceMatches(headingText, entries);
+  if (matches.length !== 1 || !Array.isArray(choices)) return false;
+  const source = entries.find(q => q.id === matches[0].sourceId);
+  if (!source || sourceQuestionId !== source.id || !Array.isArray(source.options) ||
+      choices.length !== source.options.length) return false;
+  return choices.every((choice, index) =>
+    choice && typeof choice.rawValue === 'string' &&
+    choice.rawValue === String(source.options[index].value) &&
+    typeof choice.koreanText === 'string' &&
+    choice.koreanText === source.options[index].ko
+  );
 }
 
 export async function probe() {
@@ -101,6 +123,11 @@ export async function probe() {
               questionVisible: Boolean(heading),
               optionCount: choices.length,
               sourceIdCount: document.querySelectorAll('[data-source-question-id]').length,
+              sourceQuestionId: document.querySelector('[data-source-question-id]')?.getAttribute('data-source-question-id') ?? null,
+              choices: choices.map(b => ({
+                rawValue: b.getAttribute('data-source-option-value') ?? b.getAttribute('value'),
+                koreanText: b.querySelector('[data-source-ko-option]')?.textContent ?? null,
+              })),
               rawValueCount: choices.filter(b =>
                 b.hasAttribute('value') || b.hasAttribute('data-source-option-value')
               ).length,
@@ -108,16 +135,17 @@ export async function probe() {
             };
           });
           const exactSuffixMatches = exactSuffixSourceMatches(dom.headingText, pack.seasons[season]);
+          const exactSourceOptionMapping = exactDomSourceOptionMapping(dom, pack.seasons[season]);
           findings.push({
             exactSuffixMatches,
             season, viewport: `${viewport.width}x${viewport.height}`, httpStatus: response?.status(),
             sourceAssetPinned: liveAsset === ASSET_PATH,
             questionSha256: createHash('sha256').update(dom.headingText).digest('hex'),
             optionCount: dom.optionCount, sourceIdCount: dom.sourceIdCount,
-            rawValueCount: dom.rawValueCount, overflowPx: dom.overflowPx,
+            rawValueCount: dom.rawValueCount, exactSourceOptionMapping, overflowPx: dom.overflowPx,
             blockedRequestsAfterStart: network.deniedAfterStart,
             attemptedNonGetRequests: network.attemptedWrites,
-            overlayGate: overlayGate({ ...dom, expectedOptions, textMatchCount: exactSuffixMatches.length, assetMatches: liveAsset === ASSET_PATH }),
+            overlayGate: overlayGate({ ...dom, expectedOptions, textMatchCount: exactSuffixMatches.length, assetMatches: liveAsset === ASSET_PATH, exactSourceOptionMapping }),
           });
         } catch (error) {
           findings.push({
