@@ -16,11 +16,26 @@ const CASES = [
 ];
 const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 440, height: 956 }];
 
-export function overlayGate({ assetMatches, questionVisible, optionCount, expectedOptions, sourceIdCount, rawValueCount }) {
+export function overlayGate({ assetMatches, questionVisible, optionCount, expectedOptions, sourceIdCount, rawValueCount, textMatchCount }) {
   if (!assetMatches) return 'BLOCKED_SOURCE_ASSET_DRIFT';
   if (!questionVisible || optionCount !== expectedOptions) return 'BLOCKED_QUESTION_DOM_DRIFT';
-  if (sourceIdCount === 0 || rawValueCount !== optionCount) return 'BLOCKED_MISSING_DOM_IDENTITY';
+  if (textMatchCount !== 1) return 'BLOCKED_MISSING_OR_AMBIGUOUS_SOURCE_TEXT';
+  if (sourceIdCount !== 1 || rawValueCount !== optionCount) return 'BLOCKED_MISSING_DOM_IDENTITY';
   return 'CANDIDATE_ONLY_REQUIRES_EXACT_MAPPING_RIGHTS_AND_REVIEW';
+}
+
+/**
+ * Diagnostic only: a short UI position prefix may precede the original Korean
+ * statement. Never normalize or fuzzy-match the statement into a source ID.
+ * Multiple matches are returned as ambiguous, not silently resolved.
+ */
+export function exactSuffixSourceMatches(liveText, entries) {
+  if (typeof liveText !== 'string' || !Array.isArray(entries)) return [];
+  return entries.filter(q =>
+    typeof q?.sourceKo === 'string' && q.sourceKo.length > 0 &&
+    liveText.endsWith(q.sourceKo) &&
+    liveText.length - q.sourceKo.length <= 3
+  ).map(q => ({ sourceId: q.id, prefixLength: liveText.length - q.sourceKo.length }));
 }
 
 export async function probe() {
@@ -38,6 +53,13 @@ export async function probe() {
       return;
     }
 
+    const { loadFullQuestionnaire } = await import('./load-full-questionnaire.mjs');
+    const pack = loadFullQuestionnaire();
+    if (pack.sourceSha256 !== sha) {
+      console.log(JSON.stringify({ status: 'BLOCKED_LOCAL_SOURCE_PACK_DRIFT' }));
+      process.exitCode = 2;
+      return;
+    }
     const findings = [];
     for (const { season, expectedOptions } of CASES) {
       for (const viewport of VIEWPORTS) {
@@ -85,7 +107,9 @@ export async function probe() {
               overflowPx: Math.max(0, document.documentElement.scrollWidth - innerWidth),
             };
           });
+          const exactSuffixMatches = exactSuffixSourceMatches(dom.headingText, pack.seasons[season]);
           findings.push({
+            exactSuffixMatches,
             season, viewport: `${viewport.width}x${viewport.height}`, httpStatus: response?.status(),
             sourceAssetPinned: liveAsset === ASSET_PATH,
             questionSha256: createHash('sha256').update(dom.headingText).digest('hex'),
@@ -93,7 +117,7 @@ export async function probe() {
             rawValueCount: dom.rawValueCount, overflowPx: dom.overflowPx,
             blockedRequestsAfterStart: network.deniedAfterStart,
             attemptedNonGetRequests: network.attemptedWrites,
-            overlayGate: overlayGate({ ...dom, expectedOptions, assetMatches: liveAsset === ASSET_PATH }),
+            overlayGate: overlayGate({ ...dom, expectedOptions, textMatchCount: exactSuffixMatches.length, assetMatches: liveAsset === ASSET_PATH }),
           });
         } catch (error) {
           findings.push({
