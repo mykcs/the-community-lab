@@ -143,8 +143,12 @@ function render() {
     // this value and the Korean span's lang=ko for screen readers.
     const mark = make('span', 'full-choice-mark', choice.value);
     const copy = make('span', 'full-choice-copy');
-    const ko = make('span', 'full-choice-ko', choice.ko); ko.lang = 'ko';
     const display = displayedOptionCopy(q, choice);
+    // No official Korean label exists at S1 six-step positions 2 and 5.
+    // Never present a numeric draft placeholder as the original Korean prose.
+    const ko = make('span', 'full-choice-ko',
+      display.koreanLabel ?? '当前客户端此档无韩文文字标签');
+    ko.lang = display.koreanLabel === null ? 'zh-CN' : 'ko';
     copy.append(ko, make('span', 'full-choice-zh', display.zh));
     if (display.hint) copy.append(make('span', 'full-choice-hint', display.hint));
     btn.append(mark, copy);
