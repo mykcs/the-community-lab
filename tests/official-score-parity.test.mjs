@@ -10,11 +10,11 @@ import {
 } from '../lib/official-score-parity.mjs';
 
 const stableObservations = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS
-  .filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc');
+  .filter(row => !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS'].includes(row.publicResultId));
 const fixtures = buildVerifiedOfficialScoreFixtures(stableObservations);
 
 test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-value fixtures', () => {
-  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 6);
+  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 8);
   assert.equal(fixtures.length, 4);
   const source = SOURCE_INDEX.questions.filter(q => q.season === 2)
     .sort((a, b) => a.displayPositionDerivedFromClient - b.displayPositionDerivedFromClient);
@@ -79,7 +79,7 @@ test('official fixtures refuse source-index reordering or raw-value drift even w
 test('official score fixtures detach and deeply freeze expected outputs', () => {
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   const snapshots = buildVerifiedOfficialScoreFixtures(
-    observations.filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc'));
+    observations.filter(row => !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS'].includes(row.publicResultId)));
   const gold = snapshots[0].expectedOutput;
   const before = structuredClone(gold);
   assert.notStrictEqual(gold, observations[0].output);
@@ -138,7 +138,7 @@ test('conflicting official readbacks block even a test candidate from using a de
   const result = await compareCandidateAgainstRecordedOfficialPairs(() => ({}));
   assert.equal(result.status, 'BLOCKED_CONTRADICTORY_OFFICIAL_READBACKS');
   assert.equal(result.availableVerifiedPairs, 0);
-  assert.equal(result.observedVerifiedPairs, 5);
+  assert.equal(result.observedVerifiedPairs, 7);
   assert.equal(result.contradictoryInputVectors, 1);
   assert.equal(result.comparedPairs, 0);
   assert.equal(result.officialAlgorithmVerified, false);
