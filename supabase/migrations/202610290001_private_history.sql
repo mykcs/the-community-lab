@@ -3,6 +3,16 @@
 -- Requires Supabase Auth's auth.uid(), auth.jwt(), auth.users and auth.sessions.
 BEGIN;
 
+-- Retention depends on Supabase Cron. Fail before creating any objects when
+-- pg_cron is not enabled; a missing scheduler must never silently disable TTL.
+DO $$
+BEGIN
+  IF to_regprocedure('cron.schedule(text,text,text)') IS NULL THEN
+    RAISE EXCEPTION 'Enable Supabase Cron (pg_cron) before applying private-history migration';
+  END IF;
+END;
+$$;
+
 CREATE SCHEMA community_private;
 REVOKE ALL ON SCHEMA community_private FROM PUBLIC, anon, authenticated;
 GRANT USAGE ON SCHEMA community_private TO authenticated;
@@ -126,6 +136,7 @@ CREATE TABLE public.test_runs (
   UNIQUE (owner_id, client_request_id)
 );
 CREATE INDEX test_runs_owner_created_id ON public.test_runs(owner_id, created_at DESC, id DESC);
+CREATE INDEX test_runs_created_at_retention ON public.test_runs(created_at);
 ALTER TABLE public.test_runs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.test_runs FORCE ROW LEVEL SECURITY;
 REVOKE ALL ON public.test_runs FROM PUBLIC, anon, authenticated;
@@ -169,5 +180,26 @@ LANGUAGE sql STABLE SET search_path = '' AS $$
 $$;
 REVOKE ALL ON FUNCTION public.history_capabilities() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.history_capabilities() TO authenticated;
+
+-- Runs only as the migration owner through Supabase Cron. Application roles
+-- cannot invoke this privileged delete; capture remains disabled by default.
+CREATE FUNCTION community_private.purge_expired_history() RETURNS bigint
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
+DECLARE
+  deleted_rows bigint;
+BEGIN
+  DELETE FROM public.test_runs
+  WHERE created_at <= pg_catalog.now() - interval '90 days';
+  GET DIAGNOSTICS deleted_rows = ROW_COUNT;
+  RETURN deleted_rows;
+END;
+$$;
+REVOKE ALL ON FUNCTION community_private.purge_expired_history() FROM PUBLIC, anon, authenticated, service_role;
+
+SELECT cron.schedule(
+  'community-private-history-90-day-purge',
+  '* * * * *',
+  'SELECT community_private.purge_expired_history();'
+);
 
 COMMIT;

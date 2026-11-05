@@ -44,7 +44,7 @@ export async function qualifyPostgresRls(pg) {
   }
 }
 
-export async function createHistoryDatabase() {
+export async function createHistoryDatabase({ cronEnabled = true, applyMigration = true } = {}) {
   const pg = new PGlite('memory://');
   try {
     const qualification = await qualifyPostgresRls(pg);
@@ -71,8 +71,26 @@ export async function createHistoryDatabase() {
       await pg.query('INSERT INTO auth.users(id) VALUES ($1)', [actor.sub]);
       await pg.query('INSERT INTO auth.sessions(id, user_id) VALUES ($1, $2)', [actor.session_id, actor.sub]);
     }
-    const migration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
-    await pg.exec(migration);
+    if (cronEnabled) {
+      // Synthetic pg_cron boundary: record the exact schedule without starting
+      // background jobs inside PGlite.
+      await pg.exec(`
+        CREATE SCHEMA cron;
+        CREATE TABLE cron.synthetic_jobs(jobname text PRIMARY KEY, schedule text NOT NULL, command text NOT NULL);
+        CREATE FUNCTION cron.schedule(job_name text, schedule text, command text) RETURNS bigint
+        LANGUAGE plpgsql AS $$
+        BEGIN
+          INSERT INTO cron.synthetic_jobs(jobname, schedule, command) VALUES (job_name, schedule, command)
+          ON CONFLICT (jobname) DO UPDATE SET schedule = EXCLUDED.schedule, command = EXCLUDED.command;
+          RETURN 1;
+        END;
+        $$;
+      `);
+    }
+    if (applyMigration) {
+      const migration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
+      await pg.exec(migration);
+    }
     return { pg, qualification, evidenceScope: EVIDENCE_SCOPE };
   } catch (error) {
     await pg.close();

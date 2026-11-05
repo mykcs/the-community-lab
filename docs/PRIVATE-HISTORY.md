@@ -1,8 +1,8 @@
 # 私人历史候选：默认关闭，尚未通过真实账户验收
 
-本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。没有创建 Supabase 项目或 GitHub OAuth App，没有启用生产采集。游客答题仍只使用页面内存；只有主动同意保存才准备最小结果。
+本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。已创建免费层 Supabase 项目，当前控制台状态为 Healthy、West US (Oregon) `us-west-2`、Nano；但还没有应用数据库迁移或创建 GitHub OAuth App，也没有启用生产采集。游客答题仍只使用页面内存；只有主动同意保存才准备最小结果。
 
-当前代码可以在本机使用合成数据验收。真实 GitHub、Supabase 网关及服务器会话的验收未完成，不能据此打开生产保存。此工作线保持 Draft PR，真实服务配置、运营区域、服务器保留政策和双账号验收完成后再评审发布。
+当前代码可以在本机使用合成数据验收。真实 GitHub、Supabase 网关及服务器会话的验收未完成，不能据此打开生产保存。此工作线保持 Draft PR；启用前仍需专属网站域名、OAuth 配置、Cron 实际运行、备份／日志保留披露和双账号隔离验收。
 
 ## 代码与数据的职责
 
@@ -24,6 +24,8 @@
 配置字段以仓库根目录 `.env.example` 为准，不在此维护第二份可编辑清单。所有布尔开关默认 `false`，区域与期限保持空白。浏览器只接受 `sb_publishable_` key，服务端 secret 永远不能使用 `PUBLIC_` 前缀。
 
 应用保存需要：有效且**专用于本站的精确 origin** 与 Supabase 配置、Auth 开关、保存开关、隐私批准、可用的注销流程，以及已决定的区域和服务器期限。不得把认证配置到 GitHub Pages 默认的 `*.github.io` origin：同一所有者的不同项目路径共享 origin，而 PKCE／Supabase 会话存在按 origin 隔离的 `sessionStorage` 中，其他同源项目代码在同一标签页可能读取它们。GitHub Pages 默认主机因此只能保持游客模式；只有用户选定隔离的专用域名／主机后才可讨论启用认证。数据库另外默认 `enabled=false`，客户端不能修改。只改前端开关不能开始写入。
+
+用户已指定保留期限为**创建后 90 天自动删除**。候选迁移要求 Supabase Cron (`pg_cron`) 已启用，否则事务会在创建对象前失败；获准的迁移定义仅允许调度角色执行的清理函数，并每分钟删除 `created_at <= now() - interval '90 days'` 的记录。代码测试覆盖到期前后记录和调度定义；这不证明托管 Cron 已启用或实际任务已运行。Supabase 备份、平台日志的实际保存期尚未核实，必须在启用保存前另行查清并告知用户。
 
 Supabase Data API 的 `public.history_capabilities()` 仅作 `SECURITY INVOKER` 薄封装；读取受限设置的 `SECURITY DEFINER` 实现在 `community_private`。该 schema 不得加入 Exposed schemas。
 
@@ -57,9 +59,9 @@ SQL 测试使用 PGlite 0.5.13 / PostgreSQL 18.6，实际 SET ROLE 为非超级�
 
 ## 真实服务开放前还缺什么
 
-1. 用户指定隔离的 Supabase 测试目标，确认免费方案、运营／数据区域、服务器保留与清理政策、隐私责任。不要把凭据写进聊天、仓库、截图或日志。
-2. 依当前目标的 Postgres/Auth schema 实际验证同一 migration，确认 `auth.sessions` 和 API schema 暴露范围；`community_private` 不能加入 Data API exposed schemas。未知或已有同名对象必须先调查，不自动覆盖。
-3. 控制端配置 GitHub OAuth 与精确的 Supabase、网站返回地址；读取实际权限，不要求仓库范围。服务端 secret 只由服务端消费者使用。
+1. 免费 Supabase 项目已建并确认在 Oregon，但尚未应用迁移；目标 90 天规则已写入候选，备份与平台日志的实际保留期尚未核查。不要把凭据写进聊天、仓库、截图或日志。
+2. 依当前目标的 Postgres/Auth schema 实际验证同一 migration，确认 `pg_cron` 已启用、`auth.sessions` 与 API schema 暴露范围；`community_private` 不能加入 Data API exposed schemas。未知或已有同名对象必须先调查，不自动覆盖。
+3. 需要用户提供隔离的自有网站域名，并配置 GitHub OAuth 与精确的 Supabase、网站返回地址；读取实际权限，不要求仓库范围。服务端 secret 只由服务端消费者使用。
 4. 两个真实 GitHub 测试账号仅写入虚构分数：直接 Data API 交叉读取、猜 ID、owner 冒充、拒绝写入后原记录完好；退出及注销后旧 access JWT 的读写重放均被拒绝；单条删除与账号注销取得真实服务器读回。
 5. 在精确 Preview head 上通过游客／同意／取消／PKCE／导出／删除／退出／注销的 440×956 和桌面验收，检查 URL、网络、存储、日志。GitHub Pages 默认 `*.github.io` origin 必须验证认证导航和保存入口保持关闭；只有选定隔离的专用 origin 后，才在该 origin 上测试回调、历史页及跨域 `OPTIONS` 预检。随后在拟用生产目标保持采集关闭，核对权限及隐私；全部证据与独立审查通过后才讨论开放。
 
