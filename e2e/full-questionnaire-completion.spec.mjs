@@ -656,3 +656,37 @@ test('legacy completed answer audit marks unknown historic Chinese wording per r
   await expect(page.locator('#full-answer-audit-list .full-answer-audit-provenance')).toHaveCount(0);
   expect(outboundWrites).toEqual([]);
 });
+
+test('unconfirmed completed download stays confirmable after reopening the season', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const receipt = createPrivateProgressReceipt(pack, 2, answers, questions.length - 1);
+  const writes = [];
+  page.on('request', request => { if (request.method() !== 'GET') writes.push(request.url()); });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-private-complete.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(receipt)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  await page.locator('#full-edit').click();
+  await page.locator('.full-choice').nth(1).click();
+  await page.locator('#full-finish-review').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  expect(await download.path()).toBeTruthy();
+  await expect(page.locator('#full-confirm-complete-backup')).toBeVisible();
+  const initialStatus = await page.locator('#full-complete-backup-status').textContent();
+  await page.locator('#full-back').click();
+  await expect(page.locator('#full-select')).toBeVisible();
+  await page.locator('[data-start-season="2"]').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  await expect(page.locator('#full-confirm-complete-backup')).toBeVisible();
+  await expect(page.locator('#full-complete-backup-status')).toHaveText(initialStatus);
+  await page.locator('#full-confirm-complete-backup').click();
+  await expect(page.locator('#full-confirm-complete-backup')).toBeHidden();
+  expect(writes).toEqual([]);
+});
