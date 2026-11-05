@@ -52,28 +52,35 @@
     // The marker is not proof of ownership: a host or a second probe might
     // use the same attribute. Never rewrite/remove a node we did not create.
     const labelsBySource = new Map();
+    // Ownership follows the section that was validated, not the source node's
+    // current location. Hosts may move an entire annotated subtree elsewhere.
+    const ownerBySource = new Map();
 
     function removeOwnLabels(section) {
       for (const [source, label] of labelsBySource) {
-        if (section.contains(source) || section.contains(label)) {
+        if (ownerBySource.get(source) === section) {
           label.remove();
           labelsBySource.delete(source);
+          ownerBySource.delete(source);
         }
       }
     }
 
-    function appendLabel(source, text) {
+    function appendLabel(section, source, text) {
       const previous = labelsBySource.get(source);
+      if (previous && ownerBySource.get(source) === section &&
+          previous.previousElementSibling === source &&
+          previous.parentElement === source.parentElement) {
+        // A translation-only edit replaces only our own injected text.
+        if (previous.textContent !== text) previous.textContent = text;
+        return;
+      }
       if (previous) {
-        if (previous.previousElementSibling === source &&
-            previous.parentElement === source.parentElement) {
-          // A translation-only edit replaces only our own injected text.
-          if (previous.textContent !== text) previous.textContent = text;
-          return;
-        }
-        // A host re-render may move the injected label away from its source.
+        // Hosts may move BOTH our label and its source outside the section.
+        // Never leave that now-unverified translation behind.
         previous.remove();
         labelsBySource.delete(source);
+        ownerBySource.delete(source);
       }
       const label = document.createElement('span');
       label.setAttribute(MARKER, '');
@@ -83,6 +90,7 @@
       label.style.cssText = 'display:block;max-width:100%;font-size:0.9em;line-height:1.6;color:inherit;pointer-events:none;white-space:normal;overflow-wrap:anywhere';
       source.after(label);
       labelsBySource.set(source, label);
+      ownerBySource.set(source, section);
     }
 
     function sync() {
@@ -112,9 +120,9 @@
         }
 
         translatedSections.add(section);
-        appendLabel(koreanQuestion, entry.zh);
+        appendLabel(section, koreanQuestion, entry.zh);
         controls.forEach((control, index) => {
-          appendLabel(control.querySelector('[data-source-ko-option]'), entry.options[index].zh);
+          appendLabel(section, control.querySelector('[data-source-ko-option]'), entry.options[index].zh);
         });
       }
     }
@@ -135,6 +143,7 @@
         // merely because it happens to share our public marker attribute.
         for (const label of labelsBySource.values()) label.remove();
         labelsBySource.clear();
+        ownerBySource.clear();
         translatedSections.clear();
       },
     });
