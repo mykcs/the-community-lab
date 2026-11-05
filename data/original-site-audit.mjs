@@ -253,4 +253,26 @@ export const OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS = Object.freeze([
     }),
     output: observedSeason2RepeatedVectorOutput,
   }),
+  Object.freeze({
+    origin: 'anonymous_synthetic',
+    publicResultId: 'amhKSW8ZW7_5flNG',
+    resultCreatedAt: '2026-11-05T12:56:34.809Z',
+    inputVerification: 'verified',
+    input: Object.freeze({
+      pattern: 'by_question_id',
+      questionCount: 37,
+      questionIdsByChoice: Object.freeze({
+        O: Object.freeze([
+          'rp01', 'rp02', 'rp03', 'rp04', 'rp05', 'rp06', 'rp07', 'rp08', 'rp09', 'rp10', 'rp11', 'rp12',
+        ]),
+        X: Object.freeze([
+          'rp13',
+          'sa01', 'sa02', 'sa03', 'sa04', 'sa05', 'sa06', 'sa07',
+          'sa08', 'sa09', 'sa10', 'sa11', 'sa12', 'sa13',
+          'ms01', 'ms02', 'ms03', 'ms04', 'ms05', 'ms06', 'ms07', 'ms08', 'ms10', 'ms11', 'ms13',
+        ]),
+      }),
+    }),
+    output: observedSeason2RepeatedVectorOutput,
+  }),
 ]);
