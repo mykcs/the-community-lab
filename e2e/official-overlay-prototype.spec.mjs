@@ -191,3 +191,29 @@ test('host reparenting an overlay label does not strand or duplicate its transla
   await page.evaluate(() => window.activeOverlayProbe.stop());
   await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(0);
 });
+
+test('moving the Korean source and its Chinese label together removes stale overlay text', async ({ page }) => {
+  const network = [];
+  page.on('request', request => network.push(request.url()));
+  await fixture(page);
+  await page.evaluate(data => {
+    window.activeOverlayProbe = window.CommunityOfficialOverlayProbe.install({
+      root: document.querySelector('#fixture'), entries: data,
+    });
+  }, entries);
+  const section = page.locator('[data-source-question-id]');
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(3);
+  // Moving both sibling nodes defeats a location-only cleanup: neither node
+  // remains inside the validated section, yet the label must be removed.
+  await page.evaluate(() => {
+    const source = document.querySelector('[data-source-ko-question]');
+    const label = source.nextElementSibling;
+    const host = document.querySelector('#host-output');
+    host.append(source, label);
+  });
+  await expect(page.locator('#host-output [data-source-ko-question]')).toHaveText(entries[0].ko);
+  await expect(page.locator('#host-output [data-translation-overlay-probe]')).toHaveCount(0);
+  await expect(section.locator('[data-translation-overlay-probe]')).toHaveCount(0);
+  await page.evaluate(() => window.activeOverlayProbe.stop());
+  expect(network).toEqual([]);
+});
