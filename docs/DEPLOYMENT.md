@@ -6,6 +6,12 @@
 - 将来绑定时，需把仓库 Actions variable `COMMUNITY_PAGES_DOMAIN` 与 GitHub Pages Settings 中的域名设为同一主机名；这个变量不是 secret。自定义 Actions 发布不会通过仓库内 `CNAME` 文件完成绑定，需先配置 Pages 自有域名，再按域名类型设置 DNS，之后核验 HTTPS 和精确 release SHA。[GitHub Pages 自有域名文档](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
 - 用户已选择“保留 Pages＋绑定自有域名”，但尚未提供具体主机名；本次只验证了 `quiz.example.test` 的本地 root-path 构建，不代表真实域名、DNS、HTTPS、自有域名生产发布或敏感历史登录已配置。默认 Pages 正式站和私有历史 fail-closed 门保持不变。
 
+## 2026-11-05 · 当前 GitHub Pages 正式发布读回
+
+- 当前 `main` 为 `1f341f08dbf33f88a2dedba065d6dd39bcbdae3e`。最近一次 Pages build/deploy [run #42080969316](https://github.com/mykcs/the-community-lab/actions/runs/42080969316) 的 build 与 deploy jobs 均成功，部署步骤读取的 `release-commit.txt` 为 `672aaa7d6f8f7c9b125968e4b943cd5f6dc66da5`。
+- `672aaa7` 之后 `main` 只新增 `scripts/audit-bilingual-cues.mjs` 与 `tests/bilingual-cue-triage.test.mjs`；两者都不属于 Pages 静态构建输入，因此没有新建相同内容的发布。当前首页实测 HTTP 200，浏览器显示两季 124 题 AI 初译、真人双语复核 `0/124`、官方计分未核实及答案不上传等边界。
+- GitHub Pages 已是正式主站；Vercel Git 自动部署仍关闭。自有域名尚未绑定，不能在共享的 `mykcs.github.io` origin 启用 GitHub OAuth 或个人历史保存。
+
 ## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
 
 - [PR #270](https://github.com/mykcs/the-community-lab/pull/270) 已合并，main 提交为 `e846ab930e8dec2214f009fd8455b034c72a8547`。精确候选 head `a853f287c50d18fe07a0d23e92f9776a5091527f` 的 Verify [run #42040756382](https://github.com/mykcs/the-community-lab/actions/runs/42040756382) 与桌面／440×956 浏览器验收 [run #42040756375](https://github.com/mykcs/the-community-lab/actions/runs/42040756375) 均成功。
