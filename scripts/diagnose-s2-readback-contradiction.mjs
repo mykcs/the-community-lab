@@ -63,6 +63,36 @@ function repeatedGroups(observations) {
   return [...groups.values()].filter(rows => rows.length > 1);
 }
 
+// Cluster only previously checked, unchanged public output fields. Do not
+// expose result IDs, answer vectors, values, dates or which record is an
+// outlier. A 6:1 split is NOT a vote for the correct official score.
+function summarizeReadbackClusters(groups, liveById) {
+  const summaries = groups.map(group => {
+    const clusters = [];
+    for (const row of group) {
+      const output = scoreProjection(liveById.get(row.publicResultId));
+      const cluster = clusters.find(entry =>
+        compareRecordedOfficialScoreFields(entry.output, output).matches);
+      if (cluster) cluster.count++;
+      else clusters.push({ output, count: 1 });
+    }
+    return {
+      observationCount: group.length,
+      distinctScoreOutputs: clusters.length,
+      outputClusterSizesDescending: clusters.map(entry => entry.count)
+        .sort((a, b) => b - a),
+      conflicting: clusters.length > 1,
+    };
+  });
+  return {
+    status: 'VERIFIED_EXISTING_READBACKS',
+    repeatedInputGroups: summaries.length,
+    conflictingInputGroups: summaries.filter(group => group.conflicting).length,
+    groups: summaries,
+    majorityDoesNotEstablishGoldStandard: true,
+  };
+}
+
 /** A small, privacy-safe summary of confirmed repeat observations only. */
 export function diagnoseExistingRepeatedReadbacks(
   observations = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, liveById,
@@ -70,7 +100,8 @@ export function diagnoseExistingRepeatedReadbacks(
 ) {
   if (!(liveById instanceof Map)) throw new TypeError('Live readbacks must be a Map');
   const pairs = [];
-  for (const group of repeatedGroups(observations)) {
+  const groups = repeatedGroups(observations);
+  for (const group of groups) {
     for (let i = 0; i < group.length; i++) {
       for (let j = i + 1; j < group.length; j++) {
         const left = group[i];
@@ -111,10 +142,15 @@ export function diagnoseExistingRepeatedReadbacks(
       }
     }
   }
+  const drifted = pairs.some(pair => pair.status === 'BLOCKED_READBACK_DRIFT');
   return {
-    schemaVersion: 's2-readback-contradiction-diagnostic@1',
+    schemaVersion: 's2-readback-contradiction-diagnostic@2',
     repeatedInputPairs: pairs.length,
     pairs,
+    // A changed historical readback invalidates all cluster conclusions.
+    readbackClusterSummary: drifted
+      ? { status: 'BLOCKED_READBACK_DRIFT', groups: [] }
+      : summarizeReadbackClusters(groups, liveById),
     rootCauseEstablished: false,
     officialScoringEquivalenceVerified: false,
   };

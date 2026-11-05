@@ -41,6 +41,18 @@ test('read-only diagnostic pinpoints which official score fields disagree withou
   assert.equal(repeated.length, 7);
   const result = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
   assert.equal(result.repeatedInputPairs, 21);
+  assert.deepEqual(result.readbackClusterSummary, {
+    status: 'VERIFIED_EXISTING_READBACKS',
+    repeatedInputGroups: 1,
+    conflictingInputGroups: 1,
+    groups: [{
+      observationCount: 7,
+      distinctScoreOutputs: 2,
+      outputClusterSizesDescending: [6, 1],
+      conflicting: true,
+    }],
+    majorityDoesNotEstablishGoldStandard: true,
+  });
   assert.equal(result.rootCauseEstablished, false);
   assert.equal(result.officialScoringEquivalenceVerified, false);
   assert.deepEqual(result.pairs.map(pair => pair.status), [
@@ -67,8 +79,10 @@ test('readback drift is a hard stop, never an unexamined duplicate-result findin
   const live = fakeLive();
   const changed = live.get(repeated[1].publicResultId);
   changed.axes[0].leftPercent = 48;
-  assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
-    'BLOCKED_READBACK_DRIFT');
+  const driftReport = diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references);
+  assert.equal(driftReport.pairs[0].status, 'BLOCKED_READBACK_DRIFT');
+  assert.deepEqual(driftReport.readbackClusterSummary,
+    { status: 'BLOCKED_READBACK_DRIFT', groups: [] });
   changed.axes[0].leftPercent = repeated[1].output.axes[0].leftPercent;
   changed.createdAt = 'unexpected';
   assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
@@ -77,6 +91,14 @@ test('readback drift is a hard stop, never an unexamined duplicate-result findin
   changed.title = 'wrong synthetic display';
   assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
     'BLOCKED_READBACK_DRIFT');
+});
+
+test('same named official axes in a different JSON order do not create false score clusters', () => {
+  const live = fakeLive();
+  for (const entry of live.values()) entry.axes.reverse();
+  const report = diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references);
+  assert.deepEqual(report.readbackClusterSummary.groups[0].outputClusterSizesDescending, [6, 1]);
+  assert.equal(report.readbackClusterSummary.conflictingInputGroups, 1);
 });
 
 test('unverified historical responses and private fields never become repeat-input evidence', () => {
