@@ -246,11 +246,15 @@ function finish() {
     return;
   }
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
+  // A pending download confirmation belongs to the finished season. Reopening
+  // it must not make visitors download their private answers a second time.
+  const pendingCompleteBackup = Boolean(active.receipt && active.pendingBackupKind === 'complete');
   active.receipt = summary;
   active.reviewMode = false;
-  active.pendingBackupKind = null;
-  $('full-confirm-complete-backup').hidden = true;
-  $('full-complete-backup-status').textContent = '';
+  active.pendingBackupKind = pendingCompleteBackup ? 'complete' : null;
+  $('full-confirm-complete-backup').hidden = !pendingCompleteBackup;
+  $('full-complete-backup-status').textContent = pendingCompleteBackup
+    ? active.pendingBackupStatus : '';
   const unknown = unknownWordingCount(active);
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。${unknown ? ` 其中 ${unknown} 道旧答案缺少历史中文文字指纹，无法核验当时所见译文；可返回修改并重新点击选项确认当前译文。` : ''}`;
   const panel = $('full-group-summary');
@@ -366,6 +370,7 @@ function download() {
   active.pendingBackupKind = 'complete';
   $('full-confirm-complete-backup').hidden = false;
   $('full-complete-backup-status').textContent = '已请求浏览器下载。请检查文件确实存在，再点击“我已确认文件保存”。';
+  active.pendingBackupStatus = $('full-complete-backup-status').textContent;
 }
 
 function saveProgress() {
