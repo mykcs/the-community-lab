@@ -80,7 +80,9 @@ test('browser acceptance runs Chromium at both viewport widths without publishin
 });
 
 test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
-  assert.match(homepage, /https:\/\/mykcs\.github\.io\/the-community-lab\/translation-review\//);
+  assert.match(homepage, /const translationReviewHref = siteRoutePath\(import\.meta\.env\.BASE_URL, 'translation-review\/'\)/);
+  assert.match(homepage, /href=\{translationReviewHref\}/);
+  assert.doesNotMatch(homepage, /https:\/\/mykcs\.github\.io\/the-community-lab\/translation-review\//);
   assert.match(homepage, /124 题[、和]\s*550 个选项/);
   assert.match(homepage, /questionnaire\/\?season=2/);
   assert.match(homepage, /questionnaire\/\?season=1/);
@@ -100,12 +102,17 @@ test('the homepage value-axis figure is illustrative, Chinese-readable, and not 
   assert.doesNotMatch(figure, /YOUR POSITION|당신의 좌표/);
 });
 
-test('Astro keeps Vercel rollback origin and uses GitHub project subpath only for Pages', () => {
+test('Astro preserves Vercel rollback and selects project-path or custom-root Pages config', () => {
   assert.match(astro, /output:\s*'static'/);
   assert.match(astro, /process\.env\.COMMUNITY_DEPLOY_TARGET === 'github-pages'/);
-  assert.match(astro, /https:\/\/mykcs\.github\.io/);
-  assert.match(astro, /\/the-community-lab\//);
+  assert.match(astro, /getPagesDeploymentConfig\(process\.env\)/);
   assert.match(astro, /https:\/\/the-community-lab\.vercel\.app/);
+  const pagesConfig = readFileSync(new URL('../lib/pages-deployment-config.mjs', import.meta.url), 'utf8');
+  assert.match(pagesConfig, /\/the-community-lab\//);
+  assert.match(pagesConfig, /COMMUNITY_PAGES_DOMAIN/);
+  assert.match(pagesConfig, /endsWith\('\.github\.io'\)/);
+  assert.match(workflow, /COMMUNITY_PAGES_DOMAIN:\s*\$\{\{ vars\.COMMUNITY_PAGES_DOMAIN \}\}/);
+  assert.match(workflow, /getPagesDeploymentConfig\(process\.env\)\.publicUrl/);
 });
 
 test('PR Verify watches all publicly published translation and static assets', () => {

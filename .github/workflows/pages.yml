@@ -28,6 +28,11 @@ on:
 permissions:
   contents: read
 
+# Set this repository variable only after GitHub Pages has the same custom
+# domain configured. An empty value keeps the existing project-site URL.
+env:
+  COMMUNITY_PAGES_DOMAIN: ${{ vars.COMMUNITY_PAGES_DOMAIN }}
+
 concurrency:
   group: github-pages-production
   cancel-in-progress: true
@@ -89,7 +94,8 @@ jobs:
         run: |
           set -euo pipefail
           base="${PAGES_URL%/}"
-          if [[ -z "$base" || "$base" != https://mykcs.github.io/the-community-lab ]]; then
+          expected_base="$(node --input-type=module -e 'import { getPagesDeploymentConfig } from "./lib/pages-deployment-config.mjs"; console.log(getPagesDeploymentConfig(process.env).publicUrl)')"
+          if [[ -z "$base" || "$base" != "$expected_base" ]]; then
             echo "Unexpected Pages release URL; refusing unverified target" >&2
             exit 1
           fi

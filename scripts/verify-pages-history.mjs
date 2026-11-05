@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
+import { getPagesDeploymentConfig } from '../lib/pages-deployment-config.mjs';
 
 // Run on the built artifact, not on source templates: this catches root-relative
 // links that would silently leave a GitHub project Pages deployment.
@@ -9,7 +10,7 @@ const pages = [
   ['privacy/index.html', ['', 'history/']],
   ['auth/callback/index.html', ['', 'history/']],
 ];
-const base = '/the-community-lab/';
+const base = getPagesDeploymentConfig(process.env).base;
 for (const [file, required] of pages) {
   const html = readFileSync(new URL(`../dist/${file}`, import.meta.url), 'utf8');
   const localLinks = [...html.matchAll(/href="(\/[^"#?]*)"/g)].map(match => match[1]);

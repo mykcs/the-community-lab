@@ -1,5 +1,11 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-05 · GitHub Pages 自有域名构建路径已准备（尚未绑定）
+
+- 新增 `COMMUNITY_PAGES_DOMAIN` 构建配置：未设置时沿用 `https://mykcs.github.io/the-community-lab/` 项目路径；设置为经确认的专属主机名时，Astro 使用该 origin 和 `/` 根路径。页面内的译审入口跟随当前 base path，发布门禁使用同一配置核对 Pages 部署 URL。
+- 将来绑定时，需把仓库 Actions variable `COMMUNITY_PAGES_DOMAIN` 与 GitHub Pages Settings 中的域名设为同一主机名；这个变量不是 secret。自定义 Actions 发布不会通过仓库内 `CNAME` 文件完成绑定，需先配置 Pages 自有域名，再按域名类型设置 DNS，之后核验 HTTPS 和精确 release SHA。[GitHub Pages 自有域名文档](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+- 用户已选择“保留 Pages＋绑定自有域名”，但尚未提供具体主机名；本次只验证了 `quiz.example.test` 的本地 root-path 构建，不代表真实域名、DNS、HTTPS、自有域名生产发布或敏感历史登录已配置。默认 Pages 正式站和私有历史 fail-closed 门保持不变。
+
 ## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
 
 - [PR #270](https://github.com/mykcs/the-community-lab/pull/270) 已合并，main 提交为 `e846ab930e8dec2214f009fd8455b034c72a8547`。精确候选 head `a853f287c50d18fe07a0d23e92f9776a5091527f` 的 Verify [run #42040756382](https://github.com/mykcs/the-community-lab/actions/runs/42040756382) 与桌面／440×956 浏览器验收 [run #42040756375](https://github.com/mykcs/the-community-lab/actions/runs/42040756375) 均成功。
