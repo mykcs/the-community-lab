@@ -1,6 +1,7 @@
 /**
  * Manual Chrome-only read-only DOM reconnaissance, NOT a public overlay.
  * Usage: node scripts/probe-official-chrome.mjs --live-readonly
+ *        node scripts/probe-official-chrome.mjs --live-path-readonly
  * It never chooses an answer or submits a result, and it does not print
  * Korean questions, options, nickname, cookies, or answer vectors.
  */
@@ -63,6 +64,22 @@ export function exactDomSourceOptionMapping({ headingText, sourceQuestionId, cho
     typeof choice.koreanText === 'string' &&
     choice.koreanText === source.options[index].ko
   );
+}
+
+/**
+ * Maps a visible question to a pinned source entry using exact Korean text only.
+ * Labels (including intentional blank scale labels) must match in source order.
+ * It proves text correspondence, not underlying button values or scoring.
+ */
+export function exactVisibleOptionLabelMapping({ headingText, optionLabels } = {}, entries) {
+  const matches = exactSuffixSourceMatches(headingText, entries);
+  if (matches.length !== 1 || !Array.isArray(optionLabels)) return null;
+  const source = entries.find(q => q.id === matches[0].sourceId);
+  if (!source || !Array.isArray(source.options) || optionLabels.length !== source.options.length) return null;
+  if (!optionLabels.every((label, index) =>
+    typeof label === 'string' && typeof source.options[index]?.ko === 'string' && label === source.options[index].ko
+  )) return null;
+  return { sourceId: source.id, optionCount: optionLabels.length };
 }
 
 export async function probe() {
@@ -173,10 +190,133 @@ export async function probe() {
   }
 }
 
+/** One complete visible question path per season; no last answer is selected. */
+export async function probePathReadOnly() {
+  const { chromium } = await import('@playwright/test');
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  try {
+    const check = await browser.newContext();
+    const res = await check.request.get(ORIGIN + ASSET_PATH, { timeout: 20000 });
+    const sha = res.ok() ? createHash('sha256').update(await res.body()).digest('hex') : null;
+    await check.close();
+    if (sha !== ASSET_SHA256) {
+      console.log(JSON.stringify({ status: 'BLOCKED_SOURCE_ASSET_DRIFT', sourceStatus: res.status(), sourceSha256: sha }));
+      process.exitCode = 2;
+      return;
+    }
+    const { loadFullQuestionnaire } = await import('./load-full-questionnaire.mjs');
+    const pack = loadFullQuestionnaire();
+    if (pack.sourceSha256 !== sha) {
+      console.log(JSON.stringify({ status: 'BLOCKED_LOCAL_SOURCE_PACK_DRIFT' }));
+      process.exitCode = 2;
+      return;
+    }
+    const findings = [];
+    for (const { season } of CASES) {
+      const expected = pack.seasons[season];
+      const viewport = VIEWPORTS.find(size => size.width === 440 && size.height === 956);
+      const context = await browser.newContext({ viewport, locale: 'ko-KR' });
+      const network = { frozen: false, deniedAfterStart: 0, attemptedNonGetRequests: 0, resultRequestsObserved: 0 };
+      await context.route('**/*', route => {
+        const request = route.request();
+        const method = request.method();
+        if (!['GET', 'HEAD'].includes(method)) network.attemptedNonGetRequests++;
+        if (new URL(request.url()).pathname === '/api/v1/results') network.resultRequestsObserved++;
+        if (network.frozen) {
+          network.deniedAfterStart++;
+          return route.abort('blockedbyclient');
+        }
+        if (new URL(request.url()).origin !== ORIGIN || !['GET', 'HEAD'].includes(method)) {
+          return route.abort('blockedbyclient');
+        }
+        return route.continue();
+      });
+      const page = await context.newPage();
+      const questionIds = [];
+      const mismatchCount = { question: 0, ambiguous: 0 };
+      try {
+        const response = await page.goto(`${ORIGIN}/season/${season}/test`, {
+          waitUntil: 'domcontentloaded', timeout: 20000,
+        });
+        const liveAsset = await page.evaluate(() =>
+          [...document.scripts].map(script => script.getAttribute('src')).find(src => src?.startsWith('/assets/index-')) ?? null
+        );
+        network.frozen = true;
+        await page.locator('button').first().click({ timeout: 5000 });
+        await page.locator('.question h1').first().waitFor({ timeout: 5000 });
+        for (let index = 0; index < expected.length; index++) {
+          const dom = await page.evaluate(() => {
+            const heading = document.querySelector('.question h1');
+            const buttons = [...document.querySelectorAll('.question button')].filter(button =>
+              !button.classList.contains('back') && button.getClientRects().length > 0
+            );
+            return {
+              headingText: heading?.textContent?.trim() ?? '',
+              optionLabels: buttons.map(button => button.querySelector('span')?.textContent ?? ''),
+            };
+          });
+          const mapping = exactVisibleOptionLabelMapping(dom, expected);
+          const sourceMatches = exactSuffixSourceMatches(dom.headingText, expected);
+          if (sourceMatches.length !== 1) mismatchCount.ambiguous++;
+          if (!mapping) mismatchCount.question++;
+          if (mapping) questionIds.push(mapping.sourceId);
+          if (index === expected.length - 1) break;
+          if (!mapping) break;
+          await page.evaluate(() => {
+            const firstAnswer = [...document.querySelectorAll('.question button')].find(button =>
+              !button.classList.contains('back') && button.getClientRects().length > 0
+            );
+            if (!firstAnswer) throw new Error('visible answer button missing');
+            firstAnswer.click();
+          });
+          await page.waitForFunction(previousHeading =>
+            (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
+          dom.headingText, { timeout: 5000 });
+        }
+        const expectedIds = expected.map(question => question.id);
+        const observedIds = new Set(questionIds);
+        const expectedIdSet = new Set(expectedIds);
+        const completeUniqueQuestionSet = questionIds.length === expectedIds.length &&
+          observedIds.size === expectedIdSet.size && [...expectedIdSet].every(id => observedIds.has(id));
+        const orderSha256 = createHash('sha256').update(questionIds.join('\n')).digest('hex');
+        const result = {
+          season, viewport: `${viewport.width}x${viewport.height}`, httpStatus: response?.status(),
+          sourceAssetPinned: liveAsset === ASSET_PATH,
+          expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
+          allQuestionsMatchedExactly: completeUniqueQuestionSet && mismatchCount.question === 0,
+          completeUniqueQuestionSet, orderedSourceIdsSha256: orderSha256,
+          mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
+          attemptedNonGetRequests: network.attemptedNonGetRequests,
+          blockedRequestsAfterStart: network.deniedAfterStart,
+          resultRequestsObserved: network.resultRequestsObserved,
+        };
+        findings.push(result);
+        if (!result.allQuestionsMatchedExactly || !result.sourceAssetPinned ||
+            network.attemptedNonGetRequests !== 0 || network.resultRequestsObserved !== 0) process.exitCode = 1;
+      } catch (error) {
+        findings.push({ season, viewport: `${viewport.width}x${viewport.height}`, status: 'OBSERVATION_FAILED', errorName: error.name, errorMessage: String(error.message).slice(0, 180) });
+        process.exitCode = 1;
+      } finally {
+        await context.close();
+      }
+    }
+    console.log(JSON.stringify({
+      observedAt: new Date().toISOString(), sourceSha256: sha,
+      method: 'headless Chrome; anonymous session; 440x956; exact Korean question and ordered option-label matching; post-start network frozen; last answer not selected',
+      findings,
+    }, null, 2));
+  } finally {
+    await browser.close();
+  }
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (!process.argv.includes('--live-readonly')) {
-    console.error('Explicit --live-readonly required; no automatic official-site requests.');
+  const mode = process.argv[2];
+  if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly'].includes(mode)) {
+    console.error('Explicit --live-readonly or --live-path-readonly required; no automatic official-site requests.');
     process.exitCode = 2;
+  } else if (mode === '--live-path-readonly') {
+    probePathReadOnly().catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
   } else {
     probe().catch(error => { console.error(error.name); process.exitCode = 1; });
   }
