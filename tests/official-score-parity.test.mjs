@@ -10,14 +10,15 @@ import {
 } from '../lib/official-score-parity.mjs';
 
 const repeatedConflictIds = new Set([
-  'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS', 'aMpgxXI50B7Eqrb-', '1bZs7gslVZmJHN0c',
+  'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS', 'aMpgxXI50B7Eqrb-',
+  '1bZs7gslVZmJHN0c', 'amhKSW8ZW7_5flNG',
 ]);
 const stableObservations = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS
   .filter(row => !repeatedConflictIds.has(row.publicResultId));
 const fixtures = buildVerifiedOfficialScoreFixtures(stableObservations);
 
 test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-value fixtures', () => {
-  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 10);
+  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 11);
   assert.equal(fixtures.length, 4);
   const source = SOURCE_INDEX.questions.filter(q => q.season === 2)
     .sort((a, b) => a.displayPositionDerivedFromClient - b.displayPositionDerivedFromClient);
@@ -141,7 +142,7 @@ test('conflicting official readbacks block even a test candidate from using a de
   const result = await compareCandidateAgainstRecordedOfficialPairs(() => ({}));
   assert.equal(result.status, 'BLOCKED_CONTRADICTORY_OFFICIAL_READBACKS');
   assert.equal(result.availableVerifiedPairs, 0);
-  assert.equal(result.observedVerifiedPairs, 9);
+  assert.equal(result.observedVerifiedPairs, 10);
   assert.equal(result.contradictoryInputVectors, 1);
   assert.equal(result.comparedPairs, 0);
   assert.equal(result.officialAlgorithmVerified, false);

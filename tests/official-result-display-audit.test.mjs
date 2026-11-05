@@ -18,11 +18,11 @@ const mockOutput = {
 };
 const expectedAxes = [{ id: '원칙-결과' }];
 
-test('ten checked readbacks have only two official Korean display-text signatures', () => {
+test('eleven checked readbacks have only two official Korean display-text signatures', () => {
   assert.deepEqual(summarizeOfficialResultDisplayDigestCoverage(), {
-    observedResultReadbacksWithDisplayDigests: 10,
+    observedResultReadbacksWithDisplayDigests: 11,
     distinctResultDisplayTextSignatures: 2,
-    verifiedInputReadbacksWithDisplayDigests: 9,
+    verifiedInputReadbacksWithDisplayDigests: 10,
     independentlyReviewedChineseResultExplanations: 0,
     officialFullResultEquivalenceVerified: false,
   });
@@ -81,9 +81,9 @@ test('strict live readback catches changed explanation without copying its raw c
   const result = await verifyOfficialSyntheticScoreReadbacks(
     OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, request, { verifyDisplayText: true });
   assert.equal(result.allMatch, false);
-  assert.equal(result.checked.length, 10);
+  assert.equal(result.checked.length, 11);
   assert.ok(result.checked.every(row => row.numericScoreFieldsMatch === true &&
     row.publicDisplayFieldsMatch === false && row.matchesRecordedReadback === false));
-  assert.deepEqual(calls.map(x => x[1]), ['GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET']);
+  assert.deepEqual(calls.map(x => x[1]), ['GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET', 'GET']);
   assert.doesNotMatch(JSON.stringify(result), /DO_NOT_COPY|nickname|referralCode|answers|SYNTHETIC_NOT/);
 });
