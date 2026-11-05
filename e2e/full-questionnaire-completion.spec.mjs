@@ -6,6 +6,47 @@ import { createPrivateProgressReceipt } from '../lib/full-questionnaire.mjs';
 
 const sourceIndex = JSON.parse(readFileSync(new URL('../data/original-question-index.json', import.meta.url), 'utf8'));
 
+test('finished local answer audit shows original values and edits one selected question without a score or upload', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const receipt = createPrivateProgressReceipt(pack, 2, answers, questions.length - 1);
+  const outboundWrites = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') outboundWrites.push(request.url());
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-finished-private-record.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(receipt)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  const audit = page.locator('#full-answer-audit');
+  await expect(audit).not.toHaveAttribute('open', '');
+  await audit.locator('summary').click();
+  await expect(audit.locator('li')).toHaveCount(37);
+  const target = audit.locator('li').nth(10);
+  await expect(target).toContainText(questions[10].sourceKo);
+  await expect(target).toContainText(questions[10].draftZh);
+  await expect(target).toContainText(`原始选项值：${questions[10].options[0].value}`);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(page.viewportSize().width);
+  await target.getByRole('button', { name: '修改第 11 题' }).click();
+  await expect(page.locator('#full-quiz')).toBeVisible();
+  await expect(page.locator('#full-group')).toContainText(`原题编号 ${questions[10].id}`);
+  await page.locator('.full-choice').nth(1).click();
+  await page.locator('#full-finish-review').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  const revised = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(revised.selections.map(s => s.selectedValue)).toEqual(
+    questions.map((q, i) => q.options[i === 10 ? 1 : 0].value),
+  );
+  expect(outboundWrites).toEqual([]);
+});
+
 test('S2 title displays pinned Korean source group before its unreviewed Chinese translation', async ({ page }) => {
   const question = loadFullQuestionnaire().seasons[2][0];
   const source = sourceIndex.questions.find(q => q.sourceQuestionId === question.id);
@@ -130,6 +171,19 @@ test('both complete seasons preserve every official source ID and raw option val
     await expect(page.locator('#full-done')).toBeVisible();
     await expect(page.locator('#full-done-description')).toContainText(`第 ${season} 季 ${questionCount} 道题已全部作答`);
     await expect(page.locator('#full-done')).toContainText('这里不显示官方分数或嘉宾匹配');
+
+    // Every completed source value is directly auditable without exporting a
+    // private JSON or inventing a score. This list remains local and collapsed.
+    const audit = page.locator('#full-answer-audit');
+    await expect(audit).not.toHaveAttribute('open', '');
+    await audit.locator('summary').click();
+    await expect(audit.locator('li')).toHaveCount(questionCount);
+    await expect(audit.locator('li').first()).toContainText(`源题编号 ${questions[0].sourceQuestionId}`);
+    await expect(audit.locator('li').first()).toContainText(`原始选项值：${String(expectedSelections[0].selectedValue)}`);
+    await expect(audit.locator('li').last()).toContainText(`原始选项值：${String(expectedSelections.at(-1).selectedValue)}`);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(page.viewportSize().width);
+    await audit.locator('summary').click();
 
     const [download] = await Promise.all([
       page.waitForEvent('download'),
