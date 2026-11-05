@@ -74,6 +74,13 @@ function begin(season, fresh = false) {
   });
   active = saved.get(season);
   syncUnloadGuard();
+  // A finished private session should reopen its own unscored answer record,
+  // not send the visitor back to the last question as if unfinished.
+  // The explicit "edit" action clears the receipt and still resumes the quiz.
+  if (active.receipt && !active.reviewMode && !active.needsReview?.size) {
+    finish();
+    return;
+  }
   render();
   view('quiz');
 }
@@ -85,9 +92,13 @@ function selectSeason() {
     const answered = session ? Object.keys(session.answers).length : 0;
     const pending = session?.needsReview?.size || 0;
     const unknown = unknownWordingCount(session);
-    document.querySelector(`[data-season-progress="${season}"]`).textContent = answered
-      ? `本页已答 ${answered} / ${pack.seasons[season].length}${pending ? ` · ${pending} 道译文需重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''} · 继续 ↗`
-      : '开始已观测题目试填 ↗';
+    const complete = Boolean(session?.receipt && !session.reviewMode && !pending &&
+      answered === pack.seasons[season].length);
+    document.querySelector(`[data-season-progress="${season}"]`).textContent = complete
+      ? `本页已完成 ${answered} / ${pack.seasons[season].length} · 查看本机答题记录 ↗`
+      : answered
+        ? `本页已答 ${answered} / ${pack.seasons[season].length}${pending ? ` · ${pending} 道译文需重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''} · 继续 ↗`
+        : '开始已观测题目试填 ↗';
   }
   view('select');
 }
