@@ -27,6 +27,6 @@ test('an unverified historical result from another version remains evidence, not
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   observations[1].output = { ...observations[1].output, scoringVersion: 'season-2-score@3' };
   const fixtures = buildVerifiedOfficialScoreFixtures(observations);
-  assert.equal(fixtures.length, 3);
+  assert.equal(fixtures.length, 4);
   assert.ok(fixtures.every(f => f.input.scoringVersion === 'season-2-score@2'));
 });
