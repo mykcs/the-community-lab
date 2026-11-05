@@ -251,6 +251,18 @@ test('rp03 preserves the source item’s absolute priority and both review pages
   assert.equal(standaloneData.translation_review.publishable, false);
 });
 
+test('rp12 uses natural comparative wording without changing its unreviewed draft status', () => {
+  const question = data.questions.find(item => item.id === 'rp12');
+  assert.ok(question, 'rp12 must remain in the source dataset');
+  assert.match(question.source_text_ko, /보다.*유능한 인재다/);
+  assert.equal(question.translation_zh_cn, '比起因严格遵守规则而把事情办砸的人，稍微违反规则却能取得成果的人更有能力。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /rp12.*draft-0\.1\.1/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'the standalone review page must stay in sync');
+});
+
 test('s1-politics-14 does not add exclusive force absent from Korean', () => {
   const question = data.questions.find(item => item.id === 's1-politics-14');
   assert.ok(question, 's1-politics-14 must remain in the source dataset');
