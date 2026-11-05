@@ -13,6 +13,7 @@
   'use strict';
 
   const MARKER = 'data-translation-overlay-probe';
+  const OWNER = 'data-translation-overlay-probe-owner';
   const isRecord = value => value && typeof value === 'object' && !Array.isArray(value);
   const hasText = value => typeof value === 'string' && value.trim().length > 0;
   const stableValue = value => (typeof value === 'number' && Number.isFinite(value)) ||
@@ -55,6 +56,20 @@
     // Ownership follows the section that was validated, not the source node's
     // current location. Hosts may move an entire annotated subtree elsewhere.
     const ownerBySource = new Map();
+    // DOM clones copy attributes but not node identity. A host re-render may
+    // duplicate our labels together with its source nodes. Distinguish those
+    // copies from unrelated host annotations sharing the public marker.
+    const ownershipId = [...crypto.getRandomValues(new Uint8Array(16))]
+      .map(byte => byte.toString(16).padStart(2, '0')).join('');
+
+    function removeCopiedLabels() {
+      const originals = new Set(labelsBySource.values());
+      for (const node of root.querySelectorAll(`[${MARKER}][${OWNER}]`)) {
+        if (node.getAttribute(OWNER) === ownershipId && !originals.has(node)) {
+          node.remove();
+        }
+      }
+    }
 
     function removeOwnLabels(section) {
       for (const [source, label] of labelsBySource) {
@@ -84,6 +99,7 @@
       }
       const label = document.createElement('span');
       label.setAttribute(MARKER, '');
+      label.setAttribute(OWNER, ownershipId);
       label.setAttribute('lang', 'zh-CN');
       label.setAttribute('data-nonofficial', 'synthetic-probe');
       label.textContent = text;
@@ -94,6 +110,10 @@
     }
 
     function sync() {
+      // Host cloneNode(true) can copy previously verified-looking Chinese
+      // labels. Those copies were never independently validated, so remove
+      // them before validating the cloned question's own original controls.
+      removeCopiedLabels();
       for (const section of translatedSections) {
         if (!root.contains(section) || !section.hasAttribute('data-source-question-id')) {
           removeOwnLabels(section);
@@ -139,6 +159,7 @@
       refresh: sync,
       stop() {
         observer.disconnect();
+        removeCopiedLabels();
         // Include detached or host-moved labels, but never delete a host node
         // merely because it happens to share our public marker attribute.
         for (const label of labelsBySource.values()) label.remove();
