@@ -310,7 +310,13 @@ function renderAnswerAudit(questions) {
     edit.type = 'button';
     edit.setAttribute('aria-label', `修改第 ${index + 1} 题`);
     edit.addEventListener('click', () => editCompletedAnswer(index));
-    row.append(header, korean, chinese, chosen);
+    row.append(header, korean, chinese);
+    // The completion audit must preserve the same reading context shown
+    // during answering. Omitting a culture/ambiguity note or a blank-scale
+    // explanation could make a historical choice look more certain than it is.
+    if (q.readerNote) row.append(make('p', 'full-answer-audit-note', q.readerNote));
+    row.append(chosen);
+    if (copy.hint) row.append(make('p', 'full-answer-audit-hint', copy.hint));
     // A legacy backup may preserve the raw source answer but not the exact
     // Chinese text shown when it was chosen. Never present today's AI wording
     // as if it were verified historical answer provenance.
