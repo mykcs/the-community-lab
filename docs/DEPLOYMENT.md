@@ -8,8 +8,8 @@
 
 ## 2026-11-05 · 当前 GitHub Pages 正式发布读回
 
-- 当前 `main` 为 `1f341f08dbf33f88a2dedba065d6dd39bcbdae3e`。最近一次 Pages build/deploy [run #42080969316](https://github.com/mykcs/the-community-lab/actions/runs/42080969316) 的 build 与 deploy jobs 均成功，部署步骤读取的 `release-commit.txt` 为 `672aaa7d6f8f7c9b125968e4b943cd5f6dc66da5`。
-- `672aaa7` 之后 `main` 只新增 `scripts/audit-bilingual-cues.mjs` 与 `tests/bilingual-cue-triage.test.mjs`；两者都不属于 Pages 静态构建输入，因此没有新建相同内容的发布。当前首页实测 HTTP 200，浏览器显示两季 124 题 AI 初译、真人双语复核 `0/124`、官方计分未核实及答案不上传等边界。
+- 当前 `main` 为 `fa97c616e7c180aefec60188271b3bfb1f28e326`。PR #284 的 Pages build/deploy [run #42125647365](https://github.com/mykcs/the-community-lab/actions/runs/42125647365) 成功；线上 `/release-commit.txt` 读回与该 main SHA 一致。
+- 原题复核页 HTTP 200，已读回 PR #284 的 S2 `rp12` 草稿“比起因严格遵守规则而把事情办砸的人，稍微违反规则却能取得成果的人更有能力。”。该文案仍是 AI 草稿；124 题独立韩中人工复核仍为 `0/124`，官方评分未核实，答题结果不上传。
 - GitHub Pages 已是正式主站；Vercel Git 自动部署仍关闭。自有域名尚未绑定，不能在共享的 `mykcs.github.io` origin 启用 GitHub OAuth 或个人历史保存。
 
 ## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
