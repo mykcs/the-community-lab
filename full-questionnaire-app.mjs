@@ -310,7 +310,17 @@ function renderAnswerAudit(questions) {
     edit.type = 'button';
     edit.setAttribute('aria-label', `修改第 ${index + 1} 题`);
     edit.addEventListener('click', () => editCompletedAnswer(index));
-    row.append(header, korean, chinese, chosen, edit);
+    row.append(header, korean, chinese, chosen);
+    // A legacy backup may preserve the raw source answer but not the exact
+    // Chinese text shown when it was chosen. Never present today's AI wording
+    // as if it were verified historical answer provenance.
+    if (active.answerFingerprints?.[q.id] === null) {
+      row.append(make(
+        'p', 'full-answer-audit-provenance',
+        '历史中文译文未知：这里展示的是当前 AI 初译，不能证明答题当时看到的中文与今天相同。请按需重新阅读原文并确认选项。',
+      ));
+    }
+    row.append(edit);
     list.append(row);
   }
 }
