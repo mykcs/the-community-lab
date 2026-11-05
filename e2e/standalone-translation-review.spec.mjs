@@ -5,6 +5,13 @@ import { expect, test } from '@playwright/test';
 const standaloneUrl = new URL('../docs/original-question-translation-review/index.html', import.meta.url).href;
 const questionId = 's1-politics-01';
 
+test('rp12 comparison renders with the reviewed Korean and current Chinese draft', async ({ page }) => {
+  await page.goto(standaloneUrl);
+  await expect(page.getByText('규칙을 철저히 지키느라 일을 그르치는 사람보다 규칙을 조금 어기더라도 성과를 내는 사람이 유능한 인재다.', { exact: true })).toBeVisible();
+  await expect(page.getByLabel('rp12 中文翻译')).toHaveValue('比起因严格遵守规则而把事情办砸的人，稍微违反规则却能取得成果的人更有能力。');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+});
+
 test('standalone reviewer cannot self-report a pass without notes or retain it after edits', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
