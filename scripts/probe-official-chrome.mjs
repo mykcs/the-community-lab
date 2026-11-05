@@ -34,11 +34,17 @@ export function overlayGate({ assetMatches, questionVisible, optionCount, expect
  */
 export function exactSuffixSourceMatches(liveText, entries) {
   if (typeof liveText !== 'string' || !Array.isArray(entries)) return [];
-  return entries.filter(q =>
-    typeof q?.sourceKo === 'string' && q.sourceKo.length > 0 &&
-    liveText.endsWith(q.sourceKo) &&
-    liveText.length - q.sourceKo.length <= 3
-  ).map(q => ({ sourceId: q.id, prefixLength: liveText.length - q.sourceKo.length }));
+  // The public heading may prepend its display number. Arbitrary 1–3
+  // characters previously qualified as an identity candidate, while the
+  // valid two-digit "37. " prefix was rejected. Never fuzzy-match wording:
+  // accept only a recognizable short numeric position prefix.
+  const isPositionPrefix = prefix => prefix === '' ||
+    /^(?:0?[1-9]|[1-9][0-9]{1,2})(?:[.)][ ]?|[ ])$/.test(prefix);
+  return entries.filter(q => {
+    if (typeof q?.sourceKo !== 'string' || q.sourceKo.length === 0 ||
+        !liveText.endsWith(q.sourceKo)) return false;
+    return isPositionPrefix(liveText.slice(0, -q.sourceKo.length));
+  }).map(q => ({ sourceId: q.id, prefixLength: liveText.length - q.sourceKo.length }));
 }
 
 /**
