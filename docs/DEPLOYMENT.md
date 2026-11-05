@@ -122,7 +122,7 @@ PR #22 合并后生产版本为 main `8f719869da1c842297b9286f5a20feadd2c88340`�
 
 网页是**双季原创韩中双语演示**：第一季原站观测 87 题、第二季 37 题；本站原创题 8 和 6。后续已获得对应 87＋37 个**客户端源题标识与元数据索引**，这仍不代表可以合法复制原题、已经完成真人韩中双语审校或掌握官方评分金标准。真实嘉宾排名与社媒归属未经核验，不提供虚构榜单。
 
-当前不要求登录、不上传答题数据、未启用数据库或 GitHub OAuth；服务器存储个人结果需先取得用户主动同意并通过 RLS、双用户交叉隔离和删除读回。仅以 Vercel Hobby 和现有工具执行，不增加付费服务。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
+正式网站仍以游客模式运行，不显示登录或保存入口，也不上传答题数据。已建立免费的 Supabase 候选后端并部署隔离与 90 天保留迁移；保存开关仍关闭，GitHub OAuth、网站环境变量、注销 Edge Function 和真实双账号隔离尚未配置或验收。正式网站绑定自有域名后才能安全启用登录。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
 
 ## 2026-10-29 续接快照：自动连接可用，免费部署额度仍需治理
 
@@ -153,6 +153,13 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - feat/private-history-candidate 已在本地与 main 00f1b7b60b6521dc69047c21d8ae9bf4a50135f6 同步，并通过本地 npm run check、npm run build 与游客/隐私/历史页面浏览器验收。GitHub PR #11 仍未接收这批候选更新；当前没有新的 Preview 或生产部署。
 - 历史登录与保存仍默认关闭。PGlite 合成认证回归不等于真实 Supabase、GitHub OAuth、双账号交叉隔离或删除读回验收；隐私/数据区域/保留期决策仍缺失。
 - PR #34 的 Vercel Check 在 2026-10-30 返回 api-deployments-free-per-day 与“24 小时后重试”。在平台状态变化前，不为本地候选重试部署或用其他方式规避该限制。
+
+## 2026-11-05 Supabase 候选后端部署
+
+- 用户授权创建免费资源。Supabase 组织 `The Community Lab` 为 Free；项目 `The Community Lab History` 的项目 ref 为 `hfhhjpnibrgisbkmlbzz`，创建时选择 **West US (Oregon), `us-west-2`**。项目状态读回为 `Healthy`；未升级或绑定付款方式。
+- 在 Supabase SQL Editor 应用了 PR #11 HEAD `a196050` 的私人历史迁移和 90 天保留迁移。项目启用 `pg_cron 1.6.4` 后，实时读回确认 `public.test_runs` 的 RLS 与 FORCE RLS 均开启，三条 owner/session 策略存在，捕获设置为 `enabled=false`，保留策略过滤 2160 小时前的记录。
+- `community-history-retention-90-days` Cron 作业已注册并读回为 active。首次执行在每分钟调度下以 `succeeded` 结束；随后根据 Cron 运行记录会持续增长的事实改为每小时 `0 * * * *`，源迁移与合成 PostgreSQL 测试同步更新。小时频率下的首次执行仍待之后的运行记录确认。
+- 迁移由 Dashboard SQL Editor 手动执行；没有 Supabase CLI migration-ledger 读回。当前没有 GitHub OAuth 客户端、Pages 构建变量或注销 Edge Function；项目中没有用户测试结果，保存功能仍关闭。`mykcs.github.io` 共享 origin 不可用于登录，需先绑定用户控制的域名，再完成 OAuth、两个真实账号互相隔离及删除读回验收。
 
 ## 2026-10-30 PR #35 自动发布验收
 

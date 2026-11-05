@@ -188,6 +188,8 @@
 3. GitHub OAuth 只用于识别登录用户，写入个人结果必须明确同意、服务端隔离、可导出/删除；双账号交叉访问与删后读回均验收。
 4. 访问者能在不登录的情况下完成测验，默认只在本机计算；网站清楚标注「独立非官方」。
 
+**2026-11-05 · 免费 Supabase 候选后端部署**：已在 Oregon `us-west-2` 免费项目中手动应用 PR #11 的两份迁移。实时读回确认 `test_runs` 同时启用 RLS 与 FORCE RLS、保存开关关闭、三条 owner/session policy 存在；90 天清理 Cron 当前 active、每小时运行。每分钟旧调度曾成功执行一次；改为每小时后的首次运行尚未读回。未登记 Supabase CLI migration ledger，也未配置 OAuth、Pages 环境变量或注销 Edge Function；没有用户数据。因此此项仅证明候选后端部署和数据库策略读回，不满足本节的真实双账号、同意流程或删后读回验收，历史保存仍关闭。
+
 
 
 工作流范围：`.github/workflows/verify.yml` 的 `pull_request.paths` 包含 `docs/VERIFICATION-MATRIX.md`，因此更改本文件会触发 GitHub Actions；其他文档路径（例如本目录下的嘉宾或版权研究文档）若没有同时更改触发路径，不会单独触发该工作流。实际运行仍以 PR 的 Checks 为准。

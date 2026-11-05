@@ -236,7 +236,7 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: 90-day expiry hides and purges only expired 
     await pg.exec(retentionMigration);
     const jobs = (await pg.query('SELECT * FROM cron.scheduled')).rows;
     assert.equal(jobs.length, 1);
-    assert.equal(jobs[0].schedule, '* * * * *');
+    assert.equal(jobs[0].schedule, '0 * * * *');
     assert.match(jobs[0].command, /community_private.purge_expired_history/);
     t.diagnostic('Cron registration is simulated; hosted execution and deletion latency remain unverified.');
     for (const role of ['anon','authenticated','service_role']) await asActor(pg,role,ACTORS.a,async () =>

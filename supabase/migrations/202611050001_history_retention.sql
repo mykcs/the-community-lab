@@ -25,7 +25,8 @@ REVOKE ALL ON FUNCTION community_private.purge_expired_history()
 
 -- Fail installation if Cron is unavailable rather than promising unenforced deletion.
 -- Only the database owner schedules/runs this private function.
-SELECT cron.schedule('community-history-retention-90-days', '* * * * *',
+-- Hourly enforcement keeps expiry within one hour while limiting Cron run-log growth.
+SELECT cron.schedule('community-history-retention-90-days', '0 * * * *',
   $$SELECT community_private.purge_expired_history();$$);
 
 COMMIT;
