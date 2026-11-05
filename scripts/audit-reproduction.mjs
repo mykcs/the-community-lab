@@ -72,7 +72,7 @@ emitHuman('官方结果样本覆盖：' + coverage.verifiedPairs + ' 份完整�
   coverage.axesWithIntensityTwo + ' 个曾出现强度 2；重复输入 ' + coverage.repeatedInputObservations +
   ' 次，冲突输入向量 ' + coverage.contradictoryInputVectors + ' 个。这是证据覆盖统计，不是算法验收。');
 const inputCoverage = summarizeVerifiedOfficialScoreInputCoverage();
-emitHuman('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 份金标准中有 ' +
+emitHuman('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 份已验收输入→输出记录（非确定性计分金标准）中有 ' +
   inputCoverage.uniqueInputVectors + ' 种不同原始答案向量；' +
   inputCoverage.questionsObservedWithBothValues + '/' + inputCoverage.questionCount +
   ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
