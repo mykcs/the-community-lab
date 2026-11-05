@@ -1,5 +1,11 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-05 · S2 同输入第六次官方合成读回
+
+- 用户明确授权后，官方页面按版本化源题 ID 提交匿名向量 `rp01–rp12=O`、其余 25 题 X；37 个 ID 与题干逐题核对，昵称留空。
+- 官方页面成功生成结果；API `GET` HTTP 200，版本仍为 `season-2@2026-08`、题集短指纹 `2e4ed483b6b79197`、计分版本 `season-2-score@2`。本次 `42/58` 与同向量既有五次中的四次相同，但仍有一次 `49/51`；计分根因和公式继续为 `UNKNOWN`。
+- 证据只记录匿名合成答案 ID、公开输出字段及结果指纹；该次没有改动网站内容，因此不触发 Pages 发布。
+
 ## 2026-11-05 · PR #257 Pages 发布及 PR #258 研究记录刷新
 
 - [PR #257](https://github.com/mykcs/the-community-lab/pull/257) 已合并为 `0b9211fe5392310a3e06b270666db47319d5b215`。合并后 Verify [run #42012104054](https://github.com/mykcs/the-community-lab/actions/runs/42012104054)、桌面／440×956 浏览器验收 [run #42012104060](https://github.com/mykcs/the-community-lab/actions/runs/42012104060) 与 GitHub Pages build/deploy [run #42012104066](https://github.com/mykcs/the-community-lab/actions/runs/42012104066) 均成功。
