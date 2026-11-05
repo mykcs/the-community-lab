@@ -63,7 +63,7 @@ const base = import.meta.env.BASE_URL;
               <div class="eyebrow"><span>01 / ABOUT YOUR VALUES</span><span class="eyebrow-line"></span></div>
               <p class="hero-korean" lang="ko">당신은 누구와 가장 닮았을까요?</p>
               <h1 id="hero-title" tabindex="-1">立场不同，<br /><em>也能找到同频。</em></h1>
-              <p class="hero-description">我们的目标不是另写一套测试，而是把《The Community》官网原题<span class="highlight-text">逐题信达雅地翻译成中文</span>，最终做到<strong>同一份答案、同一份官网结果</strong>。目前可以试填两季共 124 道公开来源题；AI 初译还需真人韩中复核，官方计分尚未核实，因此暂时只保存本机答题记录。</p>
+              <p class="hero-description">我们的目标不是另写一套测试，而是把《The Community》官网原题<span class="highlight-text">逐题信达雅地翻译成中文</span>，最终做到<strong>同一份答案、同一份官网结果</strong>。目前可以试填两季共 124 道公开来源题；AI 初译还需真人韩中复核，官方计分尚未核实。答案只暂存在当前页面内存；如要刷新或关闭后继续，请手动下载进度 JSON，确认文件已保存，再导入恢复。</p>
               <div class="hero-actions">
                 <a href={`${base}questionnaire/?season=2`} class="button button-primary">试填第二季 37 题 · 非官方 AI 初译 <span aria-hidden="true">↗</span></a>
                 <button id="hero-start" class="button button-outline" type="button">另看 6 道本站原创演示 <span aria-hidden="true">↗</span></button>
@@ -121,7 +121,7 @@ const base = import.meta.env.BASE_URL;
                 <a href={`${base}questionnaire/?season=2`} class="button button-primary">试填第二季 37 题 <span aria-hidden="true">↗</span></a>
                 <a href={`${base}questionnaire/?season=1`} class="button button-outline">试填第一季 87 题 <span aria-hidden="true">↗</span></a>
               </div>
-              <p class="mt-4 text-xs leading-6 text-[#c6c3c6]">无需注册 · 答案不上传 · 刷新即清空 · 不等同官方测试或正式译文</p>
+              <p class="mt-4 text-xs leading-6 text-[#c6c3c6]">无需注册 · 答案不上传 · 刷新或关闭会清空本页进度 · 下载并确认保存 JSON 后可导入恢复</p>
             </section>
             <section aria-labelledby="audit-heading" class="mt-10 border border-white/15 bg-[#171c23] p-5 md:p-7">
               <div class="flex flex-wrap items-center justify-between gap-3">
