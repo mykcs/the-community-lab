@@ -1,13 +1,13 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-11-05 · PR #246 完成答卷回看已发布；Pages 与 main 身份已核对
+## 2026-11-05 · PR #257 Pages 发布及 PR #258 研究记录刷新
 
-- [PR #246](https://github.com/mykcs/the-community-lab/pull/246) 合并提交为 `c6faaa4437c7b6b444734413024faef521ddcf4a`。精确 PR Verify [run #41965518863](https://github.com/mykcs/the-community-lab/actions/runs/41965518863)、合并后 main Verify [run #41965726354](https://github.com/mykcs/the-community-lab/actions/runs/41965726354) 与 Pages build/deploy [run #41965726463](https://github.com/mykcs/the-community-lab/actions/runs/41965726463) 均成功；PR 验证运行的 `npm run check` 为 202/202 测试通过。
-- 发布改动让已完成答卷回看保留当时的韩文题目、AI 中文草稿、选择值、已有 AI 译注，以及官方韩文量表标签缺失时的解释。它不生成官方分数或嘉宾匹配，也不改变题目答案值。
-- [公开发布指针](https://mykcs.github.io/the-community-lab/release-commit.txt) 当前返回 `c6faaa4437c7b6b444734413024faef521ddcf4a`；问卷公开路径返回 HTTP 200，`Last-Modified` 为 `Thu, 05 Nov 2026 04:07:13 GMT`，与该 SHA 的 Pages 发布时点一致。
-- 之后 main 前进到 [PR #247](https://github.com/mykcs/the-community-lab/pull/247) 的研究用提交 `e376c941d5b2f1e10f99da750762064345e1a757`；其 main Verify [run #41971686323](https://github.com/mykcs/the-community-lab/actions/runs/41971686323) 成功。PR #247 仅调整研究覆盖层的清理逻辑，没有生产 Astro 路由改动，因此 Pages 仍指向 `c6faaa...` 是预期结果，不代表发布漏掉生产代码。
-- Vercel 项目当前最新 Production 仍为 READY 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA`，源码 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`。Git 自动部署保持关闭；GitHub Pages 仍是正式发布源，Vercel 只是旧快照回退。
-- 这次发布不改变内容验收状态：独立韩中人工复核仍为 0/124，官方评分等价仍为 UNKNOWN，合格的真实嘉宾分数仍为 0.
+- [PR #257](https://github.com/mykcs/the-community-lab/pull/257) 已合并为 `0b9211fe5392310a3e06b270666db47319d5b215`。合并后 Verify [run #42012104054](https://github.com/mykcs/the-community-lab/actions/runs/42012104054)、桌面／440×956 浏览器验收 [run #42012104060](https://github.com/mykcs/the-community-lab/actions/runs/42012104060) 与 GitHub Pages build/deploy [run #42012104066](https://github.com/mykcs/the-community-lab/actions/runs/42012104066) 均成功。
+- Pages 发布流水线确认 `release-commit.txt` 与该 SHA 一致，并对首页、问卷、译审草稿和独立原题译审台执行公开路由检查。发布后首页 HTTP 200；[独立原题韩中译文复核台](https://mykcs.github.io/the-community-lab/original-question-translation-review/) HTTP 200，返回内容 SHA-256 `0162ea1617e3bded8ed445639bb8aa6260cdaa091fa51ca32ea02877e110db9c`，与本次 main 中的 `docs/original-question-translation-review/index.html` 逐字节一致。
+- PR #257 将问卷导航、暂停／下载、来源披露和完成后答案核对控件的最小高度设为 44px。精确 main 浏览器验收覆盖 440×956 与 1440×900 CSS px；无横向溢出和页面错误。该视口测试是浏览器模拟，不是实体 iPhone 测试。
+- [PR #258](https://github.com/mykcs/the-community-lab/pull/258) 随后以 `c921ea56cfc210720ffb57022760360aaa2ce26e` 合并，只改验证矩阵和合成诊断测试，不改变 Pages 静态内容；因此当前 Pages 内容仍正确指向 PR #257 的 `0b9211f…`。
+- Vercel Git 自动部署仍关闭；GitHub Pages 是正式发布源，Vercel Production 仅保留历史回退快照。
+- 内容门槛没有变化：独立韩中人工复核仍为 `0/124`，官方评分等价仍为 `UNKNOWN`，合格的真实嘉宾分数仍为 `0`。PR #257 登记的八条匿名合成结果中，有一组重复输入冲突；PR #258 补全了该向量的六组逐对诊断，根因仍未知、确定性金标准为 0。
 
 ## 2026-10-31 · PR #162 问卷移动端首屏优化已发布
 
