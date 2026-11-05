@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS } from '../data/original-site-audit.mjs';
 import { summarizeVerifiedOfficialScoreOutputCoverage } from '../lib/reproduction-audit.mjs';
 
-test('six verified S2 readbacks expose three display outcomes and a repeated-input conflict', () => {
+test('ten verified S2 readbacks expose three display outcomes and a repeated-input conflict', () => {
   const coverage = summarizeVerifiedOfficialScoreOutputCoverage();
-  assert.equal(coverage.verifiedPairs, 6);
-  assert.equal(coverage.repeatedInputObservations, 2);
+  assert.equal(coverage.verifiedPairs, 10);
+  assert.equal(coverage.repeatedInputObservations, 6);
   assert.equal(coverage.contradictoryInputVectors, 1);
   assert.equal(coverage.distinctRecordedOutputSignatures, 3);
   assert.equal(coverage.axesWithAnyNonTie, 1);
@@ -29,7 +29,7 @@ test('an unverified historical input does not add coverage even if its output is
   samples[1].output.axes[0] = { ...samples[1].output.axes[0],
     leftPercent: 90, rightPercent: 10, intensity: 2 };
   const coverage = summarizeVerifiedOfficialScoreOutputCoverage(samples);
-  assert.equal(coverage.verifiedPairs, 6);
+  assert.equal(coverage.verifiedPairs, 10);
   assert.equal(coverage.axesWithIntensityTwo, 0);
   assert.equal(coverage.axesWithBothNonTieSides, 0);
 });
@@ -56,15 +56,15 @@ test('output-only coverage counts and identifies contradictory scores for the sa
   // Coverage reports this conflict; strict parity fixtures fail closed.
   const conflicting = summarizeVerifiedOfficialScoreOutputCoverage(samples);
   assert.equal(conflicting.contradictoryInputVectors, 2);
-  assert.equal(conflicting.repeatedInputObservations, 3);
+  assert.equal(conflicting.repeatedInputObservations, 7);
   samples[3].input = originalElevenInput;
   samples[3].output = originalElevenOutput;
-  for (const index of [4, 5, 6]) {
+  for (const index of [4, 5, 6, 7, 8, 9, 10]) {
     samples[index].input = structuredClone(samples[3].input);
     samples[index].output = structuredClone(samples[3].output);
   }
   const coverage = summarizeVerifiedOfficialScoreOutputCoverage(samples);
-  assert.equal(coverage.verifiedPairs, 6);
+  assert.equal(coverage.verifiedPairs, 10);
   assert.equal(coverage.contradictoryInputVectors, 0);
   assert.equal(coverage.distinctRecordedOutputSignatures, 2);
 });

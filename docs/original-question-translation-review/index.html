@@ -144,8 +144,22 @@ function render(){
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
 document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='original-question-translation-review.json';a.click();URL.revokeObjectURL(a.href)});
 document.querySelector('#clear').addEventListener('click',()=>{
+ // Clearing is a write too: a stale tab must not erase a newer review draft.
+ if(otherTabModified){showOtherTabWarning();return}
+ let clearSnapshot;
+ try{clearSnapshot=localStorage.getItem(key)}
+ catch{storedDraftUnreadable=true;showUnreadableDraftWarning();return}
+ // An unreadable initial JSON or a denied initial read may be explicitly
+ // cleared after access returns. A known good snapshot must still match.
+ if(!storedDraftUnreadable&&clearSnapshot!==lastPersistedDraftRaw){
+  otherTabModified=true;showOtherTabWarning();return
+ }
+
  if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;
- try{localStorage.removeItem(key)}
+ try{if(otherTabModified||localStorage.getItem(key)!==clearSnapshot){
+   otherTabModified=true;showOtherTabWarning();return
+  }
+  localStorage.removeItem(key)}
  catch{
   alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');
   return;

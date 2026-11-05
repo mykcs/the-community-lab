@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping } from '../scripts/probe-official-chrome.mjs';
+import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -87,4 +87,40 @@ test('ambiguous identical Korean source wording is never resolved by a guessed I
     { id: 'a', sourceKo: '같은 질문' }, { id: 'b', sourceKo: '같은 질문' },
   ]);
   assert.equal(matches.length, 2);
+});
+
+test('read-only path maps visible Korean labels to one exact source question in order', () => {
+  const entries = [{ id: 'fictional-01', sourceKo: '가상의 질문입니다.', options: [
+    { value: 'O', ko: '동의' }, { value: 'X', ko: '비동의' },
+  ] }];
+  assert.deepEqual(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 질문입니다.', optionLabels: ['동의', '비동의'],
+  }, entries), { sourceId: 'fictional-01', optionCount: 2 });
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 질문입니다.', optionLabels: ['비동의', '동의'],
+  }, entries), null);
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 질문입니다.', optionLabels: ['동의', '다른标签'],
+  }, entries), null);
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q. 가상의 질문입니다.', optionLabels: ['동의', '비동의'],
+  }, entries), null);
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 질문입니다.', optionLabels: ['동의'],
+  }, entries), null);
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 질문입니다.', optionLabels: ['동의', '비동의'],
+  }, [...entries, { ...entries[0], id: 'fictional-02' }]), null);
+});
+
+test('read-only path preserves intentionally blank source labels exactly', () => {
+  const entries = [{ id: 'fictional-scale', sourceKo: '가상의 척도 질문입니다.', options: [
+    { value: '1', ko: '' }, { value: '2', ko: '보통' }, { value: '3', ko: '' },
+  ] }];
+  assert.deepEqual(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 척도 질문입니다.', optionLabels: ['', '보통', ''],
+  }, entries), { sourceId: 'fictional-scale', optionCount: 3 });
+  assert.equal(exactVisibleOptionLabelMapping({
+    headingText: 'Q.가상의 척도 질문입니다.', optionLabels: ['1', '보통', '3'],
+  }, entries), null);
 });

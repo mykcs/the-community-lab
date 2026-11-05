@@ -7,8 +7,16 @@ import { verifyPinnedClientOptionBindings } from '../scripts/verify-client-optio
 // Entirely fabricated JS fixture; no copyrighted source statements or results.
 const SAMPLE = [
   'function Xm({season:l}){const f=[],k=f[g];',
+  '[A,H]=j.useState(()=>JSON.parse(localStorage.getItem(c)??"{}"));',
+  'j.useEffect(()=>localStorage.setItem(c,JSON.stringify(A)),[A,c]);',
   'const Re=async ue=>{const se={...A,[k.id]:ue};',
-  'if(g<f.length-1){D(g+1)}ni.submit({season:l,answers:se,})};',
+  'if(g<f.length-1){D(g+1)}ni.submit({season:l,answers:se,',
+  '...S.trim()?{displayName:S.trim()}:{}',
+  ',...s.get("ref")?{referredBy:s.get("ref")}:{}',
+  ',...s.get("utm_source")?{campaignSource:s.get("utm_source")}:{}',
+  ',consentVersion:"result-storage-v1"},crypto.randomUUID())};',
+  'se.key==="ArrowLeft"&&g>0&&D(g-1);',
+  'onClick:()=>{fe(null),ge(null),D(Math.max(0,g-1))};',
   'const ze=l==="season-2"?[{value:"O",label:"SYNTHETIC_YES"},',
   '{value:"X",label:"SYNTHETIC_NO"}]:k.allowedAnswers.map((ue,se)=>({value:ue,label:"SYNTHETIC"}));',
   'return ze.map((ue,se)=>d.jsx("button",{onClick:()=>Re(ue.value)}))}',
@@ -30,6 +38,13 @@ test('pinned client structural audit only proves source ID/raw value binding, ne
   assert.equal(result.answerMapUsesSourceQuestionId, true);
   assert.equal(result.sameRawAnswerMapSentAtFinalSubmission, true);
   assert.equal(result.season1OptionsFromQuestionAllowedAnswers, true);
+  assert.equal(result.browserRestoresPerSeasonAnswersFromLocalStorage, true);
+  assert.equal(result.browserWritesPerSeasonAnswersToLocalStorage, true);
+  assert.equal(result.keyboardAndButtonBackNavigationObserved, true);
+  assert.equal(result.submissionMayIncludeDisplayNameReferralAndCampaign, true);
+  assert.equal(result.submissionIncludesConsentVersion, true);
+  assert.equal(result.submissionUsesFreshRequestId, true);
+  assert.equal(result.theseSubmissionFieldsAffectScore, 'UNKNOWN');
   assert.equal(result.scoringAlgorithmKnown, false);
   assert.equal(result.realDomSourceIdExposed, false);
   assert.ok(!JSON.stringify(result).includes('SYNTHETIC_'));
@@ -52,8 +67,17 @@ test('reject button-position substitution, source-ID drift, score-submit rewirin
     [SAMPLE.replace('k.allowedAnswers.map', 'k.allowedAnswers.reverse().map'), 'reversed scale'],
     [SAMPLE.replace('value:"X"', 'value:"O"'), 'duplicate O option'],
     [SAMPLE.replace('value:"O",label:"SYNTHETIC_YES"', 'value:"X",label:"SYNTHETIC_YES"'), 'wrong first value'],
+    [SAMPLE.replace('JSON.parse(localStorage.getItem(c)??"{}")', '{}'), 'lost restore provenance'],
+    [SAMPLE.replace('localStorage.setItem(c,JSON.stringify(A))', 'void A'), 'lost state persistence'],
+    [SAMPLE.replace('g>0&&D(g-1)', 'g>0&&D(g-2)'), 'wrong keyboard back'],
+    [SAMPLE.replace('D(Math.max(0,g-1))', 'D(Math.max(0,g-2))'), 'wrong button back'],
+    [SAMPLE.replace('campaignSource:s.get("utm_source")', 'campaignSource:null'), 'missing campaign evidence'],
+    [SAMPLE.replace('referredBy:s.get("ref")', 'referredBy:null'), 'missing referral evidence'],
+    [SAMPLE.replace('displayName:S.trim()', 'displayName:null'), 'missing optional displayName evidence'],
+    [SAMPLE.replace('consentVersion:"result-storage-v1"', 'consentVersion:"changed"'), 'changed consent version'],
+    [SAMPLE.replace('crypto.randomUUID()', '"fixed"'), 'missing request ID freshness'],
   ]) {
-    assert.throws(() => proof(changed), /绑定|答题|选项|按钮|链路|客户端/, reason);
+    assert.throws(() => proof(changed), /绑定|答题|选项|按钮|链路|客户端|提交|导航|状态/, reason);
   }
 });
 

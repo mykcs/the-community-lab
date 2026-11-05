@@ -103,6 +103,16 @@ function selectSeason() {
   view('select');
 }
 
+function updateProgress(questions) {
+  const answered = Object.keys(active.answers).length;
+  const unknown = unknownWordingCount(active);
+  const reviewCount = active.needsReview?.size || 0;
+  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${reviewCount ? ` · ${reviewCount} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
+  $('full-progress').max = questions.length;
+  $('full-progress').value = answered;
+  $('full-announcement').textContent = `第 ${active.index + 1} / ${questions.length} 题；已答 ${answered} / ${questions.length} 题。`;
+}
+
 function render() {
   const questions = pack.seasons[active.season];
   const q = questions[active.index];
@@ -110,9 +120,7 @@ function render() {
   const unknown = unknownWordingCount(active);
   $('full-season-tag').textContent = `SEASON 0${active.season} / SOURCE DRAFT`;
   $('full-position').textContent = `第 ${String(active.index + 1).padStart(2, '0')} / ${questions.length} 题`;
-  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
-  $('full-progress').max = questions.length;
-  $('full-progress').value = answered;
+  updateProgress(questions);
   const group = $('full-group');
   if (q.season === 2) {
     // The S2 domains are part of the official client's Korean wording.
@@ -179,8 +187,7 @@ function render() {
         entry.tabIndex = entry === btn ? 0 : -1;
       }
       $('full-next').disabled = false;
-      $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknownWordingCount(active) ? ` · ${unknownWordingCount(active)} 道历史译文未知` : ''}`;
-      $('full-progress').value = Object.keys(active.answers).length;
+      updateProgress(questions);
       $('full-save').disabled = false;
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
@@ -246,11 +253,15 @@ function finish() {
     return;
   }
   const summary = summarizeUnscoredAnswers(pack, active.season, active.answers, active.answerVersions, active.answerFingerprints);
+  // A pending download confirmation belongs to the finished season. Reopening
+  // it must not make visitors download their private answers a second time.
+  const pendingCompleteBackup = Boolean(active.receipt && active.pendingBackupKind === 'complete');
   active.receipt = summary;
   active.reviewMode = false;
-  active.pendingBackupKind = null;
-  $('full-confirm-complete-backup').hidden = true;
-  $('full-complete-backup-status').textContent = '';
+  active.pendingBackupKind = pendingCompleteBackup ? 'complete' : null;
+  $('full-confirm-complete-backup').hidden = !pendingCompleteBackup;
+  $('full-complete-backup-status').textContent = pendingCompleteBackup
+    ? active.pendingBackupStatus : '';
   const unknown = unknownWordingCount(active);
   $('full-done-description').textContent = `第 ${active.season} 季 ${summary.questionCount} 道题已全部作答。你的选择留在本机内存，本站没有发送给原站或计算官方分数。${unknown ? ` 其中 ${unknown} 道旧答案缺少历史中文文字指纹，无法核验当时所见译文；可返回修改并重新点击选项确认当前译文。` : ''}`;
   const panel = $('full-group-summary');
@@ -366,6 +377,7 @@ function download() {
   active.pendingBackupKind = 'complete';
   $('full-confirm-complete-backup').hidden = false;
   $('full-complete-backup-status').textContent = '已请求浏览器下载。请检查文件确实存在，再点击“我已确认文件保存”。';
+  active.pendingBackupStatus = $('full-complete-backup-status').textContent;
 }
 
 function saveProgress() {

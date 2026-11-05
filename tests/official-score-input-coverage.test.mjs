@@ -6,10 +6,10 @@ import { buildVerifiedOfficialScoreFixtures, summarizeVerifiedOfficialScoreInput
 test('verified S2 inputs expose two one-question contrasts and one repeat conflict without proving the scoring algorithm', () => {
   const coverage = summarizeVerifiedOfficialScoreInputCoverage();
   assert.deepEqual(coverage, {
-    verifiedPairs: 6,
+    verifiedPairs: 10,
     questionCount: 37,
     uniqueInputVectors: 4,
-    repeatedInputObservations: 2,
+    repeatedInputObservations: 6,
     contradictoryInputVectors: 1,
     repeatedInputOutputsConsistent: false,
     questionsObservedWithBothValues: 26,
@@ -30,7 +30,7 @@ test('verified S2 inputs expose two one-question contrasts and one repeat confli
 test('the new official vector differs from the 11-O and 13-O vectors only at rp12 and rp13', () => {
   const samples = buildVerifiedOfficialScoreFixtures(
     OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.filter(row =>
-      !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA'].includes(row.publicResultId)));
+      !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS', 'aMpgxXI50B7Eqrb-', '1bZs7gslVZmJHN0c', 'amhKSW8ZW7_5flNG'].includes(row.publicResultId)));
   const eleven = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 11);
   const twelve = samples.find(row => row.publicResultId === '3NtECOtE1ebvmN-C');
   const thirteen = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 13);
@@ -66,9 +66,6 @@ test('a repeated input with a contradictory output remains visible but cannot be
   assert.equal(current.output.axes[0].leftPercent, 42);
   assert.equal(previous.output.axes[0].leftPercent, 49);
   assert.equal(summarizeVerifiedOfficialScoreInputCoverage().contradictoryInputVectors, 1);
-  const thirdRepeat = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[6];
-  assert.deepEqual(thirdRepeat.input, current.input);
-  assert.deepEqual(thirdRepeat.output, current.output);
   assert.throws(() => buildVerifiedOfficialScoreFixtures(), /同一原始答卷.*结果冲突/);
 });
 

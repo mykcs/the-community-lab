@@ -27,7 +27,8 @@ test('an unverified historical result from another version remains evidence, not
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   observations[1].output = { ...observations[1].output, scoringVersion: 'season-2-score@3' };
   const fixtures = buildVerifiedOfficialScoreFixtures(
-    observations.filter(row => !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA'].includes(row.publicResultId)));
+    observations.filter(row =>
+      !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS', 'aMpgxXI50B7Eqrb-', '1bZs7gslVZmJHN0c', 'amhKSW8ZW7_5flNG'].includes(row.publicResultId)));
   assert.equal(fixtures.length, 4);
   assert.ok(fixtures.every(f => f.input.scoringVersion === 'season-2-score@2'));
 });
