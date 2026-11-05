@@ -1,13 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
+import playwrightConfig from '../playwright.config.mjs';
 
 const workflow = readFileSync(new URL('../.github/workflows/pages.yml', import.meta.url), 'utf8');
 const verifyWorkflow = readFileSync(new URL('../.github/workflows/verify.yml', import.meta.url), 'utf8');
+const browserWorkflow = readFileSync(new URL('../.github/workflows/browser-qa.yml', import.meta.url), 'utf8');
 const translationWorkflow = readFileSync(new URL('../.github/workflows/github-pages-translation-review.yml', import.meta.url), 'utf8');
 const astro = readFileSync(new URL('../astro.config.mjs', import.meta.url), 'utf8');
 const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
 const vercel = JSON.parse(readFileSync(new URL('../vercel.json', import.meta.url), 'utf8'));
+
+test('Playwright locally rebuilds Pages paths but CI uses its exact-head build', () => {
+  const preview = 'npm run preview -- --host 127.0.0.1 --port 4321';
+  assert.equal(playwrightConfig.webServer.command,
+    process.env.CI ? preview : `npm run build && ${preview}`);
+  assert.equal(playwrightConfig.webServer.env.COMMUNITY_DEPLOY_TARGET, 'github-pages');
+  assert.equal(playwrightConfig.webServer.reuseExistingServer, false,
+    'never reuse a potentially stale preview with different base paths');
+});
 
 test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /branches:\s*\[main\]/);
@@ -28,7 +39,7 @@ test('Pages builds static site from main after all project checks', () => {
 });
 
 test('GitHub workflows use pinned Node 24 action releases and a fixed Ubuntu LTS image', () => {
-  const workflows = [workflow, verifyWorkflow, translationWorkflow];
+  const workflows = [workflow, verifyWorkflow, translationWorkflow, browserWorkflow];
   for (const yaml of workflows) {
     assert.match(yaml, /runs-on: ubuntu-24\.04/);
     assert.match(yaml, /uses: actions\/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7\.0\.1/);
@@ -49,6 +60,23 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.match(translationWorkflow, /name: Validate translation review draft/);
   assert.match(translationWorkflow, /- run: node --test tests\/translation-review-page\.test\.mjs/);
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+});
+
+test('browser acceptance runs Chromium at both viewport widths without publishing the site', () => {
+  assert.match(browserWorkflow, /name: Browser acceptance/);
+  assert.match(browserWorkflow, /pull_request:/);
+  assert.match(browserWorkflow, /['"]full-questionnaire-app\.mjs['"]/);
+  for (const path of ['docs/translation-review/**', 'docs/original-question-translation-review/**']) {
+    assert.equal(browserWorkflow.split(`'${path}'`).length - 1, 2,
+      `${path} must trigger Chromium QA both on PR and on main`);
+  }
+  assert.match(browserWorkflow, /npx playwright install --with-deps --only-shell chromium/);
+  assert.match(browserWorkflow, /- run: npm run test:browser/);
+  assert.doesNotMatch(browserWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
+  const config = readFileSync(new URL('../playwright.config.mjs', import.meta.url), 'utf8');
+  assert.match(config, /width: 1440, height: 900/);
+  assert.match(config, /width: 440, height: 956/);
+  assert.match(config, /COMMUNITY_DEPLOY_TARGET: 'github-pages'/);
 });
 
 test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
@@ -78,6 +106,18 @@ test('Astro keeps Vercel rollback origin and uses GitHub project subpath only fo
   assert.match(astro, /https:\/\/mykcs\.github\.io/);
   assert.match(astro, /\/the-community-lab\//);
   assert.match(astro, /https:\/\/the-community-lab\.vercel\.app/);
+});
+
+test('PR Verify watches all publicly published translation and static assets', () => {
+  // A translation-only PR must exercise the same build gates that run after
+  // merge. Browser/review CI do not replace the exact-head npm check/build.
+  for (const path of ['docs/translation-review/**',
+    'docs/original-question-translation-review/**', 'public/**']) {
+    assert.equal(verifyWorkflow.split(`'${path}'`).length - 1, 2,
+      `${path} must trigger PR Verify and main Verify`);
+    assert.match(workflow, new RegExp(path.replace(/\\/g, '\\\\').replace(/\*/g, '\\*')),
+      `${path} must be among published Pages inputs`);
+  }
 });
 
 test('standalone questionnaire browser logic changes trigger PR Verify and Pages publication', () => {

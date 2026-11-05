@@ -18,6 +18,8 @@ test('two source seasons, provenance and unreviewed pilot disclosures appear in 
   assert.match(page, /data-start-season="2"/);
   assert.match(page, /第一季 87 题/);
   assert.match(page, /第二季 37 题/);
+  assert.match(page, /公开客户端已观测的 124 道题/);
+  assert.doesNotMatch(page, /独立非官方完整原题试填/);
   assert.match(page, /AI 初译/);
   assert.match(page, /未经人工复核/);
   assert.match(page, /独立韩中复核尚未完成/);
@@ -26,6 +28,9 @@ test('two source seasons, provenance and unreviewed pilot disclosures appear in 
   assert.match(page, /许可原件/);
   assert.match(page, /不上传服务器/);
   assert.match(page, /官方计分/);
+  assert.match(page, /id="full-source-fingerprint"/);
+  assert.match(page, /这不是官方题库或计分版本号/);
+  assert.match(app, /full-source-fingerprint'\)\.textContent = `\$\{pack\.sourceSha256\} · \$\{pack\.observedAt\}`/);
   assert.match(page, /<script id="full-questionnaire-data" type="application\/json" set:html={embedded}>/);
   assert.match(page, /<script>import '\.\.\/\.\.\/\.\.\/full-questionnaire-app\.mjs';<\/script>/);
 });
@@ -42,6 +47,21 @@ test('in-memory sessions support revisiting, changes, season isolation and local
   assert.doesNotMatch(app, /\.results\b|api\/v1\/results/);
 });
 
+test('completed-answer review can jump to any valid position and recalculate without changing fresh paths', () => {
+  for (const id of ['full-review-tools', 'full-jump-position', 'full-jump', 'full-jump-status', 'full-finish-review']) {
+    assert.match(page, new RegExp(`id="${id}"`));
+  }
+  assert.match(page, /只在修改已完成答卷或核对更新译文时开放/);
+  assert.match(app, /reviewMode: false/);
+  assert.match(app, /reviewMode: session\.complete/);
+  assert.match(app, /active\.reviewMode = true/);
+  assert.match(app, /\$\('full-review-tools'\)\.hidden = !active\.reviewMode/);
+  assert.match(app, /if \(!active\?\.reviewMode\) return/);
+  assert.match(app, /Number\.isSafeInteger\(position\)/);
+  assert.match(app, /finish\(\); \/\/ Recompute from current selections/);
+  assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
 test('private opt-in backup/restoration is local-only, version-checked and available before finishing', () => {
   assert.match(page, /id="full-save"/);
   assert.match(page, /id="full-import"/);
@@ -52,7 +72,9 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(app, /createPrivateProgressReceipt\(pack, active\.season, active\.answers, active\.index, active\.answerVersions, active\.answerFingerprints\)/);
   assert.match(app, /restorePrivateProgressReceipt\(pack, record\)/);
   assert.match(app, /file\.size > 128 \* 1024/);
-  assert.match(app, /JSON\.parse\(await file\.text\(\)\)/);
+  assert.match(app, /const content = await file\.text\(\)/);
+  assert.match(app, /if \(requestId !== latestImportRequest\) return/);
+  assert.match(app, /const record = JSON\.parse\(content\)/);
   assert.match(app, /saved\.set\(session\.season/);
   assert.match(page, /如导入会删除或覆盖本页已答选择，系统会先要求确认/);
   assert.match(page, /会保留原答案版本并要求你重新阅读题目/);
@@ -63,6 +85,36 @@ test('private opt-in backup/restoration is local-only, version-checked and avail
   assert.match(app, /wouldDiscardLocalAnswers\(previous\.answers, session\.answers\)/);
   assert.match(app, /if \(!window\.confirm\([\s\S]*?return;[\s\S]*?saved\.set\(session\.season/);
   assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
+test('unsaved choices guard refresh/navigation without silently persisting sensitive answers', () => {
+  assert.match(app, /window\.addEventListener\('beforeunload', confirmLeavingWithUnsavedChoices\)/);
+  assert.match(app, /window\.removeEventListener\('beforeunload', confirmLeavingWithUnsavedChoices\)/);
+  assert.match(app, /event\.preventDefault\(\)/);
+  assert.match(app, /event\.returnValue = ''/);
+  assert.match(app, /active\.backupStale = true/);
+  assert.match(app, /active\.backupStale = false/);
+  assert.match(app, /backupStale: false, \/\/ The imported file remains the backup/);
+  assert.match(page, /提醒不等于自动保存/);
+  assert.doesNotMatch(app, /\b(fetch|XMLHttpRequest|localStorage|sessionStorage|sendBeacon)\s*\(/);
+});
+
+test('a download request alone cannot silence the warning for unsaved private answers', () => {
+  // Browsers do not expose whether the download reached the user's disk.
+  // Only the visitor's explicit confirmation can mark the in-memory choices backed up.
+  assert.match(page, /id="full-confirm-progress-backup"[^>]*hidden/);
+  assert.match(page, /id="full-confirm-complete-backup"[^>]*hidden/);
+  assert.match(page, /浏览器发起下载不等于文件已保存/);
+  assert.match(app, /active\.pendingBackupKind = 'progress'/);
+  assert.match(app, /active\.pendingBackupKind = 'complete'/);
+  const downloadFlow = app.slice(app.indexOf('function download()'), app.indexOf('async function importProgress'));
+  assert.doesNotMatch(downloadFlow, /active\.backupStale = false/);
+  const confirm = app.slice(app.indexOf('function confirmDownloadedBackup(kind)'), app.indexOf("'full-confirm-progress-backup').addEventListener") + 60);
+  assert.match(confirm, /active\.pendingBackupKind !== kind/);
+  assert.match(confirm, /active\.backupStale = false/);
+  assert.match(confirm, /syncUnloadGuard\(\)/);
+  assert.match(app, /active\.pendingBackupKind = null; \/\/ A new choice invalidates any unconfirmed download/);
+  assert.match(app, /document\.body\.append\(a\)/);
 });
 
 test('build uses the already-published single draft source rather than duplicating source questions', () => {
