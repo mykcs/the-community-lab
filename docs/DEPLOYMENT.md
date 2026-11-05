@@ -1,5 +1,12 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
+
+- [PR #270](https://github.com/mykcs/the-community-lab/pull/270) 已合并，main 提交为 `e846ab930e8dec2214f009fd8455b034c72a8547`。精确候选 head `a853f287c50d18fe07a0d23e92f9776a5091527f` 的 Verify [run #42040756382](https://github.com/mykcs/the-community-lab/actions/runs/42040756382) 与桌面／440×956 浏览器验收 [run #42040756375](https://github.com/mykcs/the-community-lab/actions/runs/42040756375) 均成功。
+- 合并后 main Verify [run #42042474512](https://github.com/mykcs/the-community-lab/actions/runs/42042474512)、浏览器验收 [run #42042474494](https://github.com/mykcs/the-community-lab/actions/runs/42042474494) 与 Pages 发布 [run #42042474831](https://github.com/mykcs/the-community-lab/actions/runs/42042474831) 均成功。线上 `release-commit.txt` 与 main SHA 一致；`/questionnaire/?season=1` 和第二季入口均 HTTP 200。
+- 正式 Pages 上复验 S1/S2 在 1440×900 与 440×956 CSS px 的初始状态、作答、前进、返回及改答；辅助技术状态文本与题号、已答数一致，原生进度条同步，无横向溢出或非 GET 请求。浏览器可访问性树含 `role=status`、`aria-live=polite`；本次未使用实体 iPhone 或实体屏幕阅读器。
+- 此改动只改善长问卷中的答题位置提示，不改变题目、计分、隐私或嘉宾匹配状态。独立韩中人工复核仍为 `0/124`，官方评分仍为 `UNKNOWN`。
+
 ## 2026-11-05 · S2 同输入第六次官方合成读回
 
 - 用户明确授权后，官方页面按版本化源题 ID 提交匿名向量 `rp01–rp12=O`、其余 25 题 X；37 个 ID 与题干逐题核对，昵称留空。
@@ -11,7 +18,7 @@
 - [PR #257](https://github.com/mykcs/the-community-lab/pull/257) 已合并为 `0b9211fe5392310a3e06b270666db47319d5b215`。合并后 Verify [run #42012104054](https://github.com/mykcs/the-community-lab/actions/runs/42012104054)、桌面／440×956 浏览器验收 [run #42012104060](https://github.com/mykcs/the-community-lab/actions/runs/42012104060) 与 GitHub Pages build/deploy [run #42012104066](https://github.com/mykcs/the-community-lab/actions/runs/42012104066) 均成功。
 - Pages 发布流水线确认 `release-commit.txt` 与该 SHA 一致，并对首页、问卷、译审草稿和独立原题译审台执行公开路由检查。发布后首页 HTTP 200；[独立原题韩中译文复核台](https://mykcs.github.io/the-community-lab/original-question-translation-review/) HTTP 200，返回内容 SHA-256 `0162ea1617e3bded8ed445639bb8aa6260cdaa091fa51ca32ea02877e110db9c`，与本次 main 中的 `docs/original-question-translation-review/index.html` 逐字节一致。
 - PR #257 将问卷导航、暂停／下载、来源披露和完成后答案核对控件的最小高度设为 44px。精确 main 浏览器验收覆盖 440×956 与 1440×900 CSS px；无横向溢出和页面错误。该视口测试是浏览器模拟，不是实体 iPhone 测试。
-- [PR #258](https://github.com/mykcs/the-community-lab/pull/258) 随后以 `c921ea56cfc210720ffb57022760360aaa2ce26e` 合并，只改验证矩阵和合成诊断测试，不改变 Pages 静态内容；因此当前 Pages 内容仍正确指向 PR #257 的 `0b9211f…`。
+- [PR #258](https://github.com/mykcs/the-community-lab/pull/258) 随后以 `c921ea56cfc210720ffb57022760360aaa2ce26e` 合并，只改验证矩阵和合成诊断测试，不改变 Pages 静态内容；因此当时 Pages 发布的内容身份仍为 PR #257 的 `0b9211f…`；后续 main 发布见本文件顶部记录。
 - Vercel Git 自动部署仍关闭；GitHub Pages 是正式发布源，Vercel Production 仅保留历史回退快照。
 - 内容门槛没有变化：独立韩中人工复核仍为 `0/124`，官方评分等价仍为 `UNKNOWN`，合格的真实嘉宾分数仍为 `0`。PR #257 登记的八条匿名合成结果中，有一组重复输入冲突；PR #258 补全了该向量的六组逐对诊断，根因仍未知、确定性金标准为 0。
 
