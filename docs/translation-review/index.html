@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-TtlZm3DGp5vRI6x6hkIVgWSiPLZwTZtgdsYCwT7y6ZI=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-Sj6ex8NvZUf6bURLzGe0Vrudfs/isrjtFGXV2GOlAKQ=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -113,6 +113,15 @@ function save(){
  }
 }
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function downloadLocalJson(blob,filename){
+ // A detached anchor and same-task URL revocation can lose downloads in
+ // browsers that consume the object URL after the click dispatch completes.
+ const url=URL.createObjectURL(blob);
+ const anchor=document.createElement('a');anchor.href=url;anchor.download=filename;
+ document.body.append(anchor);
+ try{anchor.click()}finally{anchor.remove()}
+ setTimeout(()=>URL.revokeObjectURL(url),60_000);
+}
 function groupLabel(q){return q.season===1?q.source_group:q.source_group_zh_cn_draft+'（'+q.source_group_ko+'）'}
 function reviewCues(q){const s=q.source_text_ko;const f=[];if(/않|안|아니|없|못|불법|금지|반대|싫/.test(s))f.push('否定/拒绝');if(/면|더라도|라도|경우|때문|이전|이후|위해/.test(s))f.push('条件/让步/范围');if(/더|가장|최소|최대한|매우|강력|많은|적은/.test(s))f.push('程度/比较');return f}
 function hasCompleteChineseDraft(q,e){
@@ -241,8 +250,7 @@ function showReviewComparison(report){
  const download=document.createElement('button');download.type='button';download.textContent='下载去备注的差异 JSON';
  download.addEventListener('click',()=>{
   const blob=new Blob([JSON.stringify(buildReviewComparisonSummary(report,data),null,2)+'\n'],{type:'application/json'});
-  const anchor=document.createElement('a');anchor.href=URL.createObjectURL(blob);
-  anchor.download='translation-review-comparison-unverified.json';anchor.click();URL.revokeObjectURL(anchor.href);
+  downloadLocalJson(blob,'translation-review-comparison-unverified.json');
  });
  details.append(summary,list);target.replaceChildren(heading,warning,metrics,download,details);target.hidden=false;
  heading.focus();target.scrollIntoView({behavior:'smooth',block:'start'});
@@ -275,7 +283,7 @@ function render(){
  }
 }
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
-document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='original-question-translation-review.json';a.click();URL.revokeObjectURL(a.href)});
+document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
 const importFile=document.querySelector('#import-file');
 document.querySelector('#import').addEventListener('click',()=>importFile.click());
 importFile.addEventListener('change',async()=>{
