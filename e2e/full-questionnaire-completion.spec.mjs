@@ -460,3 +460,62 @@ test('pending private import cannot overwrite a newer clicked option', async ({ 
   const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
   expect(exported.selections.find(x => x.questionId === q.id)?.selectedValue).toBe(q.options[0].value);
 });
+
+test('finished private seasons reopen on their completed answer record without changing source choices', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const requests = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET' && /thecommunity\\.co\\.kr/.test(request.url())) {
+      requests.push(request.url());
+    }
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+
+  // Restore both seasons in the SAME tab to exercise the per-season memory map.
+  // These are local synthetic choices, never real visitors or official results.
+  for (const season of [2, 1]) {
+    const questions = pack.seasons[season];
+    const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+    const receipt = createPrivateProgressReceipt(pack, season, answers, questions.length - 1);
+    await page.locator('#full-import-file').setInputFiles({
+      name: `synthetic-season-${season}-completed.json`,
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(receipt)),
+    });
+    await expect(page.locator('#full-done')).toBeVisible();
+    await expect(page.locator('#full-done-description')).toContainText(
+      `第 ${season} 季 ${questions.length} 道题已全部作答`,
+    );
+    await page.locator('#full-back').click();
+    await expect(page.locator(`[data-season-progress="${season}"]`))
+      .toContainText(`已完成 ${questions.length} / ${questions.length}`);
+  }
+
+  // An already completed session must not reopen at the final question.
+  for (const season of [2, 1]) {
+    await page.locator(`[data-start-season="${season}"]`).click();
+    await expect(page.locator('#full-done')).toBeVisible();
+    await expect(page.locator('#full-quiz')).toBeHidden();
+    await expect(page.locator('#full-done-description')).toContainText(
+      `第 ${season} 季 ${pack.seasons[season].length} 道题已全部作答`,
+    );
+    const [download] = await Promise.all([
+      page.waitForEvent('download'), page.locator('#full-download').click(),
+    ]);
+    const restored = JSON.parse(await readFile(await download.path(), 'utf8'));
+    expect(restored.selections.map(x => [x.questionId, x.selectedValue]))
+      .toEqual(pack.seasons[season].map(q => [q.id, q.options[0].value]));
+    await page.locator('#full-back').click();
+  }
+
+  // Editing the completed record must still open the actual source question.
+  await page.locator('[data-start-season="2"]').click();
+  await page.locator('#full-edit').click();
+  await expect(page.locator('#full-quiz')).toBeVisible();
+  await expect(page.locator('#full-review-tools')).toBeVisible();
+  await page.locator('#full-exit').click();
+  await expect(page.locator('[data-season-progress="2"]')).toContainText('继续');
+  await page.locator('[data-start-season="2"]').click();
+  await expect(page.locator('#full-quiz')).toBeVisible();
+  expect(requests).toEqual([]);
+});
