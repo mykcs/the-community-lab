@@ -15,8 +15,12 @@ on:
       - 'full-questionnaire-app.mjs'
       - 'data/**'
       - 'lib/**'
-      - 'scripts/**'
-      - 'tests/**'
+      # Build-time modules imported by src/pages/questionnaire/index.astro.
+      # Research-only probes and tests still run in PR/main verification CI,
+      # but do not change the public static artifact.
+      - 'scripts/load-full-questionnaire.mjs'
+      - 'scripts/verify-korean-source-snapshot.mjs'
+      - 'scripts/verify-client-display-order.mjs'
       - 'docs/translation-review/**'
       - 'docs/original-question-translation-review/**'
   workflow_dispatch:
