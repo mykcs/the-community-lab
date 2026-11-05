@@ -48,6 +48,20 @@ test('published page is only an explicitly unreviewed draft', () => {
   assert.match(html, /许可原件因隐私未公开/);
 });
 
+test('rp05 draft says failure to catch a criminal, while preserving its unreviewed status', () => {
+  for (const source of [data, standaloneData]) {
+    const question = source.questions.find(item => item.id === 'rp05');
+    assert.ok(question);
+    assert.equal(question.source_text_ko, '흉악범을 놓칠 수 있더라도 불법적인 수사 방식이 동원되어서는 안 된다.');
+    assert.equal(question.translation_zh_cn, '即使可能抓不到凶恶罪犯，也不应动用非法侦查手段。');
+    assert.equal(question.translation_version, 'draft-0.1.1');
+    assert.equal(question.review_status, 'draft');
+    assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+    assert.match(question.translator_note, /韩国语基础词典/);
+    assert.match(question.translator_note, /独立韩中人工复核/);
+  }
+});
+
 test('all source questions remain drafts and have Korean and Chinese text', () => {
   const ids = new Set();
   const perSeason = { 1: 0, 2: 0 };
