@@ -307,7 +307,21 @@ compareFiles.addEventListener('change',async()=>{
  }catch(error){alert('无法比对审校文件：'+(error instanceof Error?error.message:'文件无效'))}
  finally{compareFiles.value=''}
 });
-document.querySelector('#clear').addEventListener('click',()=>{if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;try{localStorage.removeItem(key)}catch{alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');return}edits={};storedDraftUnreadable=false;otherTabModified=false;lastPersistedDraftRaw=null;window.removeEventListener('beforeunload',warnUnexportedReview);render();document.querySelector('.statusline').textContent='此设备的审校记录已清除'});
+document.querySelector('#clear').addEventListener('click',()=>{
+ // Clearing is a write too: a stale tab must not erase a newer review draft.
+ if(otherTabModified){showOtherTabWarning();return}
+ let clearSnapshot;
+ try{clearSnapshot=localStorage.getItem(key)}
+ catch{storedDraftUnreadable=true;showUnreadableDraftWarning();return}
+ // An unreadable initial JSON or a denied initial read may be explicitly
+ // cleared after access returns. A known good snapshot must still match.
+ if(!storedDraftUnreadable&&clearSnapshot!==lastPersistedDraftRaw){
+  otherTabModified=true;showOtherTabWarning();return
+ }
+if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;try{if(otherTabModified||localStorage.getItem(key)!==clearSnapshot){
+   otherTabModified=true;showOtherTabWarning();return
+  }
+  localStorage.removeItem(key)}catch{alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');return}edits={};storedDraftUnreadable=false;otherTabModified=false;lastPersistedDraftRaw=null;window.removeEventListener('beforeunload',warnUnexportedReview);render();document.querySelector('.statusline').textContent='此设备的审校记录已清除'});
 render();
 if(storedDraftUnreadable)showUnreadableDraftWarning();
 </script>
