@@ -5,6 +5,7 @@ import {
   extractDraftPack, buildFullQuestionnaire, summarizeUnscoredAnswers,
   PRIVATE_PROGRESS_FORMAT, createPrivateProgressReceipt, restorePrivateProgressReceipt,
   wouldDiscardLocalAnswers, countReplacedLocalAnswerProvenance,
+  hasUnsavedPrivateChoices,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
 
@@ -22,7 +23,8 @@ test('124 source IDs, 550 bilingual choices and indexed client positions survive
   for (const season of [1, 2]) {
     assert.deepEqual(pack.seasons[season].map(q => q.order),
       Array.from({ length: season === 1 ? 87 : 37 }, (_, i) => i + 1));
-    assert.ok(pack.seasons[season].every(q => q.sourceKo.trim() && q.draftZh.trim() && q.options.every(o => o.ko.trim() && o.zh.trim())));
+    assert.ok(pack.seasons[season].every(q => q.sourceKo.trim() && q.draftZh.trim() && q.options.every(o =>
+      o.zh.trim() && (o.ko.trim() || (season === 1 && q.options.length === 6 && [2, 5].includes(o.value) && o.ko === '')))));
   }
   assert.equal(pack.seasons[1][0].id, index.questions.find(q => q.season === 1 && q.displayPositionDerivedFromClient === 1).sourceQuestionId);
   assert.equal(pack.seasons[2][0].id, index.questions.find(q => q.season === 2 && q.displayPositionDerivedFromClient === 1).sourceQuestionId);
@@ -64,12 +66,111 @@ test('source provenance, reported permission, unreviewed status and question cou
   };
   mutate(d => { d.reported_permission.status = 'UNKNOWN'; });
   mutate(d => { d.questions[0].review_status = 'bilingual_reviewed'; });
+  mutate(d => { d.questions[0].rights_status = 'licensed'; }); // A user report is not independent licence proof.
   mutate(d => { d.questions[0].scoring_version = 'official'; });
   mutate(d => { d.questions[0].source_text_ko = ''; });
   mutate(d => { d.questions[0].options[1].value = d.questions[0].options[0].value; });
   mutate(d => { d.questions.pop(); });
   mutate((_d, m) => { m.sourceAssetSha256 = 'a'.repeat(64); });
   mutate((_d, m) => { m.questions[0].displayPositionDerivedFromClient = 2; });
+});
+
+test('S2 questionnaire retains the pinned Korean source group beside the unreviewed Chinese label', () => {
+  const originalGroups = new Map(index.questions.filter(q => q.season === 2)
+    .map(q => [q.sourceQuestionId, q.sourceGroup]));
+  assert.equal(new Set(pack.seasons[2].map(q => q.groupKo)).size, 3);
+  for (const q of pack.seasons[2]) {
+    assert.equal(q.groupKo, originalGroups.get(q.id), `source group missing for ${q.id}`);
+    assert.ok(q.group && q.group !== q.groupKo);
+  }
+});
+
+test('S2 Chinese group headings participate in historical wording fingerprints', () => {
+  const original = pack.seasons[2][0];
+  const oldHash = original.translationFingerprint;
+  const oldReceipt = createPrivateProgressReceipt(
+    pack, 2, { [original.id]: original.options[0].value }, 0,
+  );
+  const changed = structuredClone(pack);
+  const revised = changed.seasons[2][0];
+  revised.group += '（供回归测试的合成修订）';
+  attachTranslationFingerprints(changed);
+  assert.notEqual(revised.translationFingerprint, oldHash,
+    'editing visible S2 Chinese group copy must change the receipt wording hash');
+  const restored = restorePrivateProgressReceipt(changed, oldReceipt);
+  assert.deepEqual(restored.changedQuestionIds, [original.id],
+    'a prior selection must be re-confirmed after the displayed group is edited');
+  assert.equal(changed.seasons[2][1].translationFingerprint,
+    pack.seasons[2][1].translationFingerprint,
+    'unrelated group choices must keep their wording hashes');
+  assert.equal(changed.seasons[1][0].translationFingerprint,
+    pack.seasons[1][0].translationFingerprint,
+    'S1 historical receipt hashes must not change due to the S2-only fix');
+});
+
+test('S2 draft group labels cannot split or merge source domains in answer summaries', () => {
+  const source = pack.seasons[2];
+  assert.equal(new Set(source.map(q => q.group)).size, 3);
+  const allAnswers = Object.fromEntries(source.map(q => [q.id, q.options[0].value]));
+  const groups = summarizeUnscoredAnswers(pack, 2, allAnswers).groups;
+  assert.equal(groups.length, 3);
+  assert.equal(groups.reduce((sum, row) => sum + row.answered, 0), 37);
+
+  const reject = change => {
+    const draft = structuredClone(raw);
+    change(draft.questions.filter(q => q.season === 2));
+    assert.throws(() => buildFullQuestionnaire(draft, index), /题组韩中映射不一致/);
+  };
+  reject(questions => { questions[0].source_group_zh_cn_draft = ''; });
+  reject(questions => { questions[0].source_group_zh_cn_draft = '额外的错误中文题组'; });
+  reject(questions => {
+    const other = questions.find(q => q.source_group_ko !== questions[0].source_group_ko);
+    other.source_group_zh_cn_draft = questions[0].source_group_zh_cn_draft;
+  });
+  // Legitimate consistent editorial updates to a whole group remain possible.
+  const updated = structuredClone(raw);
+  const members = updated.questions.filter(q => q.season === 2);
+  for (const q of members) {
+    if (q.source_group_ko === members[0].source_group_ko) q.source_group_zh_cn_draft = '同组统一的新中文草稿标签';
+  }
+  assert.equal(buildFullQuestionnaire(updated, index).seasons[2].length, 37);
+});
+
+test('identical Korean response scales cannot silently diverge in Chinese across the same season', () => {
+  const captions = new Map();
+  for (const q of raw.questions) {
+    for (const option of q.options) {
+      const key = JSON.stringify([q.season, q.options.length, option.value, option.ko]);
+      if (captions.has(key)) {
+        assert.equal(option.zh_cn, captions.get(key), `inconsistent draft scale: ${q.id}`);
+      }
+      captions.set(key, option.zh_cn);
+    }
+  }
+
+  const rejectOne = (season, count) => {
+    const changed = structuredClone(raw);
+    const candidates = changed.questions.filter(q => q.season === season && q.options.length === count);
+    assert.ok(candidates.length >= 2);
+    candidates[1].options[0].zh_cn = '故意相反的 AI 草稿，仅用于测试';
+    assert.throws(() => buildFullQuestionnaire(changed, index),
+      /同一韩文量表选项存在不一致的中文 AI 初译/);
+  };
+  rejectOne(1, 6);
+  rejectOne(1, 4);
+  rejectOne(2, 2);
+
+  // One coordinated draft-wide editorial revision should remain possible.
+  // Consistency is a machine guard, never evidence of a correct translation.
+  const coordinated = structuredClone(raw);
+  for (const q of coordinated.questions.filter(q => q.season === 1 && q.options.length === 6)) {
+    q.options.find(option => option.value === 2).zh_cn = '第2档（待真人核对）';
+  }
+  const revised = buildFullQuestionnaire(coordinated, index);
+  assert.equal(revised.seasons[1].length, 87);
+  assert.equal(revised.seasons[2].length, 37);
+  assert.equal(revised.scoringVersion, 'UNKNOWN');
+  assert.equal(revised.rightsEvidence, 'USER_REPORTED_NOT_INDEPENDENTLY_VERIFIED');
 });
 
 test('all answers can be completed as a receipt, but never produce invented official axes or matches', () => {
@@ -185,6 +286,22 @@ test('import conflict gate distinguishes a safe superset from lost or changed lo
   assert.throws(() => wouldDiscardLocalAnswers(existing, null));
 });
 
+test('unload protection considers unbacked changes in either season, not just the visible quiz', () => {
+  const sessions = new Map([
+    [1, { answers: { 's1-a': 1 }, backupStale: false }],
+    [2, { answers: {}, backupStale: true }],
+  ]);
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
+  sessions.get(2).answers['s2-a'] = 'O';
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), true);
+  sessions.get(2).backupStale = false; // User downloaded a current JSON backup.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
+  sessions.get(1).backupStale = true; // Changes after that season's earlier backup.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), true);
+  sessions.get(1).answers = {}; // A confirmed restart clears the at-risk answers.
+  assert.equal(hasUnsavedPrivateChoices(sessions.values()), false);
+});
+
 test('importing an identical choice cannot silently erase a recorded wording fingerprint', () => {
   const question = pack.seasons[2][0];
   const answer = { [question.id]: question.options[0].value };
@@ -290,7 +407,7 @@ test('translation-only draft updates allow safe opt-in resume while retaining ea
 test('browser restoration asks permission on translation drift, preserves old provenance and requires reconfirmation before completion', () => {
   const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
   assert.match(app, /const changed = session\.changedQuestionIds\.length/);
-  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance\)/);
+  assert.match(app, /if \(discardsLocal \|\| changed \|\| overwrittenProvenance \|\| unknown\)/);
   assert.match(app, /window\.confirm/);
   assert.match(app, /needsReview: new Set\(session\.changedQuestionIds\)/);
   assert.match(app, /active\.answerVersions\[q\.id\] = q\.translationVersion/);
@@ -343,6 +460,8 @@ test('legacy backup without wording fingerprint stays UNKNOWN across imports and
   const legacy = createPrivateProgressReceipt(current, 2, answers, 0);
   delete legacy.selections[0].translationFingerprint;
   const restored = restorePrivateProgressReceipt(current, legacy);
+  assert.deepEqual(restored.unknownWordingQuestionIds, [q.id],
+    'legacy answers must be surfaced as historical text UNKNOWN');
   assert.equal(restored.answerFingerprints[q.id], null, 'missing historic fingerprint must stay unknown');
 
   const next = createPrivateProgressReceipt(current, 2, restored.answers, 0,

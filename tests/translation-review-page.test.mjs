@@ -58,13 +58,18 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
     perSeason[question.season]++;
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', question.id);
     assert.equal(question.review_status, 'draft', question.id);
+    assert.equal(question.rights_status, 'user_reported_permission_unverified', question.id);
     assert.ok(question.source_text_ko.trim(), `${question.id} Korean source is present`);
     assert.ok(question.translation_zh_cn.trim(), `${question.id} Chinese draft is present`);
     assert.match(question.source_url, /^https:\/\/thecommunity\.co\.kr\/season\/[12]\/test$/);
     assert.ok(question.options.length > 0, `${question.id} has source options`);
     optionCount += question.options.length;
     for (const option of question.options) {
-      assert.ok(option.ko?.trim(), `${question.id} Korean option is present`);
+      if (question.season === 1 && question.options.length === 6 && [2, 5].includes(option.value)) {
+        assert.equal(option.ko, '', `${question.id} has no source caption at level ${option.value}`);
+      } else {
+        assert.ok(option.ko?.trim(), `${question.id} Korean option is present`);
+      }
       assert.ok(option.zh_cn?.trim(), `${question.id} Chinese option draft is present`);
     }
   }
@@ -72,11 +77,58 @@ test('all source questions remain drafts and have Korean and Chinese text', () =
   assert.equal(optionCount, 550);
 });
 
+test('both reviewer packs preserve genuine empty Korean scale captions only at S1 six-choice levels 2/5', () => {
+  assert.deepEqual(standaloneData.questions, data.questions);
+  const six = data.questions.filter(q => q.season === 1 && q.options.length === 6);
+  assert.equal(six.length, 64);
+  let blanks = 0;
+  for (const q of data.questions) {
+    for (const option of q.options) {
+      const missing = q.season === 1 && q.options.length === 6 && [2, 5].includes(option.value);
+      if (missing) {
+        assert.equal(option.ko, '', `${q.id} value ${option.value} must be unlabeled`);
+        blanks++;
+      } else {
+        assert.ok(option.ko.trim(), `${q.id} unexpected blank Korean source`);
+      }
+    }
+  }
+  assert.equal(blanks, 128);
+});
+
+test('legacy reviewer export corrects only known placeholders and reopens old self-reported PASS', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const old = structuredClone(data);
+  for (const q of old.questions.filter(q => q.season === 1 && q.options.length === 6)) {
+    for (const o of q.options.filter(o => [2, 5].includes(o.value))) o.ko = o.value + '점';
+  }
+  const first = old.questions.find(q => q.season === 1 && q.options.length === 6);
+  first.human_review_status = 'pass';
+  first.human_review_note = '历史自报审核备忘，不代表独立复核';
+  first.translation_zh_cn += '（本机未上传的编辑）';
+  const edits = restore(old, data);
+  assert.equal(edits[first.id].translation, first.translation_zh_cn);
+  assert.equal(edits[first.id].review, 'pending');
+  assert.equal(edits[first.id].reviewNoteStale, true);
+  assert.equal(edits[first.id].note, first.human_review_note);
+  assert.equal(data.questions.find(q => q.id === first.id).options[1].ko, '', 'baseline is immutable');
+
+  const modified = structuredClone(old);
+  modified.questions.find(q => q.id === first.id).options[1].ko = '가짜 원문';
+  assert.throws(() => restore(modified, data), /韩文原文/);
+  const alteredSource = structuredClone(old);
+  alteredSource.source.asset_sha256 = '0'.repeat(64);
+  assert.throws(() => restore(alteredSource, data), /来源指纹/);
+});
+
 test('identical Korean answer labels keep a consistent Chinese draft', () => {
   const translations = new Map();
   for (const question of data.questions) {
     for (const option of question.options) {
-      const source = option.ko.normalize('NFC').trim();
+      // Two distinct numeric steps in the S1 six-point scale have EMPTY labels.
+      // A blank caption alone does not identify the choice: use the source value.
+      const source = JSON.stringify([question.season,question.options.length,option.value,option.ko.normalize('NFC').trim()]);
       const translation = option.zh_cn.normalize('NFC').trim();
       const existing = translations.get(source);
       assert.ok(
@@ -109,6 +161,47 @@ test('second-season AI wording revisions preserve degree, referent, and priority
   assert.match(data.translation_review.editorial_pass, /rp08、rp10、ms05、ms11/);
   assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(data.translation_review.publishable, false);
+});
+
+test('S2 sa10 preserves Korean comparative 보다 without inventing categorical exclusion', () => {
+  const q = data.questions.find(item => item.id === 'sa10');
+  assert.ok(q);
+  assert.match(q.source_text_ko, /개인의 도덕적 결함보다.*처했던 환경과 사회 구조/);
+  assert.equal(q.translation_zh_cn,
+    '犯罪的成因，与其归结为个人道德缺陷，更应从当事人当时所处的环境与社会结构中寻找。');
+  assert.equal(q.translation_version, 'draft-0.1.1');
+  assert.match(q.translator_note, /보다.*而不是.*独立韩中人工复核/);
+  assert.equal(q.review_status, 'draft');
+  assert.equal(q.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+  assert.match(data.translation_review.editorial_pass, /sa10.*보다/);
+  assert.deepEqual(standaloneData.questions.find(item => item.id === 'sa10'), q);
+});
+
+test('Korean-speaker references name Korea for Chinese readers and remain unreviewed', () => {
+  const expected = new Map([
+    ['s1-openness-08', ['우리 사회에서는', '韩国社会需要执行死刑。']],
+    ['s1-openness-17', ['한국 사회에 온 이주민은 우리 문화에', '让来到韩国的移民同化于韩国文化比较好。']],
+    ['s1-openness-18', ['우리나라로 들어오는 이민자는', '应将进入韩国的移民人数降到最低。']],
+  ]);
+  for (const [id, [sourceFragment, zh]] of expected) {
+    const question = data.questions.find(item => item.id === id);
+    assert.ok(question, `${id} must remain in the Korean source dataset`);
+    assert.match(question.source_text_ko, new RegExp(sourceFragment));
+    assert.equal(question.translation_zh_cn, zh, id);
+    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.match(question.translator_note, /AI 语境预审.*(?:待|未获).*人工复核/);
+    assert.equal(question.review_status, 'draft', id);
+    assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
+    assert.deepEqual(standaloneData.questions.find(item => item.id === id), question);
+    assert.match(data.translation_review.editorial_pass, new RegExp(id));
+  }
+  const lexicalReference = data.questions.find(item => item.id === 's1-openness-18');
+  assert.match(lexicalReference.reader_note_zh_cn, /우리나라.*韩国.*中国/);
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+  assert.deepEqual(standaloneData.questions, data.questions);
 });
 
 test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
@@ -342,7 +435,7 @@ test('exported review JSON can be safely restored without changing source eviden
     note: q.human_review_note,
     reviewNoteStale: false
   });
-  assert.match(html, /localStorage\.setItem\(key,JSON\.stringify\(imported\)\)/);
+  assert.match(html, /const serialized=JSON\.stringify\(imported\);\s*localStorage\.setItem\(key,serialized\);\s*lastPersistedDraftRaw=serialized/);
   assert.match(html, /id="import-file" type="file"/);
   assert.match(html, /human_review_note_stale=e\.reviewNoteStale===true/);
 });
@@ -370,8 +463,27 @@ test('reject forged, incompatible or incomplete imported evidence without changi
   oldExport.questions[0].human_review_status = 'pending';
   oldExport.questions[0].human_review_note = '之前的备注';
   assert.equal(restore(oldExport,data)[oldExport.questions[0].id].reviewNoteStale,true);
-  assert.match(html, /文件超过 1 MiB 上限/);
+  assert.match(html, /const MAX_REVIEW_JSON_BYTES=8\*1024\*1024/);
+  assert.match(html, /if\(file\.size>MAX_REVIEW_JSON_BYTES\)throw new Error\('文件超过 8 MiB 上限'\)/);
+  assert.match(html, /if\(files\.some\(file=>file\.size>MAX_REVIEW_JSON_BYTES\)\)throw new Error\('每份文件不得超过 8 MiB'\)/);
   assert.match(html, /原有草稿未被覆盖/);
+});
+
+test('legacy offline review exports keep edits without promoting unverified permission', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const oldExport = structuredClone(data);
+  oldExport.questions.forEach(question => { question.rights_status = 'licensed'; });
+  oldExport.questions[0].translation_zh_cn = '本机合成修改，仍待独立人工审校';
+  const edits = restore(oldExport, data);
+  assert.equal(edits[oldExport.questions[0].id].translation, '本机合成修改，仍待独立人工审校');
+  assert.equal(data.questions[0].rights_status, 'user_reported_permission_unverified');
+  const forged = structuredClone(oldExport);
+  forged.reported_permission.status = 'INDEPENDENTLY_VERIFIED'; // No such evidence was supplied.
+  assert.throws(() => restore(forged, data), /许可记录/);
+  const altered = structuredClone(oldExport);
+  altered.questions[1].rights_status = 'independently_licensed';
+  assert.throws(() => restore(altered, data), /许可记录/);
 });
 
 test('two independently exported local reviews can be compared without promoting them to human verification', () => {

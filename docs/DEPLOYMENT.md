@@ -1,5 +1,14 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-05 · PR #246 完成答卷回看已发布；Pages 与 main 身份已核对
+
+- [PR #246](https://github.com/mykcs/the-community-lab/pull/246) 合并提交为 `c6faaa4437c7b6b444734413024faef521ddcf4a`。精确 PR Verify [run #41965518863](https://github.com/mykcs/the-community-lab/actions/runs/41965518863)、合并后 main Verify [run #41965726354](https://github.com/mykcs/the-community-lab/actions/runs/41965726354) 与 Pages build/deploy [run #41965726463](https://github.com/mykcs/the-community-lab/actions/runs/41965726463) 均成功；PR 验证运行的 `npm run check` 为 202/202 测试通过。
+- 发布改动让已完成答卷回看保留当时的韩文题目、AI 中文草稿、选择值、已有 AI 译注，以及官方韩文量表标签缺失时的解释。它不生成官方分数或嘉宾匹配，也不改变题目答案值。
+- [公开发布指针](https://mykcs.github.io/the-community-lab/release-commit.txt) 当前返回 `c6faaa4437c7b6b444734413024faef521ddcf4a`；问卷公开路径返回 HTTP 200，`Last-Modified` 为 `Thu, 05 Nov 2026 04:07:13 GMT`，与该 SHA 的 Pages 发布时点一致。
+- 之后 main 前进到 [PR #247](https://github.com/mykcs/the-community-lab/pull/247) 的研究用提交 `e376c941d5b2f1e10f99da750762064345e1a757`；其 main Verify [run #41971686323](https://github.com/mykcs/the-community-lab/actions/runs/41971686323) 成功。PR #247 仅调整研究覆盖层的清理逻辑，没有生产 Astro 路由改动，因此 Pages 仍指向 `c6faaa...` 是预期结果，不代表发布漏掉生产代码。
+- Vercel 项目当前最新 Production 仍为 READY 部署 `dpl_gdaqpNx6J19EPLDAkHdh2aMks8LA`，源码 SHA `efd25fa64c95ea2813e8edd55dddde1ef9763690`。Git 自动部署保持关闭；GitHub Pages 仍是正式发布源，Vercel 只是旧快照回退。
+- 这次发布不改变内容验收状态：独立韩中人工复核仍为 0/124，官方评分等价仍为 UNKNOWN，合格的真实嘉宾分数仍为 0.
+
 ## 2026-10-31 · PR #162 问卷移动端首屏优化已发布
 
 - **发布身份：** [PR #162](https://github.com/mykcs/the-community-lab/pull/162) 已合并；main 为 `1f0e7c1f9efce468d01d44fca4b23b1a928c45b3`。该 SHA 的 [Pages build/deploy run #41222250434](https://github.com/mykcs/the-community-lab/actions/runs/41222250434) 和 [main Verify run #41222250446](https://github.com/mykcs/the-community-lab/actions/runs/41222250446) 均成功。

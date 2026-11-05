@@ -40,13 +40,13 @@
 
 项目的完整愿望与验收标准见 [WISH.md](WISH.md)。
 
-## 两季的区别（截至 2026-10-29 的公开资料）
+## 两季的区别（题量依据 2026-10-29 观察；导航入口 2026-11-02 更新）
 
 | | 第一季（2024） | 第二季《看不见的手》（2026） |
 | --- | --- | --- |
 | 已公开测试形式 | 87 道题；当前公开客户端混用六级与四级选项 | 37 个选择 |
 | 已介绍的维度 | 政治、性别观念、阶级、开放性 | 原则／结果、结构／能力、意义／实利 |
-| 已核实韩文原站入口 | [第一季 87 题（新系统）](https://the-community-survey.web.app/season/1) | [第二季 37 题](https://the-community-survey.web.app/season/2) |
+| 韩文源站当前声明的入口 | [第一季 87 题](https://thecommunity.co.kr/season/1) | [第二季 37 题](https://thecommunity.co.kr/season/2) |
 | 本项目状态 | 87 题非官方 AI 初译试填；正式译文与计分待核 | 37 题非官方 AI 初译试填；正式译文与计分待核 |
 
 上表来自节目方页面、Wavve 制作访谈及公开报道；详细的**已核实／尚未知**边界见 [资料调查](docs/REUSE-RESEARCH.md)。本项目不会把独立设计的题目或分数冒充官方原版。
@@ -66,7 +66,7 @@
 ## 我们先复用哪些成熟成果
 
 1. [第二季现有测试网站](https://thecommunity.co.kr/)：优先参考官方已公开的体验与结果概念。
-2. [第一季韩文测试现行入口](https://the-community-survey.web.app/season/1)：2026-10-29 已实际打开并进入测试开始页面，显示 87 题、预计约 9 分钟；可直接跳转参与原站，不等于获得题目转载许可。
+2. [第一季韩文测试当前导航入口](https://thecommunity.co.kr/season/1)：2026-10-29 在旧 Firebase 域名实际打开并进入测试开始页面，显示 87 题、预计约 9 分钟；2026-11-02 依据站点当前自述 canonical 域名，项目首页已统一改用此入口（[PR #205](https://github.com/mykcs/the-community-lab/pull/205)）。这不等于独立确认域名权属或获得题目转载许可。
 3. [8values 开源项目](https://github.com/8values/8values.github.io)：MIT 许可证，适合学习“问卷 → 维度计分 → 结果可视化”的通用实现；**不是**《The Community》原版。
 4. [非官方第一、二季人物倾向对照页面](https://thecommunity-fan.pages.dev/)：现有相似度比较与可视化可以作为方法参考；不能据此断言题库或源码开放。
 
