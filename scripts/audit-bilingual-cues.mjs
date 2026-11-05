@@ -2,8 +2,9 @@
  * Offline reviewer triage, NOT a Korean→Chinese translation validator.
  *
  * The existing review UI flags Korean-only linguistic cues. This checks
- * whether a broad corresponding Chinese-language cue is detectable, and
- * produces only source IDs + category codes (no question/answer text).
+ * both question stems and all source-value-stable answer captions for a
+ * broad corresponding Chinese-language cue. The output contains only source
+ * IDs, official option values and category codes (no question/answer text).
  * False positives/negatives are expected; every one of the 124 drafts still
  * requires independent qualified bilingual human review.
  */
@@ -49,34 +50,59 @@ export function triageBilingualCues(pack) {
       if (!q || !valid(q.id) || !valid(q.sourceKo) || !valid(q.draftZh)) {
         throw new TypeError('Invalid bilingual question fields');
       }
+      if (!Array.isArray(q.options) || q.options.length === 0 ||
+          q.options.some(o => !o || !['number', 'string'].includes(typeof o.value) ||
+            typeof o.ko !== 'string' || !valid(o.zh))) {
+        throw new TypeError('Invalid bilingual option fields');
+      }
       const cues = RULES.filter(rule => rule.source.test(q.sourceKo));
       const missing = cues.filter(rule => !rule.target.test(q.draftZh));
+      // S1 six-level scales genuinely have blank Korean captions at values
+      // 2/5. Never invent source Korean text to fill these empty labels.
+      const optionFlags = q.options.flatMap(option => {
+        const sourceCues = RULES.filter(rule => rule.source.test(option.ko));
+        const missingCues = sourceCues.filter(rule => !rule.target.test(option.zh));
+        return missingCues.length ? [{
+          sourceOptionValue: option.value,
+          sourceCueIds: sourceCues.map(rule => rule.id),
+          targetCueNotDetected: missingCues.map(rule => rule.id),
+        }] : [];
+      });
       items.push({
         season, sourceQuestionId: q.id,
         sourceCueIds: cues.map(rule => rule.id),
         targetCueNotDetected: missing.map(rule => rule.id),
-        priority: missing.length ? 'TARGET_CUE_ABSENT_REVIEW_FIRST' :
+        optionTargetCueNotDetected: optionFlags,
+        priority: (missing.length || optionFlags.length) ? 'TARGET_CUE_ABSENT_REVIEW_FIRST' :
           cues.length >= 2 ? 'COMPLEX_SOURCE_CUES_REVIEW_FIRST' : 'STANDARD_BILINGUAL_CHECK',
       });
     }
   }
-  if (items.length !== 124 || items.filter(q => q.season === 1).length !== 87 ||
+  const optionCount = [1, 2].flatMap(season => pack.seasons[season])
+    .reduce((n, q) => n + q.options.length, 0);
+  if (items.length !== 124 || optionCount !== 550 ||
+      items.filter(q => q.season === 1).length !== 87 ||
       items.filter(q => q.season === 2).length !== 37 ||
       new Set(items.map(q => q.sourceQuestionId)).size !== 124) {
     throw new Error('Expected 87 S1 and 37 S2 distinct questions');
   }
-  items.sort((a, b) => b.targetCueNotDetected.length - a.targetCueNotDetected.length ||
+  items.sort((a, b) =>
+    (b.targetCueNotDetected.length + b.optionTargetCueNotDetected.length) -
+    (a.targetCueNotDetected.length + a.optionTargetCueNotDetected.length) ||
     b.sourceCueIds.length - a.sourceCueIds.length ||
     a.season - b.season || a.sourceQuestionId.localeCompare(b.sourceQuestionId));
   return {
-    schema: 'bilingual-cue-triage@1',
+    schema: 'bilingual-cue-triage@2',
     sourceQuestionCount: items.length,
+    sourceOptionCount: optionCount,
     independentlyHumanReviewed: 0,
     heuristicResultIsTranslationApproval: false,
     allItemsStillRequireIndependentBilingualReview: true,
     meaning: 'Lexical cues only; NOT proven errors, approvals, or an official translation',
     firstPassPriorityCount: items.filter(item => item.priority !== 'STANDARD_BILINGUAL_CHECK').length,
     lexicalCueWithoutTargetCount: items.filter(item => item.targetCueNotDetected.length).length,
+    optionLexicalCueWithoutTargetCount: items.reduce((n, item) =>
+      n + item.optionTargetCueNotDetected.length, 0),
     items,
   };
 }
