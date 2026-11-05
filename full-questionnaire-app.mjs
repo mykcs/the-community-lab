@@ -274,7 +274,59 @@ function finish() {
     item.append(label, make('strong', '', `${group.answered} 道已答`));
     panel.append(item);
   }
+  renderAnswerAudit(questions);
   view('done');
+}
+
+// Completed selections are inspectable on this device before a visitor
+// compares them with the official test. This is NOT an official score or
+// proof of identical source-site navigation.
+function renderAnswerAudit(questions) {
+  const list = $('full-answer-audit-list');
+  list.replaceChildren();
+  $('full-answer-audit').open = false;
+  for (const [index, q] of questions.entries()) {
+    const selected = q.options.find(option => option.value === active.answers[q.id]);
+    const copy = displayedOptionCopy(q, selected);
+    const row = make('li', 'full-answer-audit-item');
+    const header = make('div', 'full-answer-audit-head');
+    header.append(
+      make('strong', '', `第 ${index + 1} 题 · 源题编号 ${q.id}`),
+      make('span', '', `原始选项值：${String(selected.value)}`),
+    );
+    const korean = make('p', 'full-answer-audit-ko', q.sourceKo);
+    korean.lang = 'ko';
+    const chinese = make('p', 'full-answer-audit-zh', q.draftZh);
+    chinese.lang = 'zh-CN';
+    const chosenKo = make('span', '', copy.koreanLabel ?? '当前客户端此档无韩文文字标签');
+    chosenKo.lang = copy.koreanLabel === null ? 'zh-CN' : 'ko';
+    const chosen = make('p', 'full-answer-audit-choice');
+    chosen.append(
+      make('span', '', '已选选项：'),
+      chosenKo,
+      make('span', '', ` / ${copy.zh}（中文 AI 初译）`),
+    );
+    const edit = make('button', 'button button-outline', '修改这道题');
+    edit.type = 'button';
+    edit.setAttribute('aria-label', `修改第 ${index + 1} 题`);
+    edit.addEventListener('click', () => editCompletedAnswer(index));
+    row.append(header, korean, chinese, chosen, edit);
+    list.append(row);
+  }
+}
+
+function editCompletedAnswer(index) {
+  if (!active?.receipt || !Number.isInteger(index) ||
+      index < 0 || index >= pack.seasons[active.season].length) return;
+  cancelPendingImport();
+  active.index = index;
+  active.receipt = null;
+  active.reviewMode = true;
+  active.pendingBackupKind = null;
+  $('full-confirm-complete-backup').hidden = true;
+  $('full-jump-status').textContent = '';
+  render();
+  view('quiz');
 }
 
 function downloadJson(record, filename) {
@@ -428,18 +480,8 @@ $('full-next').addEventListener('click', () => {
 });
 $('full-download').addEventListener('click', download);
 $('full-edit').addEventListener('click', () => {
-  if (!active?.receipt) return;
-  cancelPendingImport();
-  // Keep all original source option values and translation fingerprints.
-  // Any later edit must create a new completed receipt before downloading.
-  active.index = pack.seasons[active.season].length - 1;
-  active.receipt = null;
-  active.reviewMode = true;
-  active.pendingBackupKind = null;
-  $('full-confirm-complete-backup').hidden = true;
-  $('full-jump-status').textContent = '';
-  render();
-  view('quiz');
+  // Preserve the existing last-question edit shortcut.
+  if (active) editCompletedAnswer(pack.seasons[active.season].length - 1);
 });
 $('full-save').addEventListener('click', saveProgress);
 function confirmDownloadedBackup(kind) {
