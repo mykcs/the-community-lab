@@ -103,6 +103,16 @@ function selectSeason() {
   view('select');
 }
 
+function updateProgress(questions) {
+  const answered = Object.keys(active.answers).length;
+  const unknown = unknownWordingCount(active);
+  const reviewCount = active.needsReview?.size || 0;
+  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${reviewCount ? ` · ${reviewCount} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
+  $('full-progress').max = questions.length;
+  $('full-progress').value = answered;
+  $('full-announcement').textContent = `第 ${active.index + 1} / ${questions.length} 题；已答 ${answered} / ${questions.length} 题。`;
+}
+
 function render() {
   const questions = pack.seasons[active.season];
   const q = questions[active.index];
@@ -110,9 +120,7 @@ function render() {
   const unknown = unknownWordingCount(active);
   $('full-season-tag').textContent = `SEASON 0${active.season} / SOURCE DRAFT`;
   $('full-position').textContent = `第 ${String(active.index + 1).padStart(2, '0')} / ${questions.length} 题`;
-  $('full-count').textContent = `已答 ${answered} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknown ? ` · ${unknown} 道历史译文未知` : ''}`;
-  $('full-progress').max = questions.length;
-  $('full-progress').value = answered;
+  updateProgress(questions);
   const group = $('full-group');
   if (q.season === 2) {
     // The S2 domains are part of the official client's Korean wording.
@@ -179,8 +187,7 @@ function render() {
         entry.tabIndex = entry === btn ? 0 : -1;
       }
       $('full-next').disabled = false;
-      $('full-count').textContent = `已答 ${Object.keys(active.answers).length} / ${questions.length} 题${active.needsReview?.size ? ` · ${active.needsReview.size} 道译文待重新确认` : ''}${unknownWordingCount(active) ? ` · ${unknownWordingCount(active)} 道历史译文未知` : ''}`;
-      $('full-progress').value = Object.keys(active.answers).length;
+      updateProgress(questions);
       $('full-save').disabled = false;
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
