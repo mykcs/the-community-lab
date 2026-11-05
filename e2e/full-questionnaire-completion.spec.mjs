@@ -573,3 +573,46 @@ test('finished private seasons reopen on their completed answer record without c
   await expect(page.locator('#full-quiz')).toBeVisible();
   expect(requests).toEqual([]);
 });
+
+test('legacy completed answer audit marks unknown historic Chinese wording per row until reconfirmed', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const answers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const receipt = createPrivateProgressReceipt(pack, 2, answers, questions.length - 1);
+  // Synthetic older backup: raw choice is known but the exact Chinese wording
+  // visible when it was selected is not. Never fabricate a current hash.
+  receipt.selections[10].translationFingerprint = null;
+  const outboundWrites = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') outboundWrites.push(request.url());
+  });
+  const warnings = [];
+  page.on('dialog', async dialog => {
+    warnings.push(dialog.message());
+    await dialog.accept();
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-legacy-missing-wording-hash.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(receipt)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  expect(warnings).toHaveLength(1);
+  expect(warnings[0]).toContain('没有历史中文文字指纹');
+  await page.locator('#full-answer-audit summary').click();
+  const rows = page.locator('#full-answer-audit-list li');
+  await expect(rows).toHaveCount(37);
+  await expect(rows.nth(10).locator('.full-answer-audit-provenance'))
+    .toContainText('不能证明答题当时看到的中文与今天相同');
+  await expect(rows.nth(9).locator('.full-answer-audit-provenance')).toHaveCount(0);
+  await rows.nth(10).getByRole('button', { name: '修改第 11 题' }).click();
+  await expect(page.locator('#full-quiz')).toBeVisible();
+  // An intentional re-selection of this same option confirms the new wording.
+  await page.locator('.full-choice').first().click();
+  await page.locator('#full-finish-review').click();
+  await expect(page.locator('#full-done')).toBeVisible();
+  await page.locator('#full-answer-audit summary').click();
+  await expect(page.locator('#full-answer-audit-list .full-answer-audit-provenance')).toHaveCount(0);
+  expect(outboundWrites).toEqual([]);
+});
