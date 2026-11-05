@@ -47,6 +47,46 @@ test('finished local answer audit shows original values and edits one selected q
   expect(outboundWrites).toEqual([]);
 });
 
+test('completed S1 audit retains reader notes and source-blank scale explanations', async ({ page }) => {
+  // One synthetic private backup; never submit or record a person's viewpoints.
+  // Previous audit rows dropped the same caveats shown when choosing answers.
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[1];
+  const annotated = questions.find(q => q.id === 's1-openness-11');
+  const blankScale = questions.find(q => q.options.length === 6 &&
+    q.options.some(o => o.value === 2 && o.ko === ''));
+  expect(annotated?.readerNote).toMatch(/^AI 译注（待独立人工核对）/);
+  expect(blankScale).toBeTruthy();
+  const choices = Object.fromEntries(questions.map(q => [
+    q.id, q.options.some(o => o.value === 2 && o.ko === '') ? 2 : q.options[0].value,
+  ]));
+  const backup = createPrivateProgressReceipt(pack, 1, choices, questions.length - 1);
+  const writes = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') writes.push(request.url());
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'synthetic-s1-complete.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  await page.locator('#full-answer-audit summary').click();
+  const audit = page.locator('#full-answer-audit-list');
+  await expect(audit.locator('li')).toHaveCount(87);
+  const annotatedRow = audit.locator('li').filter({ hasText: `源题编号 ${annotated.id}` });
+  await expect(annotatedRow.locator('.full-answer-audit-note')).toHaveText(annotated.readerNote);
+  const scaleRow = audit.locator('li').filter({ hasText: `源题编号 ${blankScale.id}` });
+  await expect(scaleRow).toContainText('当前客户端此档无韩文文字标签');
+  await expect(scaleRow.locator('.full-answer-audit-hint'))
+    .toContainText('不是官网原文');
+  await expect(scaleRow.locator('.full-answer-audit-hint'))
+    .toContainText('方向是本站根据六级顺序的辅助说明');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(page.viewportSize().width);
+  expect(writes).toEqual([]);
+});
+
 test('S2 title displays pinned Korean source group before its unreviewed Chinese translation', async ({ page }) => {
   const question = loadFullQuestionnaire().seasons[2][0];
   const source = sourceIndex.questions.find(q => q.sourceQuestionId === question.id);
