@@ -74,7 +74,7 @@ mobile-friendly path.
 4. **Guest evidence:** Collect candidate public official card/episode locators and score version metadata for human provenance checks. Social links alone do not qualify any guest for similarity ranking.
 5. **Adoption decision:** Preserve the current tested Astro site until a measured alternative is better for actual bilingual comprehension and source-value/backup compatibility. No new paid services or personal-response storage.
 
-**Stage vs final goal:** A passing exact-head synthetic overlay test proves only the technical prototype. It does not count toward the 0/124 independently reviewed source questions or the 0/3 official scoring parity comparisons. Overall completion ETA cannot be estimated while source rights, independent human review and official scoring evidence remain unresolved.
+**Stage vs final goal:** A passing exact-head synthetic overlay test proves only the technical prototype. It does not count toward the 0/124 independently reviewed source questions. Official scoring parity remains blocked: no local official scorer exists, and the same verified S2 input has conflicting public outputs under matching version fields. Overall completion ETA cannot be estimated while independent human review and reproducible scoring evidence remain unresolved.
 
 ## Deliberately excluded
 
