@@ -69,13 +69,15 @@ emitHuman('官方结果样本覆盖：' + coverage.verifiedPairs + ' 份完整�
   coverage.distinctRecordedOutputSignatures + ' 种不同三轴显示结果；3 个轴中 ' +
   coverage.axesWithAnyNonTie + ' 个曾出现非 50/50，' +
   coverage.axesWithBothNonTieSides + ' 个左右两侧都出现过非平局，' +
-  coverage.axesWithIntensityTwo + ' 个曾出现强度 2。这是证据覆盖统计，不是算法验收。');
+  coverage.axesWithIntensityTwo + ' 个曾出现强度 2；重复输入 ' + coverage.repeatedInputObservations +
+  ' 次，冲突输入向量 ' + coverage.contradictoryInputVectors + ' 个。这是证据覆盖统计，不是算法验收。');
 const inputCoverage = summarizeVerifiedOfficialScoreInputCoverage();
 emitHuman('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 份金标准中有 ' +
   inputCoverage.uniqueInputVectors + ' 种不同原始答案向量；' +
   inputCoverage.questionsObservedWithBothValues + '/' + inputCoverage.questionCount +
   ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
-  inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择。');
+  inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择；相同输入的重复结果 ' +
+  (inputCoverage.repeatedInputOutputsConsistent ? '一致' : '不一致') + '。');
 emitHuman('不同输入向量两两对比（重复答卷不重复计数）：' + inputCoverage.comparedInputPairs + ' 对；' +
   inputCoverage.singleQuestionContrastPairs + ' 对只差 1 题；最少/最多相差 ' +
   (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
@@ -87,7 +89,9 @@ emitHuman('单一客户端题组内的输入对照：' + inputCoverage.groupLoca
     (row.changedScoreAxisIds.join('、') || '无')).join('；') +
   '。这是已记录样本的组级观察，不证明单题权重或其他输入下的轴独立性。');
 const parity = await compareCandidateAgainstRecordedOfficialPairs();
-emitHuman('严格逐字段数值评分差分：已锁定 ' + parity.availableVerifiedPairs + ' 份完整合成输入和官方输出；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
+emitHuman('严格逐字段数值评分差分：可作确定性金标准的完整输入 ' + parity.availableVerifiedPairs +
+  ' 份；记录到的完整输入→输出 ' + (parity.observedVerifiedPairs ?? parity.availableVerifiedPairs) +
+  ' 份；本地官方计分器仍缺失，实际比较 ' + parity.comparedPairs + ' 份，状态 ' + parity.status + '。');
 const displayCoverage = summarizeOfficialResultDisplayDigestCoverage();
 emitHuman('官方结果文字额外核查：既有 ' + displayCoverage.observedResultReadbacksWithDisplayDigests +
   ' 份匿名合成读回已记录韩文标题/说明 SHA-256（' +

@@ -3,22 +3,23 @@ import assert from 'node:assert/strict';
 import { OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS } from '../data/original-site-audit.mjs';
 import { buildVerifiedOfficialScoreFixtures, summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
 
-test('verified S2 inputs expose two one-question contrasts without proving the scoring algorithm', () => {
+test('verified S2 inputs expose two one-question contrasts and one repeat conflict without proving the scoring algorithm', () => {
   const coverage = summarizeVerifiedOfficialScoreInputCoverage();
   assert.deepEqual(coverage, {
-    verifiedPairs: 4,
+    verifiedPairs: 5,
     questionCount: 37,
     uniqueInputVectors: 4,
+    repeatedInputObservations: 1,
+    contradictoryInputVectors: 1,
+    repeatedInputOutputsConsistent: false,
     questionsObservedWithBothValues: 26,
     questionsObservedWithOnlyOneValue: 11,
     questionsObservedWithNoVerifiedValues: 0,
     comparedInputPairs: 6,
     singleQuestionContrastPairs: 2,
-    groupLocalContrastPairs: 3,
+    groupLocalContrastPairs: 1,
     groupLocalContrasts: [
       { sourceGroup: '원칙-결과', differingQuestions: 2, changedScoreAxisIds: ['원칙-결과'] },
-      { sourceGroup: '원칙-결과', differingQuestions: 1, changedScoreAxisIds: ['원칙-결과'] },
-      { sourceGroup: '원칙-결과', differingQuestions: 1, changedScoreAxisIds: [] },
     ],
     minPairwiseHammingDistance: 1,
     maxPairwiseHammingDistance: 26,
@@ -27,7 +28,8 @@ test('verified S2 inputs expose two one-question contrasts without proving the s
 });
 
 test('the new official vector differs from the 11-O and 13-O vectors only at rp12 and rp13', () => {
-  const samples = buildVerifiedOfficialScoreFixtures();
+  const samples = buildVerifiedOfficialScoreFixtures(
+    OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc'));
   const eleven = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 11);
   const twelve = samples.find(row => row.publicResultId === '3NtECOtE1ebvmN-C');
   const thirteen = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 13);
@@ -55,33 +57,15 @@ test('unverified historical results cannot be counted as input diversity', () =>
     summarizeVerifiedOfficialScoreInputCoverage());
 });
 
-test('duplicate verified input lowers diversity instead of inflating coverage', () => {
-  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
-  samples[4].input = structuredClone(samples[3].input);
-  // A repeated official input may corroborate reliability only with the same output.
-  samples[4].output = structuredClone(samples[3].output);
-  const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
-  assert.equal(result.verifiedPairs, 4);
-  assert.equal(result.uniqueInputVectors, 3);
-  assert.equal(result.questionsObservedWithBothValues, 26);
-  assert.equal(result.questionsObservedWithOnlyOneValue, 11);
-  assert.equal(result.comparedInputPairs, 3);
-  assert.equal(result.groupLocalContrastPairs, 1, 'a repeated input cannot invent a group-local contrast');
-  assert.equal(result.minPairwiseHammingDistance, 2);
-  assert.equal(result.maxPairwiseHammingDistance, 26);
-});
-
-test('repeating a verified input cannot manufacture new independent contrast pairs', () => {
-  const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
-  samples[4].input = structuredClone(samples[3].input);
-  samples[4].output = structuredClone(samples[3].output);
-  const coverage = summarizeVerifiedOfficialScoreInputCoverage(samples);
-  assert.equal(coverage.verifiedPairs, 4, 'repeats remain auditable as observations');
-  assert.equal(coverage.uniqueInputVectors, 3);
-  assert.equal(coverage.comparedInputPairs, 3, 'only three distinct vectors yield independent contrasts');
-  assert.equal(coverage.singleQuestionContrastPairs, 0);
-  assert.equal(coverage.minPairwiseHammingDistance, 2);
-  assert.equal(coverage.maxPairwiseHammingDistance, 26);
+test('a repeated input with a contradictory output remains visible but cannot be a scoring fixture', () => {
+  const current = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[5];
+  const previous = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS[4];
+  assert.deepEqual(current.input, previous.input);
+  assert.notDeepEqual(current.output, previous.output);
+  assert.equal(current.output.axes[0].leftPercent, 42);
+  assert.equal(previous.output.axes[0].leftPercent, 49);
+  assert.equal(summarizeVerifiedOfficialScoreInputCoverage().contradictoryInputVectors, 1);
+  assert.throws(() => buildVerifiedOfficialScoreFixtures(), /同一原始答卷.*结果冲突/);
 });
 
 test('synthetic one-question contrast is detected but does not establish algorithm parity', () => {
@@ -97,8 +81,8 @@ test('synthetic one-question contrast is detected but does not establish algorit
   };
   const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
   assert.equal(result.singleQuestionContrastPairs, 1);
-  assert.ok(result.groupLocalContrasts.some(row =>
-    row.sourceGroup === '원칙-결과' && row.differingQuestions === 1));
+  assert.equal(result.groupLocalContrastPairs, 0,
+    'score contrasts involving an input vector with conflicting repeated outputs are excluded');
   assert.equal(result.minPairwiseHammingDistance, 1);
   assert.equal(result.questionsObservedWithBothValues, 25);
   assert.equal(result.officialAlgorithmVerified, false);
@@ -126,11 +110,11 @@ test('no verified inputs means UNKNOWN rather than 37 questions with one value',
   assert.equal(result.officialAlgorithmVerified, false);
 });
 
-test('identical source choices with contradictory official scores are rejected as a gold standard', () => {
+test('identical source choices with contradictory official scores are reported and rejected as fixtures', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   // Synthesize a duplicate verified input with a DIFFERENT official readback.
   // Existing evidence has no such contradiction; this is a fail-closed guard.
   samples[3].input = structuredClone(samples[2].input);
-  assert.throws(() => summarizeVerifiedOfficialScoreInputCoverage(samples),
-    /同一原始答卷.*结果冲突/);
+  assert.equal(summarizeVerifiedOfficialScoreInputCoverage(samples).contradictoryInputVectors, 2);
+  assert.throws(() => buildVerifiedOfficialScoreFixtures(samples), /同一原始答卷.*结果冲突/);
 });

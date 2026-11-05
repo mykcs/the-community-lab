@@ -9,10 +9,12 @@ import {
   compareCandidateAgainstRecordedOfficialPairs,
 } from '../lib/official-score-parity.mjs';
 
-const fixtures = buildVerifiedOfficialScoreFixtures();
+const stableObservations = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS
+  .filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc');
+const fixtures = buildVerifiedOfficialScoreFixtures(stableObservations);
 
 test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-value fixtures', () => {
-  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 5);
+  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 6);
   assert.equal(fixtures.length, 4);
   const source = SOURCE_INDEX.questions.filter(q => q.season === 2)
     .sort((a, b) => a.displayPositionDerivedFromClient - b.displayPositionDerivedFromClient);
@@ -71,12 +73,13 @@ test('official fixtures refuse source-index reordering or raw-value drift even w
   changedValueOrder.questions.find(q => q.season === 2).optionValues.reverse();
   assert.throws(() => buildVerifiedOfficialScoreFixtures(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, changedValueOrder),
     /源题元数据指纹不匹配/);
-  assert.equal(buildVerifiedOfficialScoreFixtures().length, 4, 'untouched pinned index must remain usable');
+  assert.equal(buildVerifiedOfficialScoreFixtures(stableObservations).length, 4, 'consistent historical subset remains usable');
 });
 
 test('official score fixtures detach and deeply freeze expected outputs', () => {
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
-  const snapshots = buildVerifiedOfficialScoreFixtures(observations);
+  const snapshots = buildVerifiedOfficialScoreFixtures(
+    observations.filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc'));
   const gold = snapshots[0].expectedOutput;
   const before = structuredClone(gold);
   assert.notStrictEqual(gold, observations[0].output);
@@ -122,13 +125,23 @@ test('official comparisons cover every public field exactly, regardless of axis 
 });
 
 test('absent scorer is an explicit block, never a vacuous 0/0 success', async () => {
-  const result = await compareCandidateAgainstRecordedOfficialPairs();
+  const result = await compareCandidateAgainstRecordedOfficialPairs(null, stableObservations);
   assert.equal(result.status, 'BLOCKED_NO_LOCAL_OFFICIAL_SCORER');
   assert.equal(result.availableVerifiedPairs, 4);
   assert.equal(result.comparedPairs, 0);
   assert.equal(result.allRecordedPairsMatch, false);
   assert.equal(result.officialAlgorithmVerified, false);
   assert.deepEqual(result.cases, []);
+});
+
+test('conflicting official readbacks block even a test candidate from using a deterministic gold set', async () => {
+  const result = await compareCandidateAgainstRecordedOfficialPairs(() => ({}));
+  assert.equal(result.status, 'BLOCKED_CONTRADICTORY_OFFICIAL_READBACKS');
+  assert.equal(result.availableVerifiedPairs, 0);
+  assert.equal(result.observedVerifiedPairs, 5);
+  assert.equal(result.contradictoryInputVectors, 1);
+  assert.equal(result.comparedPairs, 0);
+  assert.equal(result.officialAlgorithmVerified, false);
 });
 
 test('test-only candidate can match recorded cases but NEVER prove general official equivalence', async () => {
@@ -138,7 +151,7 @@ test('test-only candidate can match recorded cases but NEVER prove general offic
     JSON.stringify(fixture.input.selections), fixture.expectedOutput,
   ]));
   const result = await compareCandidateAgainstRecordedOfficialPairs(input =>
-    outputsByInput.get(JSON.stringify(input.selections)));
+    outputsByInput.get(JSON.stringify(input.selections)), stableObservations);
   assert.equal(result.status, 'RECORDED_SAMPLE_MATCH_ONLY');
   assert.equal(result.comparedPairs, 4);
   assert.equal(result.allRecordedPairsMatch, true);
@@ -146,7 +159,7 @@ test('test-only candidate can match recorded cases but NEVER prove general offic
   assert.ok(result.cases.every(row => row.matches));
   assert.deepEqual(result.cases.map(row => row.publicResultId), fixtures.map(row => row.publicResultId));
 
-  const wrong = await compareCandidateAgainstRecordedOfficialPairs(() => fixtures[0].expectedOutput);
+  const wrong = await compareCandidateAgainstRecordedOfficialPairs(() => fixtures[0].expectedOutput, stableObservations);
   assert.equal(wrong.status, 'RECORDED_SAMPLE_MISMATCH');
   assert.equal(wrong.allRecordedPairsMatch, false);
   assert.ok(wrong.cases[2].mismatches.includes('resultType'));
@@ -156,13 +169,13 @@ test('test-only candidate can match recorded cases but NEVER prove general offic
 test('candidate exceptions fail closed and cannot leak exception messages into audit rows', async () => {
   const result = await compareCandidateAgainstRecordedOfficialPairs(() => {
     throw new Error('do-not-copy-a-private-answer');
-  });
+  }, stableObservations);
   assert.equal(result.status, 'RECORDED_SAMPLE_MISMATCH');
   assert.equal(result.comparedPairs, 4);
   assert.ok(result.cases.every(row => !row.matches &&
     row.mismatches.join() === 'candidateScore.threw'));
   assert.doesNotMatch(JSON.stringify(result), /do-not-copy-a-private-answer/);
-  await assert.rejects(compareCandidateAgainstRecordedOfficialPairs({}), TypeError);
+  await assert.rejects(compareCandidateAgainstRecordedOfficialPairs({}, stableObservations), TypeError);
   const source = readFileSync(new URL('../lib/official-score-parity.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /\b(fetch|XMLHttpRequest|sendBeacon)\s*\(|api\/v1\/results/);
 });

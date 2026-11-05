@@ -26,7 +26,8 @@ test('verified official S2 gold pairs cannot silently mix incompatible versions'
 test('an unverified historical result from another version remains evidence, not a gold fixture', () => {
   const observations = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   observations[1].output = { ...observations[1].output, scoringVersion: 'season-2-score@3' };
-  const fixtures = buildVerifiedOfficialScoreFixtures(observations);
+  const fixtures = buildVerifiedOfficialScoreFixtures(
+    observations.filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc'));
   assert.equal(fixtures.length, 4);
   assert.ok(fixtures.every(f => f.input.scoringVersion === 'season-2-score@2'));
 });

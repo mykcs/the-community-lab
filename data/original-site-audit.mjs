@@ -24,10 +24,11 @@ export const ORIGINAL_SITE_AUDIT = Object.freeze({
   }),
 });
 
-// Five already-public, anonymous *synthetic* results. These observations are
+// Six already-public, anonymous *synthetic* results. These observations are
 // a narrow evidence subset: never copy referral codes, nicknames or real
 // participant answers into this repository. One historical UI session did NOT
-// verify its submitted choices. Four checked pairs are not a scoring rule.
+// verify its submitted choices. A repeated input produced a different output;
+// five checked pairs and four distinct input vectors are not a scoring rule.
 const observedSeason2Output = Object.freeze({
   season: 'season-2',
   questionnaireVersion: 'season-2@2026-08',
@@ -49,6 +50,19 @@ const observedSeason2PartialGroupOutput = Object.freeze({
   resultType: '결과·구조·의미',
   axes: Object.freeze([
     Object.freeze({ id: '원칙-결과', leftPercent: 49, rightPercent: 51, dominant: '결과', intensity: 1 }),
+    Object.freeze({ id: '구조-능력', leftPercent: 50, rightPercent: 50, dominant: '구조', intensity: 1 }),
+    Object.freeze({ id: '의미-실리', leftPercent: 50, rightPercent: 50, dominant: '의미', intensity: 1 }),
+  ]),
+});
+
+const observedSeason2RepeatedVectorOutput = Object.freeze({
+  season: 'season-2',
+  questionnaireVersion: 'season-2@2026-08',
+  questionSetHash: '2e4ed483b6b79197',
+  scoringVersion: 'season-2-score@2',
+  resultType: '결과·구조·의미',
+  axes: Object.freeze([
+    Object.freeze({ id: '원칙-결과', leftPercent: 42, rightPercent: 58, dominant: '결과', intensity: 1 }),
     Object.freeze({ id: '구조-능력', leftPercent: 50, rightPercent: 50, dominant: '구조', intensity: 1 }),
     Object.freeze({ id: '의미-실리', leftPercent: 50, rightPercent: 50, dominant: '의미', intensity: 1 }),
   ]),
@@ -128,5 +142,27 @@ export const OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS = Object.freeze([
       }),
     }),
     output: observedSeason2PartialGroupOutput,
+  }),
+  Object.freeze({
+    origin: 'anonymous_synthetic',
+    publicResultId: 'EvG6GUuDwVZomdTc',
+    resultCreatedAt: '2026-11-05T08:03:12.428Z',
+    inputVerification: 'verified',
+    input: Object.freeze({
+      pattern: 'by_question_id',
+      questionCount: 37,
+      questionIdsByChoice: Object.freeze({
+        O: Object.freeze([
+          'rp01', 'rp02', 'rp03', 'rp04', 'rp05', 'rp06', 'rp07', 'rp08', 'rp09', 'rp10', 'rp11', 'rp12',
+        ]),
+        X: Object.freeze([
+          'rp13',
+          'sa01', 'sa02', 'sa03', 'sa04', 'sa05', 'sa06', 'sa07',
+          'sa08', 'sa09', 'sa10', 'sa11', 'sa12', 'sa13',
+          'ms01', 'ms02', 'ms03', 'ms04', 'ms05', 'ms06', 'ms07', 'ms08', 'ms10', 'ms11', 'ms13',
+        ]),
+      }),
+    }),
+    output: observedSeason2RepeatedVectorOutput,
   }),
 ]);
