@@ -576,3 +576,21 @@ test('both reviewer pages expose the same separately marked, unreviewed idiom no
   assert.match(html, /if\(q.reader_note_zh_cn\)zp.append/);
   assert.match(standaloneHtml, /if\(q.reader_note_zh_cn\)zp.append/);
 });
+
+test('S1 politics 12 preserves the Korean causative meaning in both unreviewed drafts', () => {
+  const question = data.questions.find(q => q.id === 's1-politics-12');
+  assert.ok(question);
+  assert.match(question.source_text_ko, /모든 사람들이 비슷한 월급을 받게 하는 나라/);
+  assert.equal(question.translation_zh_cn, '我不想生活在一个让所有人都拿相近工资的国家。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.source_checked_at, '2026-11-05');
+  assert.match(question.translator_note, /使役结构.*받게 하다/);
+  assert.match(question.translator_note, /未进行独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+  assert.match(data.translation_review.editorial_pass, /s1-politics-12.*받게 하다/);
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+  assert.deepEqual(standaloneData.translation_review, data.translation_review);
+});
