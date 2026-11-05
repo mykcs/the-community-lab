@@ -49,6 +49,7 @@ export default defineConfig({
   webServer: {
     command: webServerCommand,
     url: `${baseURL}questionnaire/`,
+    // Avoid accidentally testing against a preview built with a different base path.
     reuseExistingServer: false,
     timeout: 120_000,
     env: { COMMUNITY_DEPLOY_TARGET: 'github-pages' },
