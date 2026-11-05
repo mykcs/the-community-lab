@@ -12,9 +12,10 @@ const embedded = JSON.stringify(pack).replace(/</g, '\\u003c').replace(/\u2028/g
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Private answers remain in memory. Block incidental fetch/beacon/pixel/form
-         egress at the browser boundary, independently of app event handlers. -->
-    <meta http-equiv="Content-Security-Policy" content="connect-src &#39;none&#39;; img-src &#39;self&#39; data:; form-action &#39;none&#39;; object-src &#39;none&#39;" />
+    <!-- Private answers stay in memory. Deny resource egress by default:
+         connect-src alone does not cover frames, media or same-origin pixels.
+         Permit only the static app assets and inline styles; no forms/embeds. -->
+    <meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;self&#39;; style-src &#39;self&#39; &#39;unsafe-inline&#39;; img-src data:; font-src &#39;self&#39; data:; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;" />
     <meta name="theme-color" content="#101319" />
     <meta name="description" content="The Community Lab 非官方试填：公开客户端当前已观察到第一季 87 题、第二季 37 题，韩文原文与未经人工复核的中文 AI 初译。完整路径、权利原件及官方计分均未核验。" />
     <title>公开客户端已观测的 124 道题 · 非官方试填 | The Community Lab</title>
