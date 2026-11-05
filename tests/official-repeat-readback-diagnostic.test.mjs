@@ -6,9 +6,9 @@ import { diagnoseExistingRepeatedReadbacks } from '../scripts/diagnose-s2-readba
 
 const samples = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS;
 const repeated = samples.filter(row =>
-  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc'].includes(row.publicResultId));
-const diagnosticSamples = samples.filter(row =>
-  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc'].includes(row.publicResultId));
+  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS']
+    .includes(row.publicResultId));
+const diagnosticSamples = samples;
 const sha = text => createHash('sha256').update(text).digest('hex');
 const syntheticTitle = '합성 결과 제목';
 const syntheticSummary = '테스트용 합성 설명';
@@ -38,24 +38,30 @@ function fakeLive() {
 }
 
 test('read-only diagnostic pinpoints which official score fields disagree without revealing personal fields', () => {
-  assert.equal(repeated.length, 2);
+  assert.equal(repeated.length, 4);
   const result = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
-  assert.equal(result.repeatedInputPairs, 1);
+  assert.equal(result.repeatedInputPairs, 6);
   assert.equal(result.rootCauseEstablished, false);
   assert.equal(result.officialScoringEquivalenceVerified, false);
-  assert.deepEqual(result.pairs, [{
-    status: 'CONFIRMED_REPEATED_INPUT_CONFLICT',
-    recordedInputCount: 37,
-    differentOfficialFields: [
-      'axes.원칙-결과.leftPercent',
-      'axes.원칙-결과.rightPercent',
-    ],
-    versionFieldsMatch: true,
-    titleAndSummaryMatch: true,
-    createdAtSame: false,
-    storedAtSame: false,
-    consentVersionSame: true,
-  }]);
+  assert.deepEqual(result.pairs.map(pair => pair.status), [
+    'CONFIRMED_REPEATED_INPUT_CONFLICT',
+    'CONFIRMED_REPEATED_INPUT_CONFLICT',
+    'CONFIRMED_REPEATED_INPUT_CONFLICT',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+  ]);
+  for (const pair of result.pairs) {
+    assert.equal(pair.recordedInputCount, 37);
+    assert.equal(pair.versionFieldsMatch, true);
+    assert.equal(pair.titleAndSummaryMatch, true);
+    assert.equal(pair.createdAtSame, false);
+    assert.equal(pair.storedAtSame, false);
+    assert.equal(pair.consentVersionSame, true);
+    assert.deepEqual(pair.differentOfficialFields,
+      pair.status === 'CONFIRMED_REPEATED_INPUT_CONFLICT'
+        ? ['axes.원칙-결과.leftPercent', 'axes.원칙-결과.rightPercent'] : []);
+  }
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /SECRET_NEVER_OUTPUT|referral|nickname|answers|2026-|publicResultId/);
   assert.doesNotMatch(serialized, /49|42|58|51/);
@@ -79,7 +85,7 @@ test('readback drift is a hard stop, never an unexamined duplicate-result findin
 
 test('unverified historical responses and private fields never become repeat-input evidence', () => {
   const report = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
-  assert.equal(report.repeatedInputPairs, 1);
+  assert.equal(report.repeatedInputPairs, 6);
   assert.equal(samples.filter(row => row.inputVerification === 'unverified').length, 1);
   assert.throws(() => diagnoseExistingRepeatedReadbacks(diagnosticSamples, {}, references), /Map/);
 });
