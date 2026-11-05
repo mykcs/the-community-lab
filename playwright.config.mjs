@@ -1,7 +1,15 @@
 import { defineConfig } from '@playwright/test';
 
-const baseURL = 'http://127.0.0.1:4321/the-community-lab/';
-const previewCommand = 'npm run preview -- --host 127.0.0.1 --port 4321';
+// Multiple authorized agents may run browser QA at once on the same Mac.
+// Preserve CI's default but allow isolated local listeners without killing
+// someone else's preview process or accepting an unsafe shell argument.
+const portText = process.env.COMMUNITY_BROWSER_PORT ?? '4321';
+if (!/^\d+$/.test(portText) || Number(portText) < 1024 || Number(portText) > 65535) {
+  throw new Error('COMMUNITY_BROWSER_PORT must be an integer between 1024 and 65535');
+}
+const port = Number(portText);
+const baseURL = `http://127.0.0.1:${port}/the-community-lab/`;
+const previewCommand = `npm run preview -- --host 127.0.0.1 --port ${port}`;
 // CI already built the exact PR head with GitHub Pages paths. Locally, an
 // ordinary Astro build defaults to the old Vercel root, making every
 // Pages-path browser test time out. Build the correct target before preview.

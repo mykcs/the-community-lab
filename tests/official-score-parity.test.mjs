@@ -12,8 +12,8 @@ import {
 const fixtures = buildVerifiedOfficialScoreFixtures();
 
 test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-value fixtures', () => {
-  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 4);
-  assert.equal(fixtures.length, 3);
+  assert.equal(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.length, 5);
+  assert.equal(fixtures.length, 4);
   const source = SOURCE_INDEX.questions.filter(q => q.season === 2)
     .sort((a, b) => a.displayPositionDerivedFromClient - b.displayPositionDerivedFromClient);
   const allowed = new Map(source.map(q => [q.sourceQuestionId, q.optionValues]));
@@ -33,13 +33,24 @@ test('only verified S2 synthetic inputs become frozen, complete source-ID/raw-va
     assert.ok(Object.isFrozen(fixture.input));
     assert.deepEqual(Object.keys(fixture), ['publicResultId', 'input', 'expectedOutput']);
   }
-  const [uniform, sourceGroup, partialGroup] = fixtures;
+  const [uniform, sourceGroup, elevenPrincipleO, twelvePrincipleO] = fixtures;
   assert.ok(uniform.input.selections.every(row => row.selectedValue === 'O'));
   assert.equal(sourceGroup.input.selections.filter(row => row.selectedValue === 'O').length, 13);
-  assert.equal(partialGroup.input.selections.filter(row => row.selectedValue === 'O').length, 11);
+  assert.equal(elevenPrincipleO.input.selections.filter(row => row.selectedValue === 'O').length, 11);
+  assert.equal(twelvePrincipleO.input.selections.filter(row => row.selectedValue === 'O').length, 12);
   assert.deepEqual(sourceGroup.input.selections.filter(row => row.selectedValue !==
-    partialGroup.input.selections.find(other => other.questionId === row.questionId).selectedValue)
+    elevenPrincipleO.input.selections.find(other => other.questionId === row.questionId).selectedValue)
     .map(row => row.questionId).sort(), ['rp12', 'rp13']);
+  assert.deepEqual(elevenPrincipleO.input.selections.filter(row => row.selectedValue !==
+    twelvePrincipleO.input.selections.find(other => other.questionId === row.questionId).selectedValue)
+    .map(row => row.questionId), ['rp12']);
+  assert.deepEqual(sourceGroup.input.selections.filter(row => row.selectedValue !==
+    twelvePrincipleO.input.selections.find(other => other.questionId === row.questionId).selectedValue)
+    .map(row => row.questionId), ['rp13']);
+  assert.deepEqual(compareRecordedOfficialScoreFields(elevenPrincipleO.expectedOutput,
+    twelvePrincipleO.expectedOutput), { matches: true, mismatches: [] });
+  assert.equal(compareRecordedOfficialScoreFields(sourceGroup.expectedOutput,
+    twelvePrincipleO.expectedOutput).matches, false);
   assert.throws(() => { fixtures[0].input.selections[0].selectedValue = 'X'; }, TypeError);
   assert.ok(!fixtures.some(row => row.publicResultId === '0JR4VZqW4PrpCqv7'),
     'never infer an unverified historical answer vector from its official output');
@@ -60,7 +71,7 @@ test('official fixtures refuse source-index reordering or raw-value drift even w
   changedValueOrder.questions.find(q => q.season === 2).optionValues.reverse();
   assert.throws(() => buildVerifiedOfficialScoreFixtures(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS, changedValueOrder),
     /源题元数据指纹不匹配/);
-  assert.equal(buildVerifiedOfficialScoreFixtures().length, 3, 'untouched pinned index must remain usable');
+  assert.equal(buildVerifiedOfficialScoreFixtures().length, 4, 'untouched pinned index must remain usable');
 });
 
 test('official score fixtures detach and deeply freeze expected outputs', () => {
@@ -113,7 +124,7 @@ test('official comparisons cover every public field exactly, regardless of axis 
 test('absent scorer is an explicit block, never a vacuous 0/0 success', async () => {
   const result = await compareCandidateAgainstRecordedOfficialPairs();
   assert.equal(result.status, 'BLOCKED_NO_LOCAL_OFFICIAL_SCORER');
-  assert.equal(result.availableVerifiedPairs, 3);
+  assert.equal(result.availableVerifiedPairs, 4);
   assert.equal(result.comparedPairs, 0);
   assert.equal(result.allRecordedPairsMatch, false);
   assert.equal(result.officialAlgorithmVerified, false);
@@ -129,7 +140,7 @@ test('test-only candidate can match recorded cases but NEVER prove general offic
   const result = await compareCandidateAgainstRecordedOfficialPairs(input =>
     outputsByInput.get(JSON.stringify(input.selections)));
   assert.equal(result.status, 'RECORDED_SAMPLE_MATCH_ONLY');
-  assert.equal(result.comparedPairs, 3);
+  assert.equal(result.comparedPairs, 4);
   assert.equal(result.allRecordedPairsMatch, true);
   assert.equal(result.officialAlgorithmVerified, false);
   assert.ok(result.cases.every(row => row.matches));
@@ -147,7 +158,7 @@ test('candidate exceptions fail closed and cannot leak exception messages into a
     throw new Error('do-not-copy-a-private-answer');
   });
   assert.equal(result.status, 'RECORDED_SAMPLE_MISMATCH');
-  assert.equal(result.comparedPairs, 3);
+  assert.equal(result.comparedPairs, 4);
   assert.ok(result.cases.every(row => !row.matches &&
     row.mismatches.join() === 'candidateScore.threw'));
   assert.doesNotMatch(JSON.stringify(result), /do-not-copy-a-private-answer/);
