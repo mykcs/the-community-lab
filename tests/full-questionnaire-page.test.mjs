@@ -13,6 +13,14 @@ const page = readFileSync(new URL('../src/pages/questionnaire/index.astro', impo
 const app = readFileSync(new URL('../full-questionnaire-app.mjs', import.meta.url), 'utf8');
 const loader = readFileSync(new URL('../scripts/load-full-questionnaire.mjs', import.meta.url), 'utf8');
 
+test('quiz announces the current question and answered count to assistive technology', () => {
+  assert.match(page, /id="full-announcement"[^>]*role="status"[^>]*aria-live="polite"[^>]*aria-atomic="true"/);
+  assert.match(page, /\.full-sr-only\{position:absolute;width:1px;height:1px/);
+  assert.match(app, /function updateProgress\(questions\)[\s\S]*?full-announcement'\)\.textContent = `第 \$\{active\.index \+ 1\} \/ \$\{questions\.length\} 题；已答 \$\{answered\} \/ \$\{questions\.length\} 题。`;/);
+  assert.equal((app.match(/updateProgress\(questions\);/g) || []).length, 2,
+    'announce progress after rendering a question and after changing an answer');
+});
+
 test('two source seasons, provenance and unreviewed pilot disclosures appear in the page', () => {
   assert.match(page, /data-start-season="1"/);
   assert.match(page, /data-start-season="2"/);

@@ -53,6 +53,29 @@ test('season two answers, navigation, and in-memory resume work', async ({ page 
   await expectNoHorizontalOverflow(page);
 });
 
+for (const [season, questionCount] of [[1, 87], [2, 37]]) {
+  test(`season ${season} announces the current question and answered count`, async ({ page }) => {
+    await page.goto(`/the-community-lab/questionnaire/?season=${season}`);
+    const announcement = page.locator('#full-announcement');
+    await expect(announcement).toHaveAttribute('role', 'status');
+    await expect(announcement).toHaveAttribute('aria-live', 'polite');
+    await expect(announcement).toHaveText(`第 1 / ${questionCount} 题；已答 0 / ${questionCount} 题。`);
+
+    await page.locator('.full-choice').first().click();
+    await expect(announcement).toHaveText(`第 1 / ${questionCount} 题；已答 1 / ${questionCount} 题。`);
+    await page.locator('#full-next').click();
+    await expect(announcement).toHaveText(`第 2 / ${questionCount} 题；已答 1 / ${questionCount} 题。`);
+    await page.locator('#full-prev').click();
+    await expect(announcement).toHaveText(`第 1 / ${questionCount} 题；已答 1 / ${questionCount} 题。`);
+    await page.locator('.full-choice').nth(1).click();
+    await expect(announcement).toHaveText(`第 1 / ${questionCount} 题；已答 1 / ${questionCount} 题。`);
+    await expect(page.locator('#full-position')).toContainText(`第 01 / ${questionCount} 题`);
+    await expect(page.locator('#full-count')).toContainText(`已答 1 / ${questionCount}`);
+    await expect(page.locator('#full-progress')).toHaveAttribute('value', '1');
+    await expectNoHorizontalOverflow(page);
+  });
+}
+
 test('season one local download works and a reload never restores it automatically', async ({ page }) => {
   await page.goto('/the-community-lab/questionnaire/');
   await page.locator('[data-start-season="1"]').click();
