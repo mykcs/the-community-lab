@@ -68,7 +68,7 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算；Supabase 项目已配置隔离数据库，但 GitHub OAuth、网站运行配置与真实用户答卷保存尚未验收，采集功能保持关闭。不得创建宽权限 GitHub Token 来绕过现有边界。
 
-可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。Supabase 项目及隔离／90 天保留迁移已部署；GitHub OAuth 客户端、专用网站 origin、网站构建变量和注销 Edge Function 尚未配置或验收。保存与注销开关仍默认关闭，不能将数据库部署当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。
+可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。Supabase 项目及隔离／90 天保留迁移已部署；GitHub Auth provider 仍禁用，Dashboard 中已有客户端字段的有效性未核实；专用网站 origin、网站构建变量和注销 Edge Function 也未配置或验收。保存与注销开关仍默认关闭，不能将数据库部署当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。
 
 
 ### 历史保存期限决定（2026-11-05，数据库已部署、采集未启用）

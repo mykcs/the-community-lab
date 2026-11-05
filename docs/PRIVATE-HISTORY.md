@@ -2,7 +2,7 @@
 
 本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。免费层 Supabase 项目已建于 West US (Oregon) `us-west-2`、Nano。2026-11-05 的部署记录显示私人历史与 90 天保留迁移已应用，Cron 已注册；当前 Dashboard 也能读到 `public.test_runs`、RLS 开启以及 SELECT／INSERT／DELETE 三条 owner/session 策略。保存设置仍为 `enabled=false`，网站采集未启用。
 
-本轮 Dashboard 读回确认：Supabase 项目中的 GitHub Auth provider 仍禁用；Site URL 还是 `http://localhost:3000`，Redirect URLs 为空。GitHub OAuth 客户端、网站构建变量和注销 Edge Function 仍未配置。项目记录的状态需要以当前 Dashboard 和 [部署记录](DEPLOYMENT.md) 为准；不得把控制面登录成功说成网站 GitHub 登录已经可用。
+本轮 Dashboard 读回确认：Supabase 项目中的 GitHub Auth provider 仍禁用；Site URL 还是 `http://localhost:3000`，Redirect URLs 为空。GitHub provider 表单载入后显示了已填客户端字段及遮蔽的 secret，但无法据此确认凭据属于哪个 GitHub OAuth App 或仍然有效；网站构建变量和注销 Edge Function 仍未配置。项目记录的状态需要以当前 Dashboard 和 [部署记录](DEPLOYMENT.md) 为准；不得把控制面登录成功说成网站 GitHub 登录已经可用。
 
 当前代码可以在本机使用合成数据验收。真实 GitHub、Supabase 网关及服务器会话的验收未完成，不能据此打开生产保存。此工作线保持 Draft PR；启用前仍需专属网站域名、OAuth 配置、Cron 实际运行、备份／日志保留披露和双账号隔离验收。
 

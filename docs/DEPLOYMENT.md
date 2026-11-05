@@ -165,7 +165,7 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - 用户授权创建免费资源。Supabase 组织 `The Community Lab` 为 Free；项目 `The Community Lab History` 的项目 ref 为 `hfhhjpnibrgisbkmlbzz`，创建时选择 **West US (Oregon), `us-west-2`**。项目状态读回为 `Healthy`；未升级或绑定付款方式。
 - 在 Supabase SQL Editor 应用了 PR #11 HEAD `a196050` 的私人历史迁移和 90 天保留迁移。项目启用 `pg_cron 1.6.4` 后，实时读回确认 `public.test_runs` 的 RLS 与 FORCE RLS 均开启，三条 owner/session 策略存在，捕获设置为 `enabled=false`，保留策略过滤 2160 小时前的记录。
 - `community-history-retention-90-days` Cron 作业已注册并读回为 active。首次执行在每分钟调度下以 `succeeded` 结束；随后根据 Cron 运行记录会持续增长的事实改为每小时 `0 * * * *`，源迁移与合成 PostgreSQL 测试同步更新。小时频率下的首次执行仍待之后的运行记录确认。
-- 迁移由 Dashboard SQL Editor 手动执行；没有 Supabase CLI migration-ledger 读回。当前没有 GitHub OAuth 客户端、Pages 构建变量或注销 Edge Function；项目中没有用户测试结果，保存功能仍关闭。`mykcs.github.io` 共享 origin 不可用于登录，需先绑定用户控制的域名，再完成 OAuth、两个真实账号互相隔离及删除读回验收。
+- 迁移由 Dashboard SQL Editor 手动执行；没有 Supabase CLI migration-ledger 读回。最新 Dashboard 显示 GitHub Auth provider 仍禁用，Site URL 为 `http://localhost:3000` 且 Redirect URLs 为空。provider 表单显示已填客户端字段和遮蔽的 secret，但没有核实其 GitHub OAuth App 身份或有效性；Pages 构建变量和注销 Edge Function 仍未配置。项目中没有用户测试结果，保存功能仍关闭。`mykcs.github.io` 共享 origin 不可用于登录，需先绑定用户控制的域名，再完成 OAuth、两个真实账号互相隔离及删除读回验收。
 
 ## 2026-10-30 PR #35 自动发布验收
 
