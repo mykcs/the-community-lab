@@ -220,13 +220,20 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
 test('PG_RULES_WITH_SYNTHETIC_AUTH: 90-day expiry hides and purges only expired rows', async t => {
   const { pg } = await createHistoryDatabase();
   try {
+    const retentionMigration = await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8');
+    // A missing scheduler must fail the atomic migration, never silently install
+    // a policy that promises physical cleanup without a registered job.
+    await assert.rejects(pg.exec(retentionMigration), error => error.code === '3F000');
+    await pg.exec('ROLLBACK');
+    assert.equal((await pg.query("SELECT to_regprocedure('community_private.purge_expired_history()') AS fn")).rows[0].fn, null);
+    assert.equal((await pg.query('SELECT enabled FROM community_private.history_capture_settings')).rows[0].enabled, false);
     // Scheduling capture is a test double, not proof of Supabase Cron execution.
     await pg.exec(`CREATE SCHEMA cron;
       CREATE TABLE cron.scheduled(name text, schedule text, command text);
       CREATE FUNCTION cron.schedule(text,text,text) RETURNS bigint LANGUAGE sql AS $$
         INSERT INTO cron.scheduled VALUES ($1,$2,$3) RETURNING 1::bigint;
       $$;`);
-    await pg.exec(await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8'));
+    await pg.exec(retentionMigration);
     const jobs = (await pg.query('SELECT * FROM cron.scheduled')).rows;
     assert.equal(jobs.length, 1);
     assert.equal(jobs[0].schedule, '* * * * *');
