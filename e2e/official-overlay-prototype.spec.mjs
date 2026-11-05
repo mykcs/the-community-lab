@@ -217,3 +217,45 @@ test('moving the Korean source and its Chinese label together removes stale over
   await page.evaluate(() => window.activeOverlayProbe.stop());
   expect(network).toEqual([]);
 });
+
+test('cloning annotated host DOM removes copied translation labels without touching host notes', async ({ page }) => {
+  const requests = [];
+  page.on('request', request => requests.push(request.url()));
+  await fixture(page);
+  await page.evaluate(data => {
+    window.activeOverlayProbe = window.CommunityOfficialOverlayProbe.install({
+      root: document.querySelector('#fixture'), entries: data,
+    });
+  }, entries);
+
+  const original = page.locator('section').first();
+  await expect(original.locator('[data-translation-overlay-probe]')).toHaveCount(3);
+  await page.evaluate(() => {
+    const section = document.querySelector('section');
+    const host = document.createElement('span');
+    host.setAttribute('data-translation-overlay-probe', '');
+    host.textContent = 'HOST OWNED';
+    section.append(host);
+    const clone = section.cloneNode(true);
+    clone.id = 'cloned-question';
+    document.querySelector('#fixture').append(clone);
+  });
+  const clone = page.locator('#cloned-question');
+  // A cloned label looks identical but was not validated for the cloned source.
+  // Only three freshly installed labels may remain, not six.
+  await expect(clone.locator('[data-translation-overlay-probe]')).toHaveCount(4);
+  await expect(original.locator('[data-translation-overlay-probe]')).toHaveCount(4);
+  await expect(clone.locator('[data-translation-overlay-probe]:not([data-translation-overlay-probe-owner])'))
+    .toHaveText('HOST OWNED');
+  await expect(original.locator('[data-translation-overlay-probe]:not([data-translation-overlay-probe-owner])'))
+    .toHaveText('HOST OWNED');
+
+  await clone.locator('[data-source-ko-question]').evaluate(node => { node.textContent = '바뀐 질문'; });
+  await expect(clone.locator('[data-translation-overlay-probe]')).toHaveCount(1);
+  await expect(original.locator('[data-translation-overlay-probe]')).toHaveCount(4);
+  await original.locator('[data-source-option-value="X"]').click();
+  await expect(page.locator('#host-output')).toHaveText('X');
+  await page.evaluate(() => window.activeOverlayProbe.stop());
+  await expect(page.locator('[data-translation-overlay-probe]')).toHaveCount(2);
+  expect(requests).toEqual([]);
+});
