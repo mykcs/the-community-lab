@@ -24,11 +24,11 @@ export const ORIGINAL_SITE_AUDIT = Object.freeze({
   }),
 });
 
-// Six already-public, anonymous *synthetic* results. These observations are
+// Eight already-public, anonymous *synthetic* results. These observations are
 // a narrow evidence subset: never copy referral codes, nicknames or real
 // participant answers into this repository. One historical UI session did NOT
-// verify its submitted choices. A repeated input produced a different output;
-// five checked pairs and four distinct input vectors are not a scoring rule.
+// verify its submitted choices. Repeated input produced different outputs;
+// seven checked pairs and four distinct input vectors are not a scoring rule.
 const observedSeason2Output = Object.freeze({
   season: 'season-2',
   questionnaireVersion: 'season-2@2026-08',
@@ -147,6 +147,50 @@ export const OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS = Object.freeze([
     origin: 'anonymous_synthetic',
     publicResultId: 'EvG6GUuDwVZomdTc',
     resultCreatedAt: '2026-11-05T08:03:12.428Z',
+    inputVerification: 'verified',
+    input: Object.freeze({
+      pattern: 'by_question_id',
+      questionCount: 37,
+      questionIdsByChoice: Object.freeze({
+        O: Object.freeze([
+          'rp01', 'rp02', 'rp03', 'rp04', 'rp05', 'rp06', 'rp07', 'rp08', 'rp09', 'rp10', 'rp11', 'rp12',
+        ]),
+        X: Object.freeze([
+          'rp13',
+          'sa01', 'sa02', 'sa03', 'sa04', 'sa05', 'sa06', 'sa07',
+          'sa08', 'sa09', 'sa10', 'sa11', 'sa12', 'sa13',
+          'ms01', 'ms02', 'ms03', 'ms04', 'ms05', 'ms06', 'ms07', 'ms08', 'ms10', 'ms11', 'ms13',
+        ]),
+      }),
+    }),
+    output: observedSeason2RepeatedVectorOutput,
+  }),
+  Object.freeze({
+    origin: 'anonymous_synthetic',
+    publicResultId: 'UhcZYwxcXKtGKCQA',
+    resultCreatedAt: '2026-11-05T09:12:37.694Z',
+    inputVerification: 'verified',
+    input: Object.freeze({
+      pattern: 'by_question_id',
+      questionCount: 37,
+      questionIdsByChoice: Object.freeze({
+        O: Object.freeze([
+          'rp01', 'rp02', 'rp03', 'rp04', 'rp05', 'rp06', 'rp07', 'rp08', 'rp09', 'rp10', 'rp11', 'rp12',
+        ]),
+        X: Object.freeze([
+          'rp13',
+          'sa01', 'sa02', 'sa03', 'sa04', 'sa05', 'sa06', 'sa07',
+          'sa08', 'sa09', 'sa10', 'sa11', 'sa12', 'sa13',
+          'ms01', 'ms02', 'ms03', 'ms04', 'ms05', 'ms06', 'ms07', 'ms08', 'ms10', 'ms11', 'ms13',
+        ]),
+      }),
+    }),
+    output: observedSeason2RepeatedVectorOutput,
+  }),
+  Object.freeze({
+    origin: 'anonymous_synthetic',
+    publicResultId: 'Im8DirzXwGTAQygS',
+    resultCreatedAt: '2026-11-05T10:08:56.116Z',
     inputVerification: 'verified',
     input: Object.freeze({
       pattern: 'by_question_id',

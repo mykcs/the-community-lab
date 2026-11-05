@@ -6,10 +6,10 @@ import { buildVerifiedOfficialScoreFixtures, summarizeVerifiedOfficialScoreInput
 test('verified S2 inputs expose two one-question contrasts and one repeat conflict without proving the scoring algorithm', () => {
   const coverage = summarizeVerifiedOfficialScoreInputCoverage();
   assert.deepEqual(coverage, {
-    verifiedPairs: 5,
+    verifiedPairs: 7,
     questionCount: 37,
     uniqueInputVectors: 4,
-    repeatedInputObservations: 1,
+    repeatedInputObservations: 3,
     contradictoryInputVectors: 1,
     repeatedInputOutputsConsistent: false,
     questionsObservedWithBothValues: 26,
@@ -29,7 +29,8 @@ test('verified S2 inputs expose two one-question contrasts and one repeat confli
 
 test('the new official vector differs from the 11-O and 13-O vectors only at rp12 and rp13', () => {
   const samples = buildVerifiedOfficialScoreFixtures(
-    OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.filter(row => row.publicResultId !== 'EvG6GUuDwVZomdTc'));
+    OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS.filter(row =>
+      !['EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS'].includes(row.publicResultId)));
   const eleven = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 11);
   const twelve = samples.find(row => row.publicResultId === '3NtECOtE1ebvmN-C');
   const thirteen = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 13);

@@ -7,6 +7,8 @@ import { diagnoseExistingRepeatedReadbacks } from '../scripts/diagnose-s2-readba
 const samples = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS;
 const repeated = samples.filter(row =>
   ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc'].includes(row.publicResultId));
+const diagnosticSamples = samples.filter(row =>
+  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc'].includes(row.publicResultId));
 const sha = text => createHash('sha256').update(text).digest('hex');
 const syntheticTitle = '합성 결과 제목';
 const syntheticSummary = '테스트용 합성 설명';
@@ -37,7 +39,7 @@ function fakeLive() {
 
 test('read-only diagnostic pinpoints which official score fields disagree without revealing personal fields', () => {
   assert.equal(repeated.length, 2);
-  const result = diagnoseExistingRepeatedReadbacks(samples, fakeLive(), references);
+  const result = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
   assert.equal(result.repeatedInputPairs, 1);
   assert.equal(result.rootCauseEstablished, false);
   assert.equal(result.officialScoringEquivalenceVerified, false);
@@ -63,21 +65,21 @@ test('readback drift is a hard stop, never an unexamined duplicate-result findin
   const live = fakeLive();
   const changed = live.get(repeated[1].publicResultId);
   changed.axes[0].leftPercent = 48;
-  assert.equal(diagnoseExistingRepeatedReadbacks(samples, live, references).pairs[0].status,
+  assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
     'BLOCKED_READBACK_DRIFT');
   changed.axes[0].leftPercent = repeated[1].output.axes[0].leftPercent;
   changed.createdAt = 'unexpected';
-  assert.equal(diagnoseExistingRepeatedReadbacks(samples, live, references).pairs[0].status,
+  assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
     'BLOCKED_READBACK_DRIFT');
   changed.createdAt = repeated[1].resultCreatedAt;
   changed.title = 'wrong synthetic display';
-  assert.equal(diagnoseExistingRepeatedReadbacks(samples, live, references).pairs[0].status,
+  assert.equal(diagnoseExistingRepeatedReadbacks(diagnosticSamples, live, references).pairs[0].status,
     'BLOCKED_READBACK_DRIFT');
 });
 
 test('unverified historical responses and private fields never become repeat-input evidence', () => {
-  const report = diagnoseExistingRepeatedReadbacks(samples, fakeLive(), references);
+  const report = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
   assert.equal(report.repeatedInputPairs, 1);
   assert.equal(samples.filter(row => row.inputVerification === 'unverified').length, 1);
-  assert.throws(() => diagnoseExistingRepeatedReadbacks(samples, {}, references), /Map/);
+  assert.throws(() => diagnoseExistingRepeatedReadbacks(diagnosticSamples, {}, references), /Map/);
 });
