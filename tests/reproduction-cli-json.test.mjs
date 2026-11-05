@@ -36,11 +36,11 @@ test('reproduction audit --json emits one parseable document with honest scoring
     report.reproductionAudit.rows.map(row => row.licensedReviewedOfficialQuestionCount),
     [0, 0],
   );
-  assert.equal(report.officialScoreEvidence.observedAnonymousSyntheticResults, 4);
-  assert.equal(report.officialScoreEvidence.verifiedInputOutputPairs, 3);
+  assert.equal(report.officialScoreEvidence.observedAnonymousSyntheticResults, 5);
+  assert.equal(report.officialScoreEvidence.verifiedInputOutputPairs, 4);
   assert.equal(report.officialScoreOutputCoverage.officialAlgorithmVerified, false);
   assert.equal(report.officialScoreInputCoverage.questionCount, 37);
-  assert.equal(report.localOfficialScoreComparison.availableVerifiedPairs, 3);
+  assert.equal(report.localOfficialScoreComparison.availableVerifiedPairs, 4);
   assert.equal(report.localOfficialScoreComparison.comparedPairs, 0);
   assert.equal(report.localOfficialScoreComparison.allRecordedPairsMatch, false);
   assert.equal(report.localOfficialScoreComparison.status, 'BLOCKED_NO_LOCAL_OFFICIAL_SCORER');
@@ -58,7 +58,7 @@ test('reproduction audit retains its human-readable report without --json', () =
   const result = run();
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /最终愿望/);
-  assert.match(result.stdout, /官方 S2 匿名合成结果读回 4 份；完整输入→输出样本 3 份/);
+  assert.match(result.stdout, /官方 S2 匿名合成结果读回 5 份；完整输入→输出样本 4 份/);
   assert.match(result.stdout, /实际比较 0 份/);
   assert.match(result.stdout, /S1 87 题／476 选项；S2 37 题／74 选项/);
   assert.match(result.stdout, /许可原件未独立核验、真人双语审校未完成/);

@@ -1,29 +1,47 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS } from '../data/original-site-audit.mjs';
-import { summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
+import { buildVerifiedOfficialScoreFixtures, summarizeVerifiedOfficialScoreInputCoverage } from '../lib/official-score-parity.mjs';
 
-test('verified S2 inputs do not contain any isolated one-question score contrast', () => {
+test('verified S2 inputs expose two one-question contrasts without proving the scoring algorithm', () => {
   const coverage = summarizeVerifiedOfficialScoreInputCoverage();
   assert.deepEqual(coverage, {
-    verifiedPairs: 3,
+    verifiedPairs: 4,
     questionCount: 37,
-    uniqueInputVectors: 3,
+    uniqueInputVectors: 4,
     questionsObservedWithBothValues: 26,
     questionsObservedWithOnlyOneValue: 11,
     questionsObservedWithNoVerifiedValues: 0,
-    comparedInputPairs: 3,
-    singleQuestionContrastPairs: 0,
-    groupLocalContrastPairs: 1,
-    groupLocalContrasts: [{
-      sourceGroup: '원칙-결과',
-      differingQuestions: 2,
-      changedScoreAxisIds: ['원칙-결과'],
-    }],
-    minPairwiseHammingDistance: 2,
+    comparedInputPairs: 6,
+    singleQuestionContrastPairs: 2,
+    groupLocalContrastPairs: 3,
+    groupLocalContrasts: [
+      { sourceGroup: '원칙-결과', differingQuestions: 2, changedScoreAxisIds: ['원칙-결과'] },
+      { sourceGroup: '원칙-결과', differingQuestions: 1, changedScoreAxisIds: ['원칙-결과'] },
+      { sourceGroup: '원칙-결과', differingQuestions: 1, changedScoreAxisIds: [] },
+    ],
+    minPairwiseHammingDistance: 1,
     maxPairwiseHammingDistance: 26,
     officialAlgorithmVerified: false,
   });
+});
+
+test('the new official vector differs from the 11-O and 13-O vectors only at rp12 and rp13', () => {
+  const samples = buildVerifiedOfficialScoreFixtures();
+  const eleven = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 11);
+  const twelve = samples.find(row => row.publicResultId === '3NtECOtE1ebvmN-C');
+  const thirteen = samples.find(row => row.input.selections.filter(item => item.selectedValue === 'O').length === 13);
+  const selected = sample => new Map(sample.input.selections.map(row => [row.questionId, row.selectedValue]));
+  const diff = (a, b) => [...selected(a)].filter(([id, value]) => selected(b).get(id) !== value)
+    .map(([id]) => id).sort();
+  assert.ok(eleven && twelve && thirteen);
+  assert.deepEqual(diff(eleven, twelve), ['rp12']);
+  assert.deepEqual(diff(thirteen, twelve), ['rp13']);
+  assert.deepEqual(twelve.expectedOutput.axes.map(({ leftPercent, rightPercent, dominant, intensity }) =>
+    [leftPercent, rightPercent, dominant, intensity]), eleven.expectedOutput.axes.map(({ leftPercent, rightPercent, dominant, intensity }) =>
+    [leftPercent, rightPercent, dominant, intensity]));
+  assert.notDeepEqual(twelve.expectedOutput.axes[0], thirteen.expectedOutput.axes[0]);
+  assert.equal(summarizeVerifiedOfficialScoreInputCoverage().officialAlgorithmVerified, false);
 });
 
 test('unverified historical results cannot be counted as input diversity', () => {
@@ -39,31 +57,31 @@ test('unverified historical results cannot be counted as input diversity', () =>
 
 test('duplicate verified input lowers diversity instead of inflating coverage', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
-  samples[3].input = structuredClone(samples[2].input);
+  samples[4].input = structuredClone(samples[3].input);
   // A repeated official input may corroborate reliability only with the same output.
-  samples[3].output = structuredClone(samples[2].output);
+  samples[4].output = structuredClone(samples[3].output);
   const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
-  assert.equal(result.verifiedPairs, 3);
-  assert.equal(result.uniqueInputVectors, 2);
-  assert.equal(result.questionsObservedWithBothValues, 24);
-  assert.equal(result.questionsObservedWithOnlyOneValue, 13);
-  assert.equal(result.comparedInputPairs, 1);
-  assert.equal(result.groupLocalContrastPairs, 0, 'a repeated input cannot invent a group-local contrast');
-  assert.equal(result.minPairwiseHammingDistance, 24);
-  assert.equal(result.maxPairwiseHammingDistance, 24);
+  assert.equal(result.verifiedPairs, 4);
+  assert.equal(result.uniqueInputVectors, 3);
+  assert.equal(result.questionsObservedWithBothValues, 26);
+  assert.equal(result.questionsObservedWithOnlyOneValue, 11);
+  assert.equal(result.comparedInputPairs, 3);
+  assert.equal(result.groupLocalContrastPairs, 1, 'a repeated input cannot invent a group-local contrast');
+  assert.equal(result.minPairwiseHammingDistance, 2);
+  assert.equal(result.maxPairwiseHammingDistance, 26);
 });
 
 test('repeating a verified input cannot manufacture new independent contrast pairs', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
-  samples[3].input = structuredClone(samples[2].input);
-  samples[3].output = structuredClone(samples[2].output);
+  samples[4].input = structuredClone(samples[3].input);
+  samples[4].output = structuredClone(samples[3].output);
   const coverage = summarizeVerifiedOfficialScoreInputCoverage(samples);
-  assert.equal(coverage.verifiedPairs, 3, 'repeats remain auditable as observations');
-  assert.equal(coverage.uniqueInputVectors, 2);
-  assert.equal(coverage.comparedInputPairs, 1, 'only two distinct vectors yield one independent contrast');
+  assert.equal(coverage.verifiedPairs, 4, 'repeats remain auditable as observations');
+  assert.equal(coverage.uniqueInputVectors, 3);
+  assert.equal(coverage.comparedInputPairs, 3, 'only three distinct vectors yield independent contrasts');
   assert.equal(coverage.singleQuestionContrastPairs, 0);
-  assert.equal(coverage.minPairwiseHammingDistance, 24);
-  assert.equal(coverage.maxPairwiseHammingDistance, 24);
+  assert.equal(coverage.minPairwiseHammingDistance, 2);
+  assert.equal(coverage.maxPairwiseHammingDistance, 26);
 });
 
 test('synthetic one-question contrast is detected but does not establish algorithm parity', () => {
