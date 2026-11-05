@@ -56,6 +56,15 @@ all network requests were blocked *before* that local transition.
   It is not invoked by CI/Pages and is not an installable official-site script.
   `tests/probe-official-chrome.test.mjs` enforces its fail-closed adapter gate.
 
+**2026-11-05 probe-prefix correction:** The live heading uses the exact display prefix `Q.` before the
+question text. The source-identity matcher previously accepted numeric prefixes
+only, so it reported no match even where the Korean heading exactly and uniquely
+matched the pinned source text. The matcher now accepts this observed literal
+prefix, while still rejecting other letter prefixes and fuzzy text. Re-running
+the read-only probe identifies S2 `ms10` and S1 `s1-class-15`; the live DOM still
+exposes neither source-question IDs nor raw option values, so overlay use remains
+blocked and official scoring is unaffected.
+
 **Research guard refinement (2026-11-05):** Even if a future official DOM exposes one source ID and as many raw-value attributes as buttons, those **counts are insufficient**: repeated, swapped, changed or fabricated option values could all pass a count-only check. The probe now requires an exact one-to-one match of the observed ID, Korean heading, ordered raw option values and Korean option labels to the pinned source pack, with synthetic negative regressions. This does **not** unlock the live overlay; current observed DOM still lacks IDs and raw values, and permission/review remain unverified.
 
 **Pinned-client option-binding check (2026-11-05, read-only):** `node scripts/verify-client-option-bindings.mjs --live-readonly` first confirms that both public season routes still reference the 331,501-byte, SHA-256-pinned client, then inspects that exact downloaded JS **locally** (no answer click or POST). Its observed quiz handler passes the clicked button's raw `ue.value`—not its displayed index—into a map keyed by `k.id`; Season 2's buttons supply ordered `O`/`X`, Season 1's buttons take the current question's `allowedAnswers`, and the final submission receives that same map. Synthetic negative tests reject changed value order, index substitution, altered source ID and disconnected submission. This is a useful **static source-to-event mapping for that single pinned client version**, not a real-DOM ID/value attribute, per-question browser acceptance, a scoring formula or permission for a live overlay; the remaining gates are unchanged. The script outputs only structural proof fields and a source SHA, never Korean wording or answers.

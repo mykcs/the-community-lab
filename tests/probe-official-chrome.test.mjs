@@ -63,6 +63,9 @@ test('exact suffix matches synthetic Korean text without guessing or stripping s
   ];
   assert.deepEqual(exactSuffixSourceMatches('1. 가상의 질문입니다.', sources),
     [{ sourceId: 'a', prefixLength: 3 }]);
+  assert.deepEqual(exactSuffixSourceMatches('Q.가상의 질문입니다.', sources),
+    [{ sourceId: 'a', prefixLength: 2 }],
+    'the exact literal label observed in the current official heading is allowed');
   assert.deepEqual(exactSuffixSourceMatches('1. 가상의 질문입니다?', sources), []);
   assert.deepEqual(exactSuffixSourceMatches('longprefix 가상의 질문입니다.', sources), []);
   assert.deepEqual(exactSuffixSourceMatches('xyz가상의 질문입니다.', sources), [],
@@ -76,6 +79,8 @@ test('exact suffix matches synthetic Korean text without guessing or stripping s
     'arbitrary-long numeric prefixes must not qualify');
   assert.deepEqual(exactSuffixSourceMatches('3、가상의 질문입니다.', sources), [],
     'unverified punctuation cannot be treated as a source ID');
+  assert.deepEqual(exactSuffixSourceMatches('R. 가상의 질문입니다.', sources), [],
+    'unknown letter prefixes do not qualify as a source identity');
 });
 test('ambiguous identical Korean source wording is never resolved by a guessed ID', () => {
   const matches = exactSuffixSourceMatches('1. 같은 질문', [

@@ -34,11 +34,10 @@ export function overlayGate({ assetMatches, questionVisible, optionCount, expect
  */
 export function exactSuffixSourceMatches(liveText, entries) {
   if (typeof liveText !== 'string' || !Array.isArray(entries)) return [];
-  // The public heading may prepend its display number. Arbitrary 1–3
-  // characters previously qualified as an identity candidate, while the
-  // valid two-digit "37. " prefix was rejected. Never fuzzy-match wording:
-  // accept only a recognizable short numeric position prefix.
-  const isPositionPrefix = prefix => prefix === '' ||
+  // The public heading may prepend its observed literal "Q." label or a
+  // numeric display position. Never fuzzy-match wording or treat arbitrary
+  // short prefixes as identity evidence.
+  const isPositionPrefix = prefix => prefix === '' || prefix === 'Q.' ||
     /^(?:0?[1-9]|[1-9][0-9]{1,2})(?:[.)][ ]?|[ ])$/.test(prefix);
   return entries.filter(q => {
     if (typeof q?.sourceKo !== 'string' || q.sourceKo.length === 0 ||
