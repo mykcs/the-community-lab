@@ -87,3 +87,26 @@ test('main reviewer blocks import when another tab has edited the stored draft',
   expect(saved[firstId].translation).toBe('合成其他标签页已经保存');
   expect(errors).toEqual([]);
 });
+
+for (const [label, staleUrl] of [
+  ["main reviewer", mainUrl],
+  ["standalone reviewer", standaloneUrl],
+]) {
+  test(label + " cannot clear a newer draft saved by another tab", async ({ context }) => {
+    const { first: stale, second: fresh } = await openReviewPages(context, staleUrl, mainUrl);
+    const dialogs = [];
+    stale.on("dialog", async dialog => {
+      dialogs.push(dialog.message());
+      await dialog.accept();
+    });
+    await fresh.locator("#list .card").first().getByLabel(/中文翻译/).fill("跨标签页已保存、必须保留的合成审校内容");
+    await expect(fresh.locator(".statusline")).toContainText("已保存到此设备");
+    await expect(stale.locator(".statusline")).toContainText("其他标签页");
+    await stale.locator("#clear").click();
+    const saved = await getSaved(fresh);
+    expect(saved[firstId].translation).toBe("跨标签页已保存、必须保留的合成审校内容");
+    // Never open a destructive confirmation on a known stale tab.
+    expect(dialogs).toHaveLength(0);
+    await expect(stale.locator(".statusline")).toContainText("其他标签页");
+  });
+}
