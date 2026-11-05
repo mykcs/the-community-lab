@@ -45,6 +45,10 @@ jobs:
       - run: npm run build
       - name: Verify project-path navigation and private-history candidate is static-safe
         run: node scripts/verify-pages-history.mjs
+      # Same Git SHA for the uploaded artifact and live Pages smoke check.
+      # This is a public release marker, never a survey answer or credential.
+      - name: Stamp build commit for exact-release verification
+        run: printf '%s\n' "$GITHUB_SHA" > dist/release-commit.txt
       - name: Include the unreviewed bilingual translation draft on a separate route
         run: |
           mkdir -p dist/translation-review
@@ -71,3 +75,38 @@ jobs:
       - name: Publish verified static artifact
         id: deployment
         uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+      # A successful deployment API response alone does not prove what the
+      # public Pages URL actually serves. Check the exact HEAD and each entry.
+      # No production answers are submitted, and Vercel is not involved.
+      - name: Verify live Pages release and required public routes
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          base="${PAGES_URL%/}"
+          if [[ -z "$base" || "$base" != https://mykcs.github.io/the-community-lab ]]; then
+            echo "Unexpected Pages release URL; refusing unverified target" >&2
+            exit 1
+          fi
+          confirmed=0
+          for attempt in {1..12}; do
+            # Propagation may briefly leave the previous release on the CDN.
+            live_sha="$(curl -fsSL --connect-timeout 5 --max-time 12 "$base/release-commit.txt" || true)"
+            if [[ "$live_sha" == "$GITHUB_SHA" ]]; then
+              confirmed=1
+              break
+            fi
+            if [[ $attempt -lt 12 ]]; then sleep 5; fi
+          done
+          if [[ "$confirmed" != 1 ]]; then
+            echo "Live Pages did not expose this run's commit SHA" >&2
+            exit 1
+          fi
+          curl -fsSL --max-time 15 "$base/" > /tmp/community-pages-home.html
+          curl -fsSL --max-time 15 "$base/questionnaire/" > /tmp/community-pages-questionnaire.html
+          curl -fsSL --max-time 15 "$base/translation-review/" > /tmp/community-pages-review.html
+          grep -Fq 'THE COMMUNITY' /tmp/community-pages-home.html
+          grep -Fq 'id="full-questionnaire-data"' /tmp/community-pages-questionnaire.html
+          grep -Fq 'id="embedded-data"' /tmp/community-pages-review.html
+          echo "Verified exact production commit and 3 public routes; browser/translation/scoring parity require separate evidence."
