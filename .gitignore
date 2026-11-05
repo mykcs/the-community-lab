@@ -5,6 +5,8 @@ dist/
 .vercel/
 .next/
 coverage/
+test-results/
+playwright-report/
 *.log
 
 # Never commit credentials, auth material, or local secrets
