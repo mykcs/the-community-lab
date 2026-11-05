@@ -1,7 +1,8 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-TtlZm3DGp5vRI6x6hkIVgWSiPLZwTZtgdsYCwT7y6ZI=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -37,6 +38,9 @@ const MAX_REVIEW_JSON_BYTES=8*1024*1024;
 // Fail closed until the user explicitly clears the inaccessible old record.
 let edits={},storedDraftUnreadable=false;
 let lastPersistedDraftRaw=null,otherTabModified=false;
+// A slow local file must never replace edits made AFTER it was selected,
+// or an import selected more recently. This is independent of tab storage CAS.
+let reviewMutationRevision=0,latestReviewImportRequest=0;
 try{
  const raw=localStorage.getItem(key);
  const restored=JSON.parse(raw||'{}');
@@ -91,6 +95,8 @@ window.addEventListener('storage',event=>{
  }
 });
 function save(){
+ // Even if storage is full, edits in memory supersede a pending import.
+ reviewMutationRevision++;
  if(!canWriteCurrentDraft()){
   window.addEventListener('beforeunload',warnUnexportedReview);
   return;
@@ -274,13 +280,25 @@ const importFile=document.querySelector('#import-file');
 document.querySelector('#import').addEventListener('click',()=>importFile.click());
 importFile.addEventListener('change',async()=>{
  const file=importFile.files?.[0];if(!file)return;
+ const requestId=++latestReviewImportRequest;
+ const revisionAtSelection=reviewMutationRevision;
  try{
   if(storedDraftUnreadable)throw new Error('无法读取本机历史审校记录，导入被阻止以避免覆盖旧草稿。请先导出当前修改，明确清除旧记录后再导入。');
   if(!canWriteCurrentDraft())throw new Error('其他标签页已修改本机审校草稿，导入已阻止以免覆盖较新记录。请先导出本页修改，刷新后再重试。');
   if(file.size>MAX_REVIEW_JSON_BYTES)throw new Error('文件超过 8 MiB 上限');
-  const imported=validateReviewImport(JSON.parse(await file.text()),data);
+  const text=await file.text();
+  if(requestId!==latestReviewImportRequest)return; // A newer file was chosen.
+  if(revisionAtSelection!==reviewMutationRevision){
+   document.querySelector('.statusline').textContent='导入已取消：读取文件期间本页审校草稿已被修改。请先导出最新草稿，再重新选择要导入的文件。';
+   return;
+  }
+  const imported=validateReviewImport(JSON.parse(text),data);
   const total=Object.keys(imported).length;
   if(!confirm('将导入 '+total+' 道题的审校草稿，覆盖此设备现有的 '+Object.keys(edits).length+' 道编辑。不会上传至服务器。是否继续？'))return;
+  if(requestId!==latestReviewImportRequest||revisionAtSelection!==reviewMutationRevision){
+   document.querySelector('.statusline').textContent='导入已取消：本页草稿或选择的文件已更新，旧导入不得覆盖最新内容。';
+   return;
+  }
   // Recheck after the confirmation dialog: another tab may have saved meanwhile.
   if(!canWriteCurrentDraft())throw new Error('其他标签页已修改审校草稿；导入未覆盖它。');
   // Persist before changing the in-memory editor; failure keeps the old draft intact.
@@ -290,10 +308,11 @@ importFile.addEventListener('change',async()=>{
   // A successful import is now persisted; clear any warning left by an
   // earlier quota failure before replacing the in-memory draft.
   window.removeEventListener("beforeunload",warnUnexportedReview);
+  reviewMutationRevision++;
   edits=imported;render();
   document.querySelector('.statusline').textContent='已从同一来源版本恢复 '+total+' 道本机审校草稿（自报状态，未独立核验）';
- }catch(error){alert('导入失败，原有草稿未被覆盖：'+(error instanceof Error?error.message:'文件无效'))}
- finally{importFile.value=''}
+ }catch(error){if(requestId===latestReviewImportRequest)alert('导入失败，原有草稿未被覆盖：'+(error instanceof Error?error.message:'文件无效'))}
+ finally{if(requestId===latestReviewImportRequest)importFile.value=''}
 });
 const compareFiles=document.querySelector('#compare-files');
 document.querySelector('#compare').addEventListener('click',()=>compareFiles.click());
@@ -321,7 +340,7 @@ document.querySelector('#clear').addEventListener('click',()=>{
 if(!confirm('清除此设备上本页保存的全部译文修改和审校标记？导出的文件不会删除。'))return;try{if(otherTabModified||localStorage.getItem(key)!==clearSnapshot){
    otherTabModified=true;showOtherTabWarning();return
   }
-  localStorage.removeItem(key)}catch{alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');return}edits={};storedDraftUnreadable=false;otherTabModified=false;lastPersistedDraftRaw=null;window.removeEventListener('beforeunload',warnUnexportedReview);render();document.querySelector('.statusline').textContent='此设备的审校记录已清除'});
+  localStorage.removeItem(key)}catch{alert('清除失败：浏览器拒绝删除本机存储，原有草稿未被清除。请检查浏览器存储权限或手动清理站点数据。');return}edits={};reviewMutationRevision++;storedDraftUnreadable=false;otherTabModified=false;lastPersistedDraftRaw=null;window.removeEventListener('beforeunload',warnUnexportedReview);render();document.querySelector('.statusline').textContent='此设备的审校记录已清除'});
 render();
 if(storedDraftUnreadable)showUnreadableDraftWarning();
 </script>
