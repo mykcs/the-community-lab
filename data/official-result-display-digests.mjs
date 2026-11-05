@@ -32,4 +32,8 @@ export const OFFICIAL_SYNTHETIC_RESULT_DISPLAY_DIGESTS = Object.freeze({
     titleSha256: '0ac8fb9b158c3b907a3e1b6809d3ccc1431750e25c1bff96db169d0f5bde1acf',
     summarySha256: '7aab7507a654ff0265196521ade61d8b61d7c6d653b33735837a4aa4c273e026',
   }),
+  'aMpgxXI50B7Eqrb-': Object.freeze({
+    titleSha256: '0ac8fb9b158c3b907a3e1b6809d3ccc1431750e25c1bff96db169d0f5bde1acf',
+    summarySha256: '7aab7507a654ff0265196521ade61d8b61d7c6d653b33735837a4aa4c273e026',
+  }),
 });

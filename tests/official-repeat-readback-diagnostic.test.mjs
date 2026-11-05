@@ -6,7 +6,7 @@ import { diagnoseExistingRepeatedReadbacks } from '../scripts/diagnose-s2-readba
 
 const samples = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS;
 const repeated = samples.filter(row =>
-  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS']
+  ['3NtECOtE1ebvmN-C', 'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS', 'aMpgxXI50B7Eqrb-']
     .includes(row.publicResultId));
 const diagnosticSamples = samples;
 const sha = text => createHash('sha256').update(text).digest('hex');
@@ -38,15 +38,19 @@ function fakeLive() {
 }
 
 test('read-only diagnostic pinpoints which official score fields disagree without revealing personal fields', () => {
-  assert.equal(repeated.length, 4);
+  assert.equal(repeated.length, 5);
   const result = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
-  assert.equal(result.repeatedInputPairs, 6);
+  assert.equal(result.repeatedInputPairs, 10);
   assert.equal(result.rootCauseEstablished, false);
   assert.equal(result.officialScoringEquivalenceVerified, false);
   assert.deepEqual(result.pairs.map(pair => pair.status), [
     'CONFIRMED_REPEATED_INPUT_CONFLICT',
     'CONFIRMED_REPEATED_INPUT_CONFLICT',
     'CONFIRMED_REPEATED_INPUT_CONFLICT',
+    'CONFIRMED_REPEATED_INPUT_CONFLICT',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+    'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
     'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
     'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
     'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
@@ -85,7 +89,7 @@ test('readback drift is a hard stop, never an unexamined duplicate-result findin
 
 test('unverified historical responses and private fields never become repeat-input evidence', () => {
   const report = diagnoseExistingRepeatedReadbacks(diagnosticSamples, fakeLive(), references);
-  assert.equal(report.repeatedInputPairs, 6);
+  assert.equal(report.repeatedInputPairs, 10);
   assert.equal(samples.filter(row => row.inputVerification === 'unverified').length, 1);
   assert.throws(() => diagnoseExistingRepeatedReadbacks(diagnosticSamples, {}, references), /Map/);
 });
