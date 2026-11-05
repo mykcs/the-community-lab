@@ -1,6 +1,8 @@
 # 私人历史候选：默认关闭，尚未通过真实账户验收
 
-本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。已创建免费层 Supabase 项目，当前控制台状态为 Healthy、West US (Oregon) `us-west-2`、Nano；但还没有应用数据库迁移或创建 GitHub OAuth App，也没有启用生产采集。游客答题仍只使用页面内存；只有主动同意保存才准备最小结果。
+本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。免费层 Supabase 项目已建于 West US (Oregon) `us-west-2`、Nano。2026-11-05 的部署记录显示私人历史与 90 天保留迁移已应用，Cron 已注册；当前 Dashboard 也能读到 `public.test_runs`、RLS 开启以及 SELECT／INSERT／DELETE 三条 owner/session 策略。保存设置仍为 `enabled=false`，网站采集未启用。
+
+本轮 Dashboard 读回确认：Supabase 项目中的 GitHub Auth provider 仍禁用；Site URL 还是 `http://localhost:3000`，Redirect URLs 为空。GitHub OAuth 客户端、网站构建变量和注销 Edge Function 仍未配置。项目记录的状态需要以当前 Dashboard 和 [部署记录](DEPLOYMENT.md) 为准；不得把控制面登录成功说成网站 GitHub 登录已经可用。
 
 当前代码可以在本机使用合成数据验收。真实 GitHub、Supabase 网关及服务器会话的验收未完成，不能据此打开生产保存。此工作线保持 Draft PR；启用前仍需专属网站域名、OAuth 配置、Cron 实际运行、备份／日志保留披露和双账号隔离验收。
 
@@ -59,8 +61,8 @@ SQL 测试使用 PGlite 0.5.13 / PostgreSQL 18.6，实际 SET ROLE 为非超级�
 
 ## 真实服务开放前还缺什么
 
-1. 免费 Supabase 项目已建并确认在 Oregon，但尚未应用迁移；目标 90 天规则已写入候选，备份与平台日志的实际保留期尚未核查。不要把凭据写进聊天、仓库、截图或日志。
-2. 依当前目标的 Postgres/Auth schema 实际验证同一 migration，确认 `pg_cron` 已启用、`auth.sessions` 与 API schema 暴露范围；`community_private` 不能加入 Data API exposed schemas。未知或已有同名对象必须先调查，不自动覆盖。
+1. 免费 Supabase 项目与两份迁移已部署（见 [部署记录](DEPLOYMENT.md)）；Dashboard 显示项目 Healthy、`test_runs` 已启用 RLS 且 Data API 为 disabled。仍需读回每小时 Cron 的托管运行记录，并核实备份与平台日志的实际保留期。不要把凭据写进聊天、仓库、截图或日志。
+2. 用目标项目继续验证已部署的 Postgres/Auth schema：确认 `pg_cron` 小时任务持续成功、`auth.sessions` 可用于会话约束、`community_private` 未暴露给 Data API，并完成合成身份的真实 Supabase RLS 交叉隔离。未知或已有同名对象必须先调查，不自动覆盖。
 3. 需要用户提供隔离的自有网站域名，并配置 GitHub OAuth 与精确的 Supabase、网站返回地址；读取实际权限，不要求仓库范围。服务端 secret 只由服务端消费者使用。
 4. 两个真实 GitHub 测试账号仅写入虚构分数：直接 Data API 交叉读取、猜 ID、owner 冒充、拒绝写入后原记录完好；退出及注销后旧 access JWT 的读写重放均被拒绝；单条删除与账号注销取得真实服务器读回。
 5. 在精确 Preview head 上通过游客／同意／取消／PKCE／导出／删除／退出／注销的 440×956 和桌面验收，检查 URL、网络、存储、日志。GitHub Pages 默认 `*.github.io` origin 必须验证认证导航和保存入口保持关闭；只有选定隔离的专用 origin 后，才在该 origin 上测试回调、历史页及跨域 `OPTIONS` 预检。随后在拟用生产目标保持采集关闭，核对权限及隐私；全部证据与独立审查通过后才讨论开放。

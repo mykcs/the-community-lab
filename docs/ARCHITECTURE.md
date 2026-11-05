@@ -1,6 +1,6 @@
 # 网站、登录、结果保存与费用设计
 
-状态：**静态演示网站已发布；私有历史已有默认关闭的实现候选，尚未开通真实服务。** 调查日期：2026-10-29。
+状态：**静态演示网站已发布；美国西部的免费 Supabase 项目和隔离／90 天保留迁移已部署，GitHub OAuth 与答卷采集仍关闭。** 核验日期：2026-11-05。
 
 ## 推荐最小方案
 
@@ -66,13 +66,13 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 
 当前 Astro + Tailwind 双季静态演示版已在 [GitHub Pages](https://mykcs.github.io/the-community-lab/) 发布。2026-10-30 [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 合并后，对提交 `7cbb659c5d16c6002767ee32a0bd062d516badbf` 的 [Actions 运行](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 已核对 `build`、`deploy` 均成功，正式首页、译审子页、JS/CSS 均 HTTP 200；浏览器走通了第二季 6 题、第一季 8 题、暂停续答和结果卡，440×956 CSS px 手机模拟视口没有横向溢出（并非实体手机）。
 
-原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。服务器功能需要未来单独设计、授权和验证；不得创建宽权限 GitHub Token 来绕过现有边界。
+原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算；Supabase 项目已配置隔离数据库，但 GitHub OAuth、网站运行配置与真实用户答卷保存尚未验收，采集功能保持关闭。不得创建宽权限 GitHub Token 来绕过现有边界。
 
-可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。这里**只有离线候选代码**，没有部署 Supabase、GitHub OAuth 或真实数据，所有保存与注销开关仍默认关闭；不能将静态 Pages 的发布状态当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。
+可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。Supabase 项目及隔离／90 天保留迁移已部署；GitHub OAuth 客户端、专用网站 origin、网站构建变量和注销 Edge Function 尚未配置或验收。保存与注销开关仍默认关闭，不能将数据库部署当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。
 
 
-### 历史保存期限决定（2026-11-05，候选未部署）
+### 历史保存期限决定（2026-11-05，数据库已部署、采集未启用）
 
 用户指定数据位于美国西部，历史记录创建后 90 天自动删除。迁移 `202611050001_history_retention.sql` 将 90 天定义为 2160 小时：到期记录立即退出用户 SELECT 权限，每分钟由数据库所有者运行私有清理函数。调度延迟或故障时，过期记录仍不可由用户读取；物理删除可能延迟，不能把计划频率当成删除时限保证。
 
-部署必须先在用户指定的美国西部 Supabase 项目启用 Cron，再应用全部迁移；缺少 Cron 时期限迁移失败，禁止启用保存。上线验收须确认实际项目区域、定时任务身份和成功执行记录，并用合成的到期/未到期记录核对删除与保留。PGlite 测试只验证 PostgreSQL 规则与模拟的 Cron 注册，不证明托管调度运行。清理只覆盖在线历史表，不删除 GitHub/Supabase Auth 账号；备份与服务商日志的保留策略需在隐私说明和上线验收中另行确认。所有保存门仍关闭。
+私人历史与保留迁移已在用户指定的美国西部免费 Supabase 项目应用；部署记录确认 `pg_cron` 已启用、保留任务已注册，分钟级试运行曾成功，随后改为每小时调度。需要继续核对小时任务的托管运行记录，并用合成的到期／未到期记录核对删除与保留。PGlite 测试只验证 PostgreSQL 规则与模拟的 Cron 注册，不证明托管调度持续运行。清理只覆盖在线历史表，不删除 GitHub/Supabase Auth 账号；备份与服务商日志的保留策略需在隐私说明和上线验收中另行确认。所有保存门仍关闭。
