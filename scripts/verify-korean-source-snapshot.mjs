@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { verifyClientDisplayOrder } from './verify-client-display-order.mjs';
 
 // Source-faithful correction of the 2026-10-30 AI review draft.
 // The 124 question statements were found in the pinned 331,501-byte public
@@ -47,6 +48,9 @@ export function verifySourceMetadataSnapshot(index) {
       fingerprintSourceMetadata(index) !== KOREAN_SOURCE_SNAPSHOT.sourceMetadataSha256) {
     throw new Error('源题元数据指纹不匹配：须先独立核对当前公开客户端的题号、选项值、顺序与方向');
   }
+  // A frozen hash can also freeze an originally incorrect ordering. Independently
+  // reconstruct the observed client's seeded permutation for both seasons.
+  verifyClientDisplayOrder(index);
   return true;
 }
 
