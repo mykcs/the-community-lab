@@ -69,3 +69,10 @@ GitHub OAuth 只负责回答“用户是谁”，**不会自动存储测试答�
 原 [Vercel](https://the-community-lab.vercel.app/) 生产版通过精确 SHA 的 Git 自动部署发布过，现只保留为历史回退快照，`vercel.json` 已关闭后续自动 Git 部署，避免再次触发 Hobby 限额；之前的部署历史与 CI 证据见 [部署记录](DEPLOYMENT.md)。GitHub Pages 仍只有浏览器本地计算，尚无 OAuth、数据库或真实用户答卷保存。服务器功能需要未来单独设计、授权和验证；不得创建宽权限 GitHub Token 来绕过现有边界。
 
 可选私人历史 [Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 已提供 Pages 项目子路径导航与 Supabase Edge Function 注销候选，Vercel 回退入口复用同一核验核心。这里**只有离线候选代码**，没有部署 Supabase、GitHub OAuth 或真实数据，所有保存与注销开关仍默认关闭；不能将静态 Pages 的发布状态当作身份／删除系统已验收。详见 [私人历史验收边界](PRIVATE-HISTORY.md)。
+
+
+### 历史保存期限决定（2026-11-05，候选未部署）
+
+用户指定数据位于美国西部，历史记录创建后 90 天自动删除。迁移 `202611050001_history_retention.sql` 将 90 天定义为 2160 小时：到期记录立即退出用户 SELECT 权限，每分钟由数据库所有者运行私有清理函数。调度延迟或故障时，过期记录仍不可由用户读取；物理删除可能延迟，不能把计划频率当成删除时限保证。
+
+部署必须先在用户指定的美国西部 Supabase 项目启用 Cron，再应用全部迁移；缺少 Cron 时期限迁移失败，禁止启用保存。上线验收须确认实际项目区域、定时任务身份和成功执行记录，并用合成的到期/未到期记录核对删除与保留。PGlite 测试只验证 PostgreSQL 规则与模拟的 Cron 注册，不证明托管调度运行。清理只覆盖在线历史表，不删除 GitHub/Supabase Auth 账号；备份与服务商日志的保留策略需在隐私说明和上线验收中另行确认。所有保存门仍关闭。

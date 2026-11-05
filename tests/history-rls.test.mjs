@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HISTORY_CONSENT_VERSION, HISTORY_SELECT_COLUMNS, HISTORY_TEST_VERSIONS } from '../lib/history-contract.mjs';
@@ -212,5 +213,41 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
         assert.equal(caps.session_active, false);
       });
     });
+  } finally { await pg.close(); }
+});
+
+
+test('PG_RULES_WITH_SYNTHETIC_AUTH: 90-day expiry hides and purges only expired rows', async t => {
+  const { pg } = await createHistoryDatabase();
+  try {
+    // Scheduling capture is a test double, not proof of Supabase Cron execution.
+    await pg.exec(`CREATE SCHEMA cron;
+      CREATE TABLE cron.scheduled(name text, schedule text, command text);
+      CREATE FUNCTION cron.schedule(text,text,text) RETURNS bigint LANGUAGE sql AS $$
+        INSERT INTO cron.scheduled VALUES ($1,$2,$3) RETURNING 1::bigint;
+      $$;`);
+    await pg.exec(await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8'));
+    const jobs = (await pg.query('SELECT * FROM cron.scheduled')).rows;
+    assert.equal(jobs.length, 1);
+    assert.equal(jobs[0].schedule, '* * * * *');
+    assert.match(jobs[0].command, /community_private.purge_expired_history/);
+    t.diagnostic('Cron registration is simulated; hosted execution and deletion latency remain unverified.');
+    for (const role of ['anon','authenticated','service_role']) await asActor(pg,role,ACTORS.a,async () =>
+      denied(pg.query('SELECT community_private.purge_expired_history()')));
+    await pg.exec('BEGIN');
+    await pg.query('UPDATE community_private.history_capture_settings SET enabled=true');
+    const ids = [];
+    for (let i=0; i<3; i++) ids.push(await asActor(pg, 'authenticated', ACTORS.a,
+      async () => (await insertHistory(pg, payload())).rows[0].id));
+    for (const [i, seconds] of [7775999,7776000,7776001].entries()) {
+      await pg.query("UPDATE public.test_runs SET created_at=now()-($1 * interval '1 second') WHERE id=$2", [seconds, ids[i]]);
+    }
+    await asActor(pg, 'authenticated', ACTORS.a, async () => {
+      assert.deepEqual((await pg.query('SELECT id FROM public.test_runs')).rows, [{id:ids[0]}]);
+    });
+    assert.equal(Number((await pg.query('SELECT community_private.purge_expired_history() AS removed')).rows[0].removed),2);
+    assert.deepEqual((await pg.query('SELECT id FROM public.test_runs')).rows,[{id:ids[0]}]);
+    assert.equal(Number((await pg.query('SELECT community_private.purge_expired_history() AS removed')).rows[0].removed),0);
+    await pg.exec('ROLLBACK');
   } finally { await pg.close(); }
 });
