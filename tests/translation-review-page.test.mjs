@@ -231,7 +231,7 @@ test('rp06 preserves torture severity and sa03 does not add an unspoken threshol
     if (id === 'rp06') {
       assert.match(question.source_text_ko, /폭탄 테러가 예고되었다/);
       assert.match(question.translator_note, /자녀/);
-      assert.match(question.translator_note, /독립 韩|独立韩中人工复核/);
+      assert.match(question.translator_note, /独立韩中人工复核/);
       assert.doesNotMatch(question.translation_zh_cn, /他们/);
     }
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
