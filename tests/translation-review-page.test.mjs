@@ -220,14 +220,20 @@ test('Korean-speaker references name Korea for Chinese readers and remain unrevi
 
 test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
   const expected = new Map([
-    ['rp06', '一座聚集数万人的综合体育场收到炸弹威胁。若唯一能查明炸弹确切位置的方法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，就应该对他们施以酷刑。'],
+    ['rp06', '一座聚集数万人的综合体育场收到炸弹袭击预告。若查明炸弹确切位置的唯一办法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，那就应该施以酷刑。'],
     ['sa03', '即使企业或组织按能力选人，如果人员构成偏向特定出身地、学校或性别，也有必要作出调整。'],
   ]);
   for (const [id, translation] of expected) {
     const question = data.questions.find(item => item.id === id);
     assert.ok(question, `${id} must remain in the source dataset`);
     assert.equal(question.translation_zh_cn, translation, id);
-    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_version, id === 'rp06' ? 'draft-0.1.2' : 'draft-0.1.1', id);
+    if (id === 'rp06') {
+      assert.match(question.source_text_ko, /폭탄 테러가 예고되었다/);
+      assert.match(question.translator_note, /자녀/);
+      assert.match(question.translator_note, /独立韩中人工复核/);
+      assert.doesNotMatch(question.translation_zh_cn, /他们/);
+    }
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
     assert.equal(question.review_status, 'draft', id);
   }
