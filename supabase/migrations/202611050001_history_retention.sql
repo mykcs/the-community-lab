@@ -10,23 +10,13 @@ USING (owner_id = (SELECT auth.uid())
 
 CREATE INDEX test_runs_retention_created ON public.test_runs(created_at);
 
-CREATE FUNCTION community_private.purge_expired_history() RETURNS bigint
-LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-DECLARE removed bigint;
-BEGIN
-  DELETE FROM public.test_runs
-  WHERE created_at <= now() - interval '2160 hours';
-  GET DIAGNOSTICS removed = ROW_COUNT;
-  RETURN removed;
-END;
-$$;
-REVOKE ALL ON FUNCTION community_private.purge_expired_history()
-  FROM PUBLIC, anon, authenticated, service_role;
+-- The preceding migration already defines and locks down this purge function.
+-- Replace its per-minute job instead of creating a duplicate function/job.
+SELECT cron.unschedule('community-private-history-90-day-purge');
 
 -- Fail installation if Cron is unavailable rather than promising unenforced deletion.
--- Only the database owner schedules/runs this private function.
 -- Hourly enforcement keeps expiry within one hour while limiting Cron run-log growth.
-SELECT cron.schedule('community-history-retention-90-days', '0 * * * *',
+SELECT cron.schedule('community-private-history-90-day-purge', '0 * * * *',
   $$SELECT community_private.purge_expired_history();$$);
 
 COMMIT;

@@ -85,11 +85,20 @@ export async function createHistoryDatabase({ cronEnabled = true, applyMigration
           RETURN 1;
         END;
         $$;
+        CREATE FUNCTION cron.unschedule(job_name text) RETURNS boolean
+        LANGUAGE plpgsql AS $$
+        BEGIN
+          DELETE FROM cron.synthetic_jobs WHERE jobname = job_name;
+          RETURN FOUND;
+        END;
+        $$;
       `);
     }
     if (applyMigration) {
-      const migration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
-      await pg.exec(migration);
+      const initialMigration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
+      const retentionMigration = await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8');
+      await pg.exec(initialMigration);
+      await pg.exec(retentionMigration);
     }
     return { pg, qualification, evidenceScope: EVIDENCE_SCOPE };
   } catch (error) {

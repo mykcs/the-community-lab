@@ -92,7 +92,8 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
     await t.test('90-day retention has a callable purge and a scheduled cleanup job', async () => {
       const job = (await pg.query(`SELECT jobname, schedule, command FROM cron.synthetic_jobs
         WHERE jobname='community-private-history-90-day-purge'`)).rows;
-      assert.deepEqual(job, [{ jobname: 'community-private-history-90-day-purge', schedule: '* * * * *',
+      assert.equal((await pg.query('SELECT count(*)::int AS count FROM cron.synthetic_jobs')).rows[0].count, 1);
+      assert.deepEqual(job, [{ jobname: 'community-private-history-90-day-purge', schedule: '0 * * * *',
         command: 'SELECT community_private.purge_expired_history();' }]);
       const definition = (await pg.query("SELECT pg_get_functiondef('community_private.purge_expired_history()'::regprocedure) AS sql")).rows[0].sql;
       assert.match(definition, /created_at\s*<=\s*pg_catalog\.now\(\)\s*-\s*interval '90 days'/i);
@@ -102,6 +103,11 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
       const freshId = await insertAsOwner(ACTORS.b);
       await pg.query("UPDATE public.test_runs SET created_at=pg_catalog.now()-interval '90 days'-interval '1 second' WHERE id=$1", [expiredId]);
       await pg.query("UPDATE public.test_runs SET created_at=pg_catalog.now()-interval '90 days'+interval '1 second' WHERE id=$1", [freshId]);
+      await runAs(ACTORS.a, async () => {
+        assert.deepEqual((await pg.query('SELECT id FROM public.test_runs WHERE id=$1', [expiredId])).rows, []);
+        assert.equal((await pg.query('SELECT id FROM public.test_runs WHERE id=$1', [freshId])).rows.length, 0);
+      });
+      assert.equal((await pg.query('SELECT count(*)::int AS count FROM public.test_runs WHERE id=$1', [expiredId])).rows[0].count, 1);
       const deleted = (await pg.query('SELECT community_private.purge_expired_history() AS count')).rows[0].count;
       assert.equal(deleted, 1);
       assert.equal((await pg.query('SELECT count(*)::int AS count FROM public.test_runs WHERE id=$1', [expiredId])).rows[0].count, 0);
