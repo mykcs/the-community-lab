@@ -12,6 +12,14 @@ test('rp12 comparison renders with the reviewed Korean and current Chinese draft
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
 });
 
+test('S1 idiom condition and degree render in the unreviewed Chinese draft', async ({ page }) => {
+  await page.goto(standaloneUrl);
+  const translation = page.getByLabel('s1-openness-11 中文翻译');
+  await expect(translation).toBeVisible();
+  await expect(translation).toHaveValue('“如果不喜欢寺庙，和尚就该离开”这句话在大多数情况下是对的。');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(await page.evaluate(() => window.innerWidth));
+});
+
 test('standalone reviewer cannot self-report a pass without notes or retain it after edits', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
