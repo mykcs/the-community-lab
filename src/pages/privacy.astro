@@ -1,8 +1,8 @@
 ---
 import AccountLayout from '../layouts/AccountLayout.astro';
 import { siteRoutePath } from '../../lib/history-config.mjs';
-const region = import.meta.env.PUBLIC_HISTORY_REGION_LABEL || '尚未确定，保存保持关闭';
-const retention = import.meta.env.PUBLIC_HISTORY_RETENTION_LABEL || '尚未确定，保存保持关闭';
+const region = import.meta.env.PUBLIC_HISTORY_REGION_LABEL || '美国西部（俄勒冈州；登录尚未启用）';
+const retention = import.meta.env.PUBLIC_HISTORY_RETENTION_LABEL || '创建后 90 天自动删除；登录尚未启用';
 const homeHref = siteRoutePath(import.meta.env.BASE_URL);
 const historyHref = siteRoutePath(import.meta.env.BASE_URL, 'history/');
 ---
@@ -21,7 +21,8 @@ const historyHref = siteRoutePath(import.meta.env.BASE_URL, 'history/');
     <p>只有勾选同意并点击继续，才会准备保存该次结果。上传内容限于季别、题库／计分／译文版本、原创示例标识、各维度分数、同意版本和用于防止重复写入的请求标识；服务器关联本站账号并记录保存及同意时间。不会上传逐题答案。</p>
     <p>前往 GitHub 前，最小结果会暂存在当前标签页，交接有效期为 15 分钟。过期后不能用于保存，返回网站时检查并清理，关闭标签页也会清除。取消交接、确认保存成功或拒绝登录返回时也会清理；浏览器若阻止清理，会明确提示。</p>
     <dl><div><dt>数据区域</dt><dd>{region}</dd></div><div><dt>服务器保存期限</dt><dd>{retention}</dd></div><div><dt>当前同意说明版本</dt><dd>history-consent-v1（候选）</dd></div></dl>
-    <p>区域、服务器保留政策及运营责任尚未确认时，不能打开结果保存。任何今后的变更都应先更新告知和验收，不以登录代替同意。</p>
+    <p>如开放保存，Supabase 免费项目不含自动数据库备份，目前也没有本站自有备份；数据库损坏或误操作可能导致结果无法恢复。Supabase 免费层的 API 与数据库日志保留期为 1 天，日志可能包含技术请求元数据。这属于服务运行日志，与本站 90 天历史记录保留期限不同。</p>
+    <p>项目负责人已确定数据区域和服务器期限，但 GitHub 登录域名、OAuth 凭据、注销服务及真实权限验收尚未完成，因此登录和保存仍关闭。后续变更会先更新告知并重新验收；登录不代表同意保存。</p>
     <h2>查看、导出与删除</h2>
     <p>在私人历史中，可以查看和导出自己的全部记录。导出文件不含账号标识、邮箱或逐题答案。删除单条记录后，页面会再次从服务器读取并确认已无该条记录；未确认时不会显示成功。</p>
     <p>注销本站账号会永久删除本站登录身份及其历史记录，不会注销 GitHub 账号。注销需要单独确认，并以服务端身份验证和删除后读回为准。停止新增保存时，已有账号仍应能够导出、删除和注销。</p>
