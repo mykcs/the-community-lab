@@ -7,7 +7,10 @@ import {
 } from '../scripts/audit-pinned-question-text.mjs';
 
 // Fictional Korean strings, never original test text.
-const make = (source = 'const ie=["O","X"],$s=[{id:"fiction-2",group:"fiction-group",agreeValue:"fiction-agree",prompt:"질문 둘",allowedAnswers:ie}]; 질문 하나') => {
+const FICTIONAL_S1_ARRAY = [['질문 하나', 1]];
+const FICTIONAL_S1_ARRAY_HASH = createHash('sha256')
+  .update(JSON.stringify(FICTIONAL_S1_ARRAY)).digest('hex');
+const make = (source = `const a1=${JSON.stringify(FICTIONAL_S1_ARRAY)};const ie=["O","X"],$s=[{id:"fiction-2",group:"fiction-group",agreeValue:"fiction-agree",prompt:"질문 둘",allowedAnswers:ie}];`) => {
   const bytes = Buffer.from(source, 'utf8');
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   const expected = { sha256, bytes: bytes.length, counts: { 1: 1, 2: 1 } };
@@ -20,8 +23,14 @@ const make = (source = 'const ie=["O","X"],$s=[{id:"fiction-2",group:"fiction-gr
     },
   };
   const index = { questions: [{
+    sourceQuestionId: 'fiction-1', season: 1, sourceGroup: 'fiction-s1-group',
+    sourceArrayPosition: 1, reverseFlagInPublicClient: true,
+  }, {
     sourceQuestionId: 'fiction-2', season: 2, sourceGroup: 'fiction-group',
     agreeSideInPublicClient: 'fiction-agree', optionValues: ['O', 'X'],
+  }], groups: [{
+    season: 1, sourceGroup: 'fiction-s1-group', count: 1,
+    sourceArraySha256: FICTIONAL_S1_ARRAY_HASH,
   }] };
   return { bytes, expected, pack, index };
 };
@@ -45,6 +54,8 @@ test('offline source membership reports only counts and digest, never question p
   const result = auditPinnedKoreanQuestionText(bytes, pack, expected, index);
   assert.equal(result.totalUniqueExactTextMatches, 2);
   assert.equal(result.season1UniqueExactTextMatches, 1);
+  assert.equal(result.season1IndexIdToTextAndReverseBindings, 1);
+  assert.equal(result.season2DirectIdTextGroupAndOptionBindings, 1);
   assert.equal(result.season2UniqueExactTextMatches, 1);
   assert.equal(result.permissionsHumanReviewSourceIdMappingAndScoring,
     'NOT_VALIDATED_BY_THIS_AUDIT');
@@ -90,6 +101,35 @@ test('requires valid unique question identities and raw Buffer input', () => {
   duplicatedIds.seasons[2][0].id = 'fiction-1';
   assert.throws(() => auditPinnedKoreanQuestionText(bytes, duplicatedIds, expected, index),
     /Duplicate/);
+});
+
+test('binds S1 local IDs through group and source position to fictional text and reverse flags', () => {
+  const { bytes, expected, pack, index } = make();
+  const result = auditPinnedKoreanQuestionText(bytes, pack, expected, index);
+  assert.equal(result.season1IndexIdToTextAndReverseBindings, 1);
+  assert.equal(result.season1SourceGroupArraysSha256.length, 64);
+  assert.doesNotMatch(JSON.stringify(result), /fictional|질문/);
+
+  const changedText = structuredClone(pack);
+  changedText.seasons[1][0].sourceKo = '另一个虚构句子';
+  assert.throws(() => auditPinnedKoreanQuestionText(bytes, changedText, expected, index),
+    /fiction-1/);
+
+  const changedReverse = structuredClone(index);
+  changedReverse.questions[0].reverseFlagInPublicClient = false;
+  assert.throws(() => auditPinnedKoreanQuestionText(bytes, pack, expected, changedReverse),
+    /fiction-1/);
+
+  const changedArray = Buffer.from(bytes.toString().replace(',1]]', ',0]]'));
+  const changedExpected = {
+    sha256: createHash('sha256').update(changedArray).digest('hex'),
+    bytes: changedArray.length, counts: expected.counts,
+  };
+  const changedPack = structuredClone(pack);
+  changedPack.sourceSha256 = changedExpected.sha256;
+  assert.throws(() => auditPinnedKoreanQuestionText(
+    changedArray, changedPack, changedExpected, index,
+  ), /S1 indexed ID-to-text\/reverse binding mismatch/);
 });
 
 test('directly binds each S2 source ID to its prompt, group, agree-side and source options', () => {
