@@ -263,6 +263,22 @@ test('rp12 uses natural comparative wording without changing its unreviewed draf
   assert.deepEqual(standaloneData.questions, data.questions, 'the standalone review page must stay in sync');
 });
 
+test('rp11 avoids overstating 반인륜적인 as “反人类” and stays an unreviewed AI draft', () => {
+  const question = data.questions.find(item => item.id === 'rp11');
+  assert.ok(question, 'rp11 must remain in the source dataset');
+  assert.match(question.source_text_ko, /반인륜적인 행위/);
+  assert.match(question.translation_zh_cn, /酷刑、屠杀等不人道行为/);
+  assert.doesNotMatch(question.translation_zh_cn, /反人类/);
+  assert.equal(question.translation_version, 'draft-0.1.3');
+  assert.match(question.translator_note, /待独立韩中人工复核/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.deepEqual(question.options.map(option => option.value), ['O', 'X']);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must carry the same draft');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('s1-politics-14 does not add exclusive force absent from Korean', () => {
   const question = data.questions.find(item => item.id === 's1-politics-14');
   assert.ok(question, 's1-politics-14 must remain in the source dataset');
