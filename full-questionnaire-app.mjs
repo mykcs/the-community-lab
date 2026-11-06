@@ -143,6 +143,12 @@ function render() {
     ? '请选择一个更符合你观点的选项；下方韩文为公开客户端文字。'
     : `请选择一个选项（原题为 ${q.options.length} 级量表）。`;
   $('full-source').href = q.sourceUrl;
+  // Open a voluntary PUBLIC feedback page with source identity only. Never
+  // encode choices, translated question text, private backups or session state.
+  const feedback = new URL('https://github.com/mykcs/the-community-lab/issues/new');
+  feedback.searchParams.set('title', `韩中译文建议 · 第 ${q.season} 季 · ${q.id}`);
+  feedback.searchParams.set('body', `季别：第 ${q.season} 季\n源题索引：${q.id}\n\n建议修改的中文和语义依据（请勿填写自己的答案、真实姓名或私人资料）：\n\n韩中双语来源或审校证据（如有）：\n\n此建议仅是反馈，不代表独立人工复核通过。`);
+  $('full-report-translation').href = feedback.toString();
   // Expose the pinned public client asset, not an invented questionnaire or scoring version.
   $('full-source-fingerprint').textContent = `${pack.sourceSha256} · ${pack.observedAt}`;
   const list = $('full-choices');
