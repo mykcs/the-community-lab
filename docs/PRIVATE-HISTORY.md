@@ -1,6 +1,6 @@
 # 私人历史候选：默认关闭，尚未通过真实账户验收
 
-本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。免费层 Supabase 项目已建于 West US (Oregon) `us-west-2`、Nano。2026-11-05 的部署记录显示私人历史与 90 天保留迁移已应用，Cron 已注册；当前 Dashboard 也能读到 `public.test_runs`、RLS 开启以及 SELECT／INSERT／DELETE 三条 owner/session 策略。2026-11-06 实时读取到每小时保留任务最近 10 次均成功。保存设置仍为 `enabled=false`，网站采集未启用。
+本候选保留 Astro 静态网站，用 Supabase JS 2.118.0 的 GitHub PKCE 登录与 Postgres RLS 提供可选历史。免费层 Supabase 项目已建于 West US (Oregon) `us-west-2`、Nano。2026-11-05 的部署记录显示此前两份数据库迁移已应用，Cron 已注册；当前 Dashboard 也能读到 `public.test_runs`、RLS 开启以及 SELECT／INSERT／DELETE 三条 owner/session 策略。2026-11-06 实时读取到旧名 `community-history-retention-90-days` 的每小时任务最近 10 次均成功。新增升级迁移 `202611060001_history_retention_schedule_upgrade.sql` 尚未应用；保存设置仍为 `enabled=false`，网站采集未启用。
 
 2026-11-06 Dashboard 读回确认：GitHub Auth provider 仍禁用；Site URL 还是 `http://localhost:3000`，Redirect URLs 为空。GitHub provider 表单显示已填客户端字段和遮蔽的 secret，但无法确认凭据对应哪个 OAuth App 或仍然有效。用户已选择 GitHub 作为网站登录方式；这只是登录方案选择，不代表控制面登录成功或网站登录已经可用。网站构建变量和注销 Edge Function 仍未配置。
 
@@ -27,7 +27,7 @@
 
 应用保存需要：有效且**专用于本站的精确 origin** 与 Supabase 配置、Auth 开关、保存开关、隐私批准、可用的注销流程，以及已决定的区域和服务器期限。不得把认证配置到 GitHub Pages 默认的 `*.github.io` origin：同一所有者的不同项目路径共享 origin，而 PKCE／Supabase 会话存在按 origin 隔离的 `sessionStorage` 中，其他同源项目代码在同一标签页可能读取它们。GitHub Pages 默认主机因此只能保持游客模式；只有用户选定隔离的专用域名／主机后才可讨论启用认证。数据库另外默认 `enabled=false`，客户端不能修改。只改前端开关不能开始写入。
 
-用户已指定保留期限为**创建后 90 天自动删除**。候选迁移要求 Supabase Cron (`pg_cron`) 已启用，否则事务会在创建对象前失败；获准的迁移定义仅允许调度角色执行的清理函数，并每小时删除 `created_at <= now() - interval '90 days'` 的记录。2026-11-06 的实时 SQL 只读结果显示任务 `community-history-retention-90-days` 为 active、频率 `0 * * * *`，最近 10 次运行均为 `succeeded`。这证明调度正在执行，不替代到期／未到期记录删除与保留的真实 Supabase 验收。
+用户已指定保留期限为**创建后 90 天自动删除**。候选迁移要求 Supabase Cron (`pg_cron`) 已启用；获准的迁移定义仅允许调度角色执行的清理函数，并每小时删除 `created_at <= now() - interval '90 days'` 的记录。2026-11-06 的实时 SQL 只读结果显示旧任务名 `community-history-retention-90-days` 为 active、频率 `0 * * * *`，最近 10 次运行均为 `succeeded`。新增升级迁移会把旧任务名归一到唯一的当前任务名，并对任一已有任务按需调度；该迁移尚未应用。这些证据证明现有调度正在执行，不替代到期／未到期记录删除与保留的真实 Supabase 验收。
 
 该项目仍为 Supabase Free。Dashboard 的“Last backup”显示没有备份；Supabase 当前官方说明称 Free 项目不含自动数据库备份，且 API／数据库日志保留 1 天。尚未设置本站自有备份，也未核实或配置向外部存储导出；目前没有用户结果可备份。服务方运行日志可能含请求元数据，与本站 90 天历史保留期不同。若开放保存，必须在用户告知中保留这些限制；不能暗示有自动备份或恢复保证。
 
@@ -63,7 +63,7 @@ SQL 测试使用 PGlite 0.5.13 / PostgreSQL 18.6，实际 SET ROLE 为非超级�
 
 ## 真实服务开放前还缺什么
 
-1. 免费 Supabase 项目与两份迁移已部署（见 [部署记录](DEPLOYMENT.md)）；Dashboard 显示项目 Healthy、`test_runs` 已启用 RLS 且 Data API 为 disabled。每小时 Cron 最近 10 次执行均成功；Free 层没有自动数据库备份，API／数据库日志保留 1 天。仍需对实际数据删除和保留行为作合成记录读回。不要把凭据写进聊天、仓库、截图或日志。
+1. 免费 Supabase 项目与此前两份迁移已部署（见 [部署记录](DEPLOYMENT.md)）；Dashboard 显示项目 Healthy、`test_runs` 已启用 RLS 且 Data API 为 disabled。旧名每小时 Cron 最近 10 次执行均成功；新增升级迁移 `202611060001_history_retention_schedule_upgrade.sql` 尚待应用。Free 层没有自动数据库备份，API／数据库日志保留 1 天。仍需对实际数据删除和保留行为作合成记录读回。不要把凭据写进聊天、仓库、截图或日志。
 2. 用目标项目继续验证已部署的 Postgres/Auth schema：确认 `pg_cron` 小时任务持续成功、`auth.sessions` 可用于会话约束、`community_private` 未暴露给 Data API，并完成合成身份的真实 Supabase RLS 交叉隔离。未知或已有同名对象必须先调查，不自动覆盖。
 3. 需要用户提供隔离的自有网站域名，并配置 GitHub OAuth 与精确的 Supabase、网站返回地址；读取实际权限，不要求仓库范围。服务端 secret 只由服务端消费者使用。
 4. 两个真实 GitHub 测试账号仅写入虚构分数：直接 Data API 交叉读取、猜 ID、owner 冒充、拒绝写入后原记录完好；退出及注销后旧 access JWT 的读写重放均被拒绝；单条删除与账号注销取得真实服务器读回。

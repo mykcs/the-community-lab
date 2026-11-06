@@ -165,6 +165,7 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - 用户授权创建免费资源。Supabase 组织 `The Community Lab` 为 Free；项目 `The Community Lab History` 的项目 ref 为 `hfhhjpnibrgisbkmlbzz`，创建时选择 **West US (Oregon), `us-west-2`**。项目状态读回为 `Healthy`；未升级或绑定付款方式。
 - 在 Supabase SQL Editor 应用了 PR #11 HEAD `a196050` 的私人历史迁移和 90 天保留迁移。项目启用 `pg_cron 1.6.4` 后，实时读回确认 `public.test_runs` 的 RLS 与 FORCE RLS 均开启，三条 owner/session 策略存在，捕获设置为 `enabled=false`，保留策略过滤 2160 小时前的记录。
 - 2026-11-06 Supabase SQL Editor 只读查询确认：`community-history-retention-90-days`（job id 1）为 active，调度为 `0 * * * *`；最近 10 次记录均为 `succeeded`，最近一次开始时间为 `2026-11-06 01:00:00 UTC`。这验证托管任务确实执行，不等于已经用到期／未到期结果验证删除行为。
+- PR #11 的新增迁移 `202611060001_history_retention_schedule_upgrade.sql` 针对已经应用旧版 migration 2 的项目：它只处理当前用户可见的 Cron job ID，移除旧任务名并保留唯一的每小时当前任务。该迁移尚未应用；不得通过重放已部署的 `202611050001` 文件来升级。
 - 项目仍是 Supabase Free；Dashboard 的 Last backup 显示 No backups。当前官方[备份说明](https://supabase.com/docs/guides/platform/backups)称 Free 项目没有自动数据库备份；[价格页](https://supabase.com/pricing)列出 Free 层 API／数据库日志保留 1 天。本站没有自有备份或外部导出配置，目前没有用户结果。若将来开放保存，必须说明无自动恢复保障及服务日志期限；它们与本站 90 天历史记录删除期限不同。
 - 迁移由 Dashboard SQL Editor 手动执行；没有 Supabase CLI migration-ledger 读回。2026-11-06 Dashboard 显示 GitHub Auth provider 仍禁用，Site URL 为 `http://localhost:3000` 且 Redirect URLs 为空。用户已选择 GitHub 登录，但 provider 表单中已填的客户端字段及遮蔽 secret 尚未核实对应 OAuth App 或有效性；Pages 构建变量和注销 Edge Function 仍未配置。项目中没有用户测试结果，保存功能仍关闭。`mykcs.github.io` 共享 origin 不可用于登录，需先绑定用户控制的域名，再完成 OAuth、两个真实账号互相隔离及删除读回验收。
 

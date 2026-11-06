@@ -44,7 +44,26 @@ export async function qualifyPostgresRls(pg) {
   }
 }
 
-export async function createHistoryDatabase({ cronEnabled = true, applyMigration = true } = {}) {
+async function setSyntheticCronState(pg, state) {
+  assert.ok(['current', 'legacy', 'both', 'none'].includes(state));
+  const jobs = (await pg.query('SELECT jobid FROM cron.job')).rows;
+  for (const job of jobs) await pg.query('SELECT cron.unschedule($1)', [job.jobid]);
+  if (state === 'current' || state === 'both') {
+    await pg.query(`SELECT cron.schedule('community-private-history-90-day-purge', '* * * * *',
+      'SELECT community_private.purge_expired_history();')`);
+  }
+  if (state === 'legacy' || state === 'both') {
+    await pg.query(`SELECT cron.schedule('community-history-retention-90-days', '* * * * *',
+      'SELECT community_private.purge_expired_history();')`);
+  }
+}
+
+export async function createHistoryDatabase({
+  cronEnabled = true,
+  applyMigration = true,
+  preRetentionCronState = 'current',
+  preUpgradeCronState = 'current',
+} = {}) {
   const pg = new PGlite('memory://');
   try {
     const qualification = await qualifyPostgresRls(pg);
@@ -76,20 +95,36 @@ export async function createHistoryDatabase({ cronEnabled = true, applyMigration
       // background jobs inside PGlite.
       await pg.exec(`
         CREATE SCHEMA cron;
-        CREATE TABLE cron.synthetic_jobs(jobname text PRIMARY KEY, schedule text NOT NULL, command text NOT NULL);
+        CREATE TABLE cron.synthetic_jobs(jobid bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+          jobname text NOT NULL UNIQUE, schedule text NOT NULL, command text NOT NULL);
+        CREATE VIEW cron.job AS SELECT jobid, jobname FROM cron.synthetic_jobs;
         CREATE FUNCTION cron.schedule(job_name text, schedule text, command text) RETURNS bigint
         LANGUAGE plpgsql AS $$
+        DECLARE scheduled_job_id bigint;
         BEGIN
           INSERT INTO cron.synthetic_jobs(jobname, schedule, command) VALUES (job_name, schedule, command)
-          ON CONFLICT (jobname) DO UPDATE SET schedule = EXCLUDED.schedule, command = EXCLUDED.command;
-          RETURN 1;
+          ON CONFLICT (jobname) DO UPDATE SET schedule = EXCLUDED.schedule, command = EXCLUDED.command
+          RETURNING jobid INTO scheduled_job_id;
+          RETURN scheduled_job_id;
         END;
         $$;
-        CREATE FUNCTION cron.unschedule(job_name text) RETURNS boolean
+        CREATE FUNCTION cron.unschedule(job_id bigint) RETURNS boolean
         LANGUAGE plpgsql AS $$
         BEGIN
-          DELETE FROM cron.synthetic_jobs WHERE jobname = job_name;
-          RETURN FOUND;
+          DELETE FROM cron.synthetic_jobs WHERE jobid = job_id;
+          IF NOT FOUND THEN RAISE EXCEPTION 'could not find valid entry for job'; END IF;
+          RETURN true;
+        END;
+        $$;
+        CREATE FUNCTION cron.alter_job(job_id bigint, schedule text DEFAULT NULL, command text DEFAULT NULL,
+          database text DEFAULT NULL, username text DEFAULT NULL, active boolean DEFAULT NULL) RETURNS void
+        LANGUAGE plpgsql AS $$
+        BEGIN
+          UPDATE cron.synthetic_jobs
+            SET schedule = COALESCE(alter_job.schedule, synthetic_jobs.schedule),
+                command = COALESCE(alter_job.command, synthetic_jobs.command)
+            WHERE cron.synthetic_jobs.jobid = alter_job.job_id;
+          IF NOT FOUND THEN RAISE EXCEPTION 'could not find valid entry for job'; END IF;
         END;
         $$;
       `);
@@ -97,14 +132,14 @@ export async function createHistoryDatabase({ cronEnabled = true, applyMigration
     if (applyMigration) {
       const initialMigration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
       const retentionMigration = await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8');
+      const upgradeMigration = await readFile(new URL('../supabase/migrations/202611060001_history_retention_schedule_upgrade.sql', import.meta.url), 'utf8');
       await pg.exec(initialMigration);
-      // A previously deployed version used a different per-minute Cron name.
-      // Model that live upgrade state before applying the retention revision.
       if (cronEnabled) {
-        await pg.query(`SELECT cron.schedule('community-history-retention-90-days', '* * * * *',
-          'SELECT community_private.purge_expired_history();')`);
+        await setSyntheticCronState(pg, preRetentionCronState);
       }
       await pg.exec(retentionMigration);
+      if (cronEnabled) await setSyntheticCronState(pg, preUpgradeCronState);
+      await pg.exec(upgradeMigration);
     }
     return { pg, qualification, evidenceScope: EVIDENCE_SCOPE };
   } catch (error) {

@@ -25,6 +25,22 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: missing Cron fails before private-history sc
   } finally { await pg.close(); }
 });
 
+test('PG_RULES_WITH_SYNTHETIC_AUTH: retention upgrades normalize each existing Cron schedule state', async t => {
+  for (const state of ['current', 'legacy', 'both', 'none']) {
+    await t.test(`starting with ${state} job names leaves exactly one hourly current job`, async () => {
+      const { pg } = await createHistoryDatabase({
+        preRetentionCronState: state,
+        preUpgradeCronState: state,
+      });
+      try {
+        const jobs = (await pg.query('SELECT jobname, schedule, command FROM cron.synthetic_jobs')).rows;
+        assert.deepEqual(jobs, [{ jobname: 'community-private-history-90-day-purge', schedule: '0 * * * *',
+          command: 'SELECT community_private.purge_expired_history();' }]);
+      } finally { await pg.close(); }
+    });
+  }
+});
+
 test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history boundaries', async t => {
   const { pg, qualification, evidenceScope } = await createHistoryDatabase();
   try {
