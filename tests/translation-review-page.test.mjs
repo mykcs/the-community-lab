@@ -162,13 +162,13 @@ test('second-season AI wording revisions preserve degree, referent, and priority
     ['rp08', '自动驾驶汽车若面临撞上多名行人的局面，应以挽救多数人为方向进行设计，即使这意味着牺牲驾驶者。'],
     ['rp10', '如果指认一名无辜者为责任人并对其施以惩罚，就能平息暴徒的愤怒、保障市民安全，那么可以牺牲这一个人。'],
     ['ms05', '如果对方是我非常讨厌的那类人，即使对我的工作成果很有帮助，我也不会在私下与其建立亲密关系。'],
-    ['ms11', '选择职业时，是否适合自己、是否有成就感应当是首要考虑，比工资到账的数额更重要。'],
+    ['ms11', '选择职业时，比起银行账户上显示的金额，更应把是否适合自己、能否获得成就感放在首位。'],
   ]);
   for (const [id, translation] of expected) {
     const question = data.questions.find(item => item.id === id);
     assert.ok(question, `${id} must remain in the source dataset`);
     assert.equal(question.translation_zh_cn, translation, id);
-    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_version, id === 'ms11' ? 'draft-0.1.2' : 'draft-0.1.1', id);
     assert.equal(question.review_status, 'draft', id);
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
   }
