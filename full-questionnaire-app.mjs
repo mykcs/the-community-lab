@@ -129,10 +129,10 @@ function render() {
     koreanGroup.lang = 'ko';
     group.replaceChildren(
       make('span', '', '题组 · '), koreanGroup,
-      make('span', '', ` / ${q.group} · 原题编号 ${q.id}`),
+      make('span', '', ` / ${q.group} · 原题编号 ${q.id}（客户端原有 ID）`),
     );
   } else {
-    group.textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
+    group.textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}（本站根据客户端数组位置生成的索引，非官方题号）`;
   }
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
@@ -302,7 +302,7 @@ function renderAnswerAudit(questions) {
     const row = make('li', 'full-answer-audit-item');
     const header = make('div', 'full-answer-audit-head');
     header.append(
-      make('strong', '', `第 ${index + 1} 题 · 源题编号 ${q.id}`),
+      make('strong', '', `第 ${index + 1} 题 · 源题编号 ${q.id}${q.season === 1 ? '（本站生成索引，非官方题号）' : '（客户端原有 ID）'}`),
       make('span', '', `原始选项值：${String(selected.value)}`),
     );
     const korean = make('p', 'full-answer-audit-ko', q.sourceKo);
