@@ -652,3 +652,32 @@ test('S1 politics 12 preserves the Korean causative meaning in both unreviewed d
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
   assert.deepEqual(standaloneData.translation_review, data.translation_review);
 });
+
+
+test('export and import preserve the pre-edit note baseline across offline reviewer devices', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(source);
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const exported = structuredClone(data);
+  const row = exported.questions[0];
+  row.translation_zh_cn += '（合成中文编辑，仅用于测试）';
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  row.human_review_note_stale = false;
+  row.human_review_note_stale_original = '旧备注：仅检查原译文';
+  const restored = restore(exported, data);
+  assert.equal(restored[row.id].reviewNoteStaleOriginal, '旧备注：仅检查原译文');
+  assert.equal(restored[row.id].reviewNoteStale, false);
+  row.human_review_note = '旧备注：仅检查原译文  ';
+  row.human_review_status = 'pass';
+  assert.throws(() => restore(exported, data), /通过状态缺少有效备注/,
+    'undoing the old note after import must not restore a PASS');
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  const legacy = structuredClone(exported);
+  delete legacy.questions[0].human_review_note_stale_original;
+  assert.equal(restore(legacy, data)[row.id].reviewNoteStaleOriginal, undefined,
+    'previous export format remains accepted without fabricating a historical baseline');
+  assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
+  assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
+});

@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-WB6NmaRGlT8tjNByzieWdbk5rJNo6RF+gUqpFKMrlA8=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-/Ro2wqjUOQf3S3TmL7Jgen7GykIkeSiQHnlo6zFidp0=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -171,7 +171,7 @@ function validateReviewImport(incoming,baseline){
       baseline.reported_permission?.status==='USER_CONFIRMED_OFFICIAL_NONCOMMERCIAL_PERMISSION'){
     q.rights_status='user_reported_permission_unverified';
    }
-   delete q.translation_zh_cn;delete q.human_review_status;delete q.human_review_note;delete q.human_review_note_stale;
+   delete q.translation_zh_cn;delete q.human_review_status;delete q.human_review_note;delete q.human_review_note_stale;delete q.human_review_note_stale_original;
    for(const [j,option] of q.options.entries()){
     if(!option||typeof option!=='object')throw new Error('源选项结构不完整');
     // Historical downloads predating the 2026-11-04 source correction
@@ -202,7 +202,9 @@ function validateReviewImport(incoming,baseline){
   if(!['pending','pass','revise'].includes(status)||typeof note!=='string'||note.length>4000||
      typeof q.translation_zh_cn!=='string'||q.translation_zh_cn.length>20000||
      q.options.some(o=>typeof o.zh_cn!=='string'||o.zh_cn.length>4000)||
-     (q.human_review_note_stale!==undefined&&typeof q.human_review_note_stale!=='boolean')){
+     (q.human_review_note_stale!==undefined&&typeof q.human_review_note_stale!=='boolean')||
+     (q.human_review_note_stale_original!==undefined&&
+      (typeof q.human_review_note_stale_original!=='string'||q.human_review_note_stale_original.length>4000))){
    throw new Error('审校状态、备注或中文译文格式不合法：'+original.id);
   }
   const optionTexts=q.options.map(o=>o.zh_cn);
@@ -213,7 +215,12 @@ function validateReviewImport(incoming,baseline){
   const unprovenLegacyPass=status==='pass'&&q.human_review_note_stale===undefined&&
     (textChanged||optionChanged);
   if(unprovenLegacyPass)effectiveStatus='pending';
-  const stale=unprovenLegacyPass||(legacyCaptions&&Boolean(note.trim()))||
+  // A pre-edit remark must remain recognizable across export/import even if
+  // the user briefly rewrote the note and later undid that change.
+  const recordedOriginal=q.human_review_note_stale_original;
+  const revertedNote=typeof recordedOriginal==='string'&&
+    Boolean(recordedOriginal.trim())&&note.trim()===recordedOriginal.trim();
+  const stale=unprovenLegacyPass||(legacyCaptions&&Boolean(note.trim()))||revertedNote||
     (q.human_review_note_stale??(status==='pending'&&Boolean(note.trim())&&(textChanged||optionChanged)));
   if(effectiveStatus==='pass'&&(!note.trim()||stale||!q.translation_zh_cn.trim()||optionTexts.some(v=>!v.trim()))){
    throw new Error('通过状态缺少有效备注、译文或选项：'+original.id);
@@ -222,6 +229,7 @@ function validateReviewImport(incoming,baseline){
   if(textChanged)edit.translation=q.translation_zh_cn;
   if(optionChanged)edit.options=optionTexts;
   if(effectiveStatus!=='pending'||note||stale)Object.assign(edit,{review:effectiveStatus,note,reviewNoteStale:stale});
+  if(recordedOriginal!==undefined)edit.reviewNoteStaleOriginal=recordedOriginal;
   if(Object.keys(edit).length)imported[original.id]=edit;
  }
  return imported;
@@ -308,7 +316,7 @@ function render(){
  }
 }
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
-document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
+document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true;if(typeof e.reviewNoteStaleOriginal==='string')q.human_review_note_stale_original=e.reviewNoteStaleOriginal}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
 const importFile=document.querySelector('#import-file');
 document.querySelector('#import').addEventListener('click',()=>importFile.click());
 importFile.addEventListener('change',async()=>{

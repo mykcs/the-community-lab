@@ -99,3 +99,45 @@ test("reviewer clear fails closed when browser storage rejects removal, then rec
   await expect(page.locator(".statusline")).toContainText("审校记录已清除");
   expect(errors).toEqual([]);
 });
+
+test('offline export/import retains the pre-edit note basis and rejects undo to an old remark', async ({ page, browser }) => {
+  const id = 's1-politics-01';
+  await page.goto(reviewUrl);
+  const oldRemark = '合成旧备注：只审核过上一版中文';
+  const freshRemark = '合成新备注：已审核当前中文内容及所有选项';
+  await page.getByLabel(`${id} 审校备注`).fill(oldRemark);
+  await page.getByLabel(`${id} 中文翻译`).fill('合成当前新版中文内容');
+  await page.getByLabel(`${id} 审校备注`).fill(freshRemark);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.locator('#export').click(),
+  ]);
+  const contents = await readFile(await download.path());
+  const exported = JSON.parse(contents.toString('utf8'));
+  const row = exported.questions.find(q => q.id === id);
+  expect(row.human_review_note_stale).toBe(false);
+  expect(row.human_review_note_stale_original).toBe(oldRemark);
+  const newContext = await browser.newContext();
+  try {
+    const restoredPage = await newContext.newPage();
+    restoredPage.on('dialog', dialog => dialog.accept());
+    await restoredPage.goto(reviewUrl);
+    await restoredPage.locator('#import-file').setInputFiles({
+      name: 'synthetic-review-roundtrip.json',
+      mimeType: 'application/json',
+      buffer: contents,
+    });
+    await expect(restoredPage.locator('.statusline')).toContainText('已从同一来源版本恢复');
+    const note = restoredPage.getByLabel(`${id} 审校备注`);
+    const status = restoredPage.getByLabel(`${id} 复核状态`);
+    await expect(note).toHaveValue(freshRemark);
+    await note.fill(oldRemark + ' ');
+    await status.selectOption('pass');
+    await expect(status).toHaveValue('pending');
+    await note.fill('合成二次审核：当前翻译已重新核对');
+    await status.selectOption('pass');
+    await expect(status).toHaveValue('pass');
+  } finally {
+    await newContext.close();
+  }
+});
