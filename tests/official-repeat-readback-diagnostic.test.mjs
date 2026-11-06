@@ -50,6 +50,10 @@ test('read-only diagnostic pinpoints which official score fields disagree withou
       distinctScoreOutputs: 2,
       outputClusterSizesDescending: [6, 1],
       conflicting: true,
+      recordedResultOrder: 'KNOWN',
+      chronologicalScoreRunSizes: [1, 6],
+      chronologicalScoreTransitions: 1,
+      oneChronologicalBoundaryObserved: true,
     }],
     majorityDoesNotEstablishGoldStandard: true,
   });
@@ -106,4 +110,29 @@ test('unverified historical responses and private fields never become repeat-inp
   assert.equal(report.repeatedInputPairs, 21);
   assert.equal(samples.filter(row => row.inputVerification === 'unverified').length, 1);
   assert.throws(() => diagnoseExistingRepeatedReadbacks(diagnosticSamples, {}, references), /Map/);
+});
+
+test('temporal score split is independent of fixture array order, not a backend-cause conclusion', () => {
+  const report = diagnoseExistingRepeatedReadbacks(
+    [...diagnosticSamples].reverse(), fakeLive(), references);
+  const group = report.readbackClusterSummary.groups[0];
+  assert.deepEqual(group.chronologicalScoreRunSizes, [1, 6]);
+  assert.equal(group.chronologicalScoreTransitions, 1);
+  assert.equal(group.oneChronologicalBoundaryObserved, true);
+  assert.equal(report.rootCauseEstablished, false);
+});
+
+test('duplicate recorded creation times block chronological claims', () => {
+  const altered = structuredClone(diagnosticSamples);
+  const a = altered.find(row => row.publicResultId === repeated[0].publicResultId);
+  const b = altered.find(row => row.publicResultId === repeated[1].publicResultId);
+  a.resultCreatedAt = b.resultCreatedAt;
+  const live = fakeLive();
+  live.get(a.publicResultId).createdAt = a.resultCreatedAt;
+  const group = diagnoseExistingRepeatedReadbacks(altered, live, references)
+    .readbackClusterSummary.groups[0];
+  assert.equal(group.recordedResultOrder, 'AMBIGUOUS_EQUAL_TIMESTAMPS');
+  assert.deepEqual(group.chronologicalScoreRunSizes, []);
+  assert.equal(group.chronologicalScoreTransitions, null);
+  assert.equal(group.oneChronologicalBoundaryObserved, false);
 });

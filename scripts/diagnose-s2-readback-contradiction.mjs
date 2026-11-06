@@ -76,12 +76,36 @@ function summarizeReadbackClusters(groups, liveById) {
       if (cluster) cluster.count++;
       else clusters.push({ output, count: 1 });
     }
+    // Result creation order may reveal a pattern to investigate, not its cause.
+    // Publish only contiguous run sizes, never times, identifiers or score values.
+    const timeline = group.map(row => ({
+      createdAt: row.resultCreatedAt,
+      output: scoreProjection(liveById.get(row.publicResultId)),
+    })).sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    const distinctTimes = new Set(timeline.map(row => row.createdAt)).size === timeline.length;
+    const runs = [];
+    if (distinctTimes) {
+      for (const row of timeline) {
+        const index = clusters.findIndex(entry =>
+          compareRecordedOfficialScoreFields(entry.output, row.output).matches);
+        if (index < 0) throw new Error('Recorded score cluster vanished');
+        const last = runs.at(-1);
+        if (last?.index === index) last.count++;
+        else runs.push({ index, count: 1 });
+      }
+    }
     return {
       observationCount: group.length,
       distinctScoreOutputs: clusters.length,
       outputClusterSizesDescending: clusters.map(entry => entry.count)
         .sort((a, b) => b - a),
       conflicting: clusters.length > 1,
+      recordedResultOrder: distinctTimes ? 'KNOWN' : 'AMBIGUOUS_EQUAL_TIMESTAMPS',
+      chronologicalScoreRunSizes: runs.map(row => row.count),
+      chronologicalScoreTransitions: distinctTimes ? Math.max(0, runs.length - 1) : null,
+      // Does not prove backend drift: historical request context is absent.
+      oneChronologicalBoundaryObserved: distinctTimes && clusters.length > 1 &&
+        runs.length === 2,
     };
   });
   return {
@@ -144,7 +168,7 @@ export function diagnoseExistingRepeatedReadbacks(
   }
   const drifted = pairs.some(pair => pair.status === 'BLOCKED_READBACK_DRIFT');
   return {
-    schemaVersion: 's2-readback-contradiction-diagnostic@2',
+    schemaVersion: 's2-readback-contradiction-diagnostic@3',
     repeatedInputPairs: pairs.length,
     pairs,
     // A changed historical readback invalidates all cluster conclusions.
