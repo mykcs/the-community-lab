@@ -78,6 +78,7 @@ emitHuman('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 
   ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
   inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择；相同输入的重复结果 ' +
   (inputCoverage.repeatedInputOutputsConsistent ? '一致' : '不一致') + '。');
+emitHuman('重要证据边界：上面的“已验收输入”是逐题客户端 UI 选择的重建记录；官网结果 GET 不回传服务端收到的答案。历史最终 POST 负载及完整请求上下文未独立保存，因此不同读回不能证明服务器收到了完全相同的输入，更不能证明后台计分随机变化。');
 emitHuman('不同输入向量两两对比（重复答卷不重复计数）：' + inputCoverage.comparedInputPairs + ' 对；' +
   inputCoverage.singleQuestionContrastPairs + ' 对只差 1 题；最少/最多相差 ' +
   (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
