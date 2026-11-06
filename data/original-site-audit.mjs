@@ -24,11 +24,12 @@ export const ORIGINAL_SITE_AUDIT = Object.freeze({
   }),
 });
 
-// Ten already-public, anonymous *synthetic* results. These observations are
-// a narrow evidence subset: never copy referral codes, nicknames or real
-// participant answers into this repository. One historical UI session did NOT
-// verify its submitted choices. Repeated input produced different outputs;
-// nine checked pairs and four distinct input vectors are not a scoring rule.
+// Eleven already-public, anonymous *synthetic* results. Ten have verified
+// input vectors; one historical UI session did NOT verify its submitted
+// choices. These observations are a narrow evidence subset: never copy
+// referral codes, nicknames or real participant answers into this repository.
+// Repeated input produced different outputs; four distinct vectors are not a
+// scoring rule.
 const observedSeason2Output = Object.freeze({
   season: 'season-2',
   questionnaireVersion: 'season-2@2026-08',

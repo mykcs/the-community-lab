@@ -44,6 +44,16 @@ function knownEquality(left, right, key) {
     ? 'UNKNOWN' : left[key] === right[key];
 }
 
+// Only canonical UTC millisecond timestamps establish a total order.
+// Lexicographic sorting of arbitrary date strings can reverse timezone
+// offsets or accept impossible dates, inventing an apparent score transition.
+function canonicalUtcEpoch(value) {
+  if (typeof value !== 'string' ||
+      !/^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}Z$/.test(value)) return null;
+  const epoch = Date.parse(value);
+  return Number.isFinite(epoch) && new Date(epoch).toISOString() === value ? epoch : null;
+}
+
 function scoreProjection(response) {
   return {
     ...Object.fromEntries(PUBLIC_SCORE_FIELDS.map(key => [key, response[key]])),
@@ -76,12 +86,40 @@ function summarizeReadbackClusters(groups, liveById) {
       if (cluster) cluster.count++;
       else clusters.push({ output, count: 1 });
     }
+    // Result creation order may reveal a pattern to investigate, not its cause.
+    // Publish only contiguous run sizes, never times, identifiers or score values.
+    const timeline = group.map(row => ({
+      epoch: canonicalUtcEpoch(row.resultCreatedAt),
+      output: scoreProjection(liveById.get(row.publicResultId)),
+    }));
+    const canonicalTimes = timeline.every(row => row.epoch !== null);
+    const distinctTimes = canonicalTimes &&
+      new Set(timeline.map(row => row.epoch)).size === timeline.length;
+    const runs = [];
+    if (distinctTimes) {
+      timeline.sort((a, b) => a.epoch - b.epoch);
+      for (const row of timeline) {
+        const index = clusters.findIndex(entry =>
+          compareRecordedOfficialScoreFields(entry.output, row.output).matches);
+        if (index < 0) throw new Error('Recorded score cluster vanished');
+        const last = runs.at(-1);
+        if (last?.index === index) last.count++;
+        else runs.push({ index, count: 1 });
+      }
+    }
     return {
       observationCount: group.length,
       distinctScoreOutputs: clusters.length,
       outputClusterSizesDescending: clusters.map(entry => entry.count)
         .sort((a, b) => b - a),
       conflicting: clusters.length > 1,
+      recordedResultOrder: !canonicalTimes ? 'AMBIGUOUS_NONCANONICAL_TIMESTAMPS'
+        : distinctTimes ? 'KNOWN' : 'AMBIGUOUS_EQUAL_TIMESTAMPS',
+      chronologicalScoreRunSizes: runs.map(row => row.count),
+      chronologicalScoreTransitions: distinctTimes ? Math.max(0, runs.length - 1) : null,
+      // Does not prove backend drift: historical request context is absent.
+      oneChronologicalBoundaryObserved: distinctTimes && clusters.length > 1 &&
+        runs.length === 2,
     };
   });
   return {
@@ -144,7 +182,7 @@ export function diagnoseExistingRepeatedReadbacks(
   }
   const drifted = pairs.some(pair => pair.status === 'BLOCKED_READBACK_DRIFT');
   return {
-    schemaVersion: 's2-readback-contradiction-diagnostic@2',
+    schemaVersion: 's2-readback-contradiction-diagnostic@3',
     repeatedInputPairs: pairs.length,
     pairs,
     // A changed historical readback invalidates all cluster conclusions.
