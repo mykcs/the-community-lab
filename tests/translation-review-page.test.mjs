@@ -251,6 +251,22 @@ test('rp03 preserves the source item’s absolute priority and both review pages
   assert.equal(standaloneData.translation_review.publishable, false);
 });
 
+test('rp01 preserves the source goal of resolving the power shortage in both unreviewed drafts', () => {
+  const question = data.questions.find(item => item.id === 'rp01');
+  assert.ok(question, 'rp01 must remain in the source dataset');
+  assert.match(question.source_text_ko, /전력 부족 사태를 해결하기 위해/);
+  assert.equal(question.translation_zh_cn, '如果为解决国家电力短缺而必须修建水坝，即使部分淹没区居民强烈反对，也有必要强行推进。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /한국어기초사전|韩国国立国语院/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /rp01.*draft-0\.1\.1/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both reviewer pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('rp12 uses natural comparative wording without changing its unreviewed draft status', () => {
   const question = data.questions.find(item => item.id === 'rp12');
   assert.ok(question, 'rp12 must remain in the source dataset');
