@@ -25,6 +25,7 @@ test('finished local answer audit shows original values and edits one selected q
   await expect(audit).not.toHaveAttribute('open', '');
   await audit.locator('summary').click();
   await expect(audit.locator('li')).toHaveCount(37);
+  await expect(audit.locator('li').first()).toContainText('客户端原有 ID');
   const target = audit.locator('li').nth(10);
   await expect(target).toContainText(questions[10].sourceKo);
   await expect(target).toContainText(questions[10].draftZh);
@@ -75,6 +76,7 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   await page.locator('#full-answer-audit summary').click();
   const audit = page.locator('#full-answer-audit-list');
   await expect(audit.locator('li')).toHaveCount(87);
+  await expect(audit.locator('li').first()).toContainText('本站生成索引，非官方题号');
   const annotatedRow = audit.locator('li').filter({ hasText: `源题编号 ${annotated.id}` });
   await expect(annotatedRow.locator('.full-answer-audit-note')).toHaveText(annotated.readerNote);
   const scaleRow = audit.locator('li').filter({ hasText: `源题编号 ${blankScale.id}` });
@@ -88,13 +90,29 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   expect(writes).toEqual([]);
 });
 
+test('S1 visibly discloses that its index is site-derived, not an official question number', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=1');
+  const heading = page.locator('#full-group');
+  await expect(heading).toContainText('原题编号 s1-class-15');
+  await expect(heading).toContainText('本站根据客户端数组位置生成的索引，非官方题号');
+  await expect(heading).not.toContainText('客户端原有 ID');
+  const outbound = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') outbound.push(request.url());
+  });
+  await page.locator('.full-choice').first().click();
+  await page.locator('#full-next').click();
+  await expect(heading).toContainText('非官方题号');
+  expect(outbound).toEqual([]);
+});
+
 test('S2 title displays pinned Korean source group before its unreviewed Chinese translation', async ({ page }) => {
   const question = loadFullQuestionnaire().seasons[2][0];
   const source = sourceIndex.questions.find(q => q.sourceQuestionId === question.id);
   await page.goto('/the-community-lab/questionnaire/?season=2');
   const heading = page.locator('#full-group');
   await expect(heading.locator('[lang="ko"]')).toHaveText(source.sourceGroup);
-  await expect(heading).toContainText(` / ${question.group} · 原题编号 ${question.id}`);
+  await expect(heading).toContainText(` / ${question.group} · 原题编号 ${question.id}（客户端原有 ID）`);
   const label = await heading.textContent();
   expect(label.indexOf(source.sourceGroup)).toBeLessThan(label.indexOf(question.group));
   await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');

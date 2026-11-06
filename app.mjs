@@ -198,8 +198,11 @@ function downloadResult() {
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = `community-demo-season-${active.result.season}-result.json`;
-  anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  // Some WebKit browsers ignore programmatic downloads from detached links.
+  // Match the full-questionnaire backup path, without adding persistence or egress.
+  document.body.append(anchor);
+  try { anchor.click(); } finally { anchor.remove(); }
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
 
 $('hero-start').addEventListener('click', () => begin(2));

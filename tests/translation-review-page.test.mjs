@@ -432,6 +432,7 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
     q1: { review: 'pass', note: 'reviewer A · bilingual evidence · 2026-10-30' },
     q2: { review: 'pass', note: 'reviewer B · 2026-10-30' },
     q3: { review: 'revise', note: 'needs changes' },
+    q4: { review: 'pending' },
   };
   let saves = 0;
   const update = new Function('edits', 'save', body + '; return recordTranslationEdit;')(edits, () => saves++);
@@ -449,14 +450,22 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
   const q3Select = { value: 'revise' };
   update('q3', { translation: '修改' }, q3Select);
   assert.equal(edits.q3.review, 'revise');
-  assert.equal(edits.q3.reviewNoteStale, false);
+  assert.equal(edits.q3.reviewNoteStale, true, 'pre-edit notes are stale even before a PASS');
   assert.equal(q3Select.value, 'revise');
-  assert.equal(saves, 3);
+  const q4Select = { value: 'pending' };
+  update('q4', { translation: '新翻译' }, q4Select);
+  assert.equal(edits.q4.reviewNoteStale, false, 'no previous note to invalidate');
+  assert.equal(saves, 4);
   assert.match(html, /recordTranslationEdit\(q\.id,\{translation:edit\.value\},status\)/);
   assert.match(html, /recordTranslationEdit\(q\.id,\{options:arr\},status\)/);
   assert.match(html, /再次修改题干译文或选项.*自动退回待复核/);
   assert.match(html, /curr\.reviewNoteStale===true/);
-  assert.match(html, /note:note\.value,reviewNoteStale:false/);
+  assert.match(html, /reviewNoteStaleOriginal:staleBasis/);
+  assert.match(html, /note\.value\.trim\(\)===String\(staleBasis\)\.trim\(\)/);
+  assert.doesNotMatch(html, /note:note\.value,reviewNoteStale:false/);
+  assert.equal(edits.q1.reviewNoteStaleOriginal, 'reviewer A · bilingual evidence · 2026-10-30');
+  assert.equal(edits.q3.reviewNoteStaleOriginal, 'needs changes');
+  assert.equal(edits.q4.reviewNoteStaleOriginal, undefined);
 });
 
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
@@ -658,4 +667,33 @@ test('S1 politics 12 preserves the Korean causative meaning in both unreviewed d
   assert.match(data.translation_review.editorial_pass, /s1-politics-12.*받게 하다/);
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
   assert.deepEqual(standaloneData.translation_review, data.translation_review);
+});
+
+
+test('export and import preserve the pre-edit note baseline across offline reviewer devices', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(source);
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const exported = structuredClone(data);
+  const row = exported.questions[0];
+  row.translation_zh_cn += '（合成中文编辑，仅用于测试）';
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  row.human_review_note_stale = false;
+  row.human_review_note_stale_original = '旧备注：仅检查原译文';
+  const restored = restore(exported, data);
+  assert.equal(restored[row.id].reviewNoteStaleOriginal, '旧备注：仅检查原译文');
+  assert.equal(restored[row.id].reviewNoteStale, false);
+  row.human_review_note = '旧备注：仅检查原译文  ';
+  row.human_review_status = 'pass';
+  assert.throws(() => restore(exported, data), /通过状态缺少有效备注/,
+    'undoing the old note after import must not restore a PASS');
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  const legacy = structuredClone(exported);
+  delete legacy.questions[0].human_review_note_stale_original;
+  assert.equal(restore(legacy, data)[row.id].reviewNoteStaleOriginal, undefined,
+    'previous export format remains accepted without fabricating a historical baseline');
+  assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
+  assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
 });

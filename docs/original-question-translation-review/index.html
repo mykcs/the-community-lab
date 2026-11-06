@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-zwQ3oAC7sejlpMl1j3bKxQHMGuBpELxqfrtcGYNoUnk=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-2/YPvD7QYgT4OnMrGp3ffqKeuuZA5eh3kX/N0jVPf4I=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <title>The Community 原题韩中译文复核台</title>
 <style>
@@ -44,9 +44,17 @@ try{
  // Preserve edits/notes, but do not silently keep a PASS granted against
  // invented Korean labels. New PASS marks carry the corrected source revision.
  for(const q of data.questions){
-  if(q.season!==1||q.options.length!==6)continue;
   const entry=restored[q.id];
-  if(entry?.review==='pass'&&entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1'){
+  if(entry?.review!=='pass')continue;
+  // Older local drafts lack a note-currency marker. If their Chinese copy
+  // differs from this source pack, the note cannot be tied to the latest text.
+  const unprovenLegacyNote=entry.reviewNoteStale===undefined&&(
+   (entry.translation!==undefined&&entry.translation!==q.translation_zh_cn)||
+   (Array.isArray(entry.options)&&entry.options.some((value,i)=>value!==q.options[i]?.zh_cn))
+  );
+  const outdatedScale=q.season===1&&q.options.length===6&&
+   entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1';
+  if(unprovenLegacyNote||outdatedScale){
    entry.review='pending';entry.reviewNoteStale=true;
   }
  }
@@ -126,7 +134,15 @@ function hasCompleteChineseDraft(q,e){
 function recordTranslationEdit(id,patch,select){
  const previous=edits[id]||{};
  const hadPass=previous.review==='pass';
- edits[id]={...previous,...patch,review:hadPass?'pending':(previous.review||'pending'),reviewNoteStale:previous.reviewNoteStale===true||hadPass};
+ const stale=previous.reviewNoteStale===true||hadPass||Boolean(previous.note?.trim());
+  // Bind a stale note to the exact earlier remark. Whitespace and undo do
+  // not constitute a new review after Chinese wording has changed.
+  const staleBasis=previous.reviewNoteStale===true
+    ? (previous.reviewNoteStaleOriginal??previous.note??'')
+    : (previous.note??'');
+  edits[id]={...previous,...patch,review:hadPass?'pending':(previous.review||'pending'),
+    reviewNoteStale:stale,
+    ...(stale?{reviewNoteStaleOriginal:staleBasis}:{})};
  if(hadPass)select.value='pending';
  save();
 }
@@ -153,13 +169,19 @@ function render(){
   const zp=node('section','panel');zp.append(node('div','label','中文翻译 · AI 初译'));const edit=node('textarea','translation');edit.value=e.translation??q.translation_zh_cn;edit.setAttribute('aria-label',q.id+' 中文翻译');edit.addEventListener('input',()=>{recordTranslationEdit(q.id,{translation:edit.value},status)});zp.append(edit);if(q.reader_note_zh_cn)zp.append(node('p','cues','AI 译注（待独立人工核对）：'+q.reader_note_zh_cn.replace(/^AI 译注（待独立人工核对）：/u,'')));cmp.append(kp,zp);body.append(cmp);const cues=reviewCues(q);if(cues.length)body.append(node('p','cues','自动提示（仅词语匹配）：重点核对'+cues.join('、')+'；不代表译文有误或已通过。'));
   const opts=node('div','options');opts.append(node('div','label','答案选项 · 韩文原文 / 中文初译'));
   q.options.forEach((o,i)=>{const row=node('div','option');row.append(node('span','optionnum',o.mark||String(o.value)));row.append(node('div','optionko',o.ko||'（客户端未提供韩文文字标签；保留原始数值）'));const cell=node('label','optionzh');const input=document.createElement('input');input.value=(e.options&&e.options[i]!==undefined)?e.options[i]:(o.zh_cn||'');input.setAttribute('aria-label',q.id+' 选项 '+(i+1)+' 中文');input.addEventListener('input',()=>{const curr=edits[q.id]||{};const arr=curr.options||q.options.map(x=>x.zh_cn||'');arr[i]=input.value;recordTranslationEdit(q.id,{options:arr},status)});cell.append(input);row.append(cell);opts.append(row)});body.append(opts);
-  const review=node('div','review');const status=document.createElement('select');status.setAttribute('aria-label',q.id+' 复核状态');[['pending','待复核'],['pass','审校者自报通过（待核验）'],['revise','需要修改']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;status.append(o)});status.value=e.review||'pending';const note=document.createElement('textarea');note.placeholder='记录审校者代号、韩中能力依据、日期、歧义与计分极性意见';note.value=e.note||'';note.setAttribute('aria-label',q.id+' 审校备注');if(status.value==='pass'&&(!note.value.trim()||e.reviewNoteStale===true||!hasCompleteChineseDraft(q,e))){status.value='pending';edits[q.id]={...e,review:'pending'}}status.addEventListener('change',()=>{const curr=edits[q.id]||{};if(status.value==='pass'&&(!note.value.trim()||curr.reviewNoteStale===true||!hasCompleteChineseDraft(q,curr))){status.value=curr.review||'pending';note.setCustomValidity('请先填写完整的中文题干、所有中文选项及审校备注；如刚修改译文，请更新复核备注后再标记通过。');note.reportValidity();return}note.setCustomValidity('');edits[q.id]={...curr,review:status.value,
+  const review=node('div','review');const status=document.createElement('select');status.setAttribute('aria-label',q.id+' 复核状态');[['pending','待复核'],['pass','审校者自报通过（待核验）'],['revise','需要修改']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;status.append(o)});status.value=e.review||'pending';const note=document.createElement('textarea');note.placeholder='记录审校者代号、韩中能力依据、日期、歧义与计分极性意见';note.value=e.note||'';note.setAttribute('aria-label',q.id+' 审校备注');if(status.value==='pass'&&(!note.value.trim()||e.reviewNoteStale===true||!hasCompleteChineseDraft(q,e))){status.value='pending';edits[q.id]={...e,review:'pending'}}status.addEventListener('change',()=>{const curr=edits[q.id]||{};if(status.value==='pass'&&(!note.value.trim()||curr.reviewNoteStale===true||!hasCompleteChineseDraft(q,curr))){status.value=curr.review||'pending';note.setCustomValidity('请先填写完整的中文题干、所有中文选项及审校备注；如刚修改译文，请更新复核备注后再标记通过。');note.reportValidity();return}note.setCustomValidity('');edits[q.id]={...curr,review:status.value,...(status.value==='pass'?{reviewNoteStaleOriginal:undefined}:{}),
    ...(status.value==='pass'&&q.season===1&&q.options.length===6?
-     {sourceCaptionRevision:'s1-scale-empty-2-and-5@1'}:{})};save()});note.addEventListener('input',()=>{note.setCustomValidity('');const curr=edits[q.id]||{};if(status.value==='pass'&&!note.value.trim()){status.value='pending';edits[q.id]={...curr,review:'pending',note:note.value}}else{edits[q.id]={...curr,note:note.value,reviewNoteStale:false}}save()});review.append(status,note,node('p','status','标记通过前请填写审校者代号、韩中能力依据和复核日期。可用代号，勿写邮箱等私人信息。标记通过后再次修改题干译文或选项，会自动退回待复核，且须更新备注才能重新自报通过。此自述只作本地留痕，不证明审校者身份或能力。'));body.append(review);card.append(body);list.append(card)
+     {sourceCaptionRevision:'s1-scale-empty-2-and-5@1'}:{})};save()});note.addEventListener('input',()=>{note.setCustomValidity('');const curr=edits[q.id]||{};if(status.value==='pass'&&!note.value.trim()){status.value='pending';edits[q.id]={...curr,review:'pending',note:note.value}}else{
+    const staleBasis=curr.reviewNoteStaleOriginal??
+      (curr.reviewNoteStale===true?(curr.note??''):undefined);
+    edits[q.id]={...curr,note:note.value,
+      reviewNoteStale:staleBasis===undefined?false:note.value.trim()===String(staleBasis).trim(),
+      ...(staleBasis===undefined?{}:{reviewNoteStaleOriginal:staleBasis})}
+   }save()});review.append(status,note,node('p','status','标记通过前请填写审校者代号、韩中能力依据和复核日期。可用代号，勿写邮箱等私人信息。标记通过后再次修改题干译文或选项，会自动退回待复核，且须更新备注才能重新自报通过。此自述只作本地留痕，不证明审校者身份或能力。'));body.append(review);card.append(body);list.append(card)
  }
 }
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);priorityFilter.addEventListener('change',render);
-document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
+document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true;if(typeof e.reviewNoteStaleOriginal==='string')q.human_review_note_stale_original=e.reviewNoteStaleOriginal}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
 document.querySelector('#clear').addEventListener('click',()=>{
  // Clearing is a write too: a stale tab must not erase a newer review draft.
  if(otherTabModified){showOtherTabWarning();return}

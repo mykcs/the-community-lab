@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
 async function expectNoHorizontalOverflow(page) {
@@ -185,3 +186,41 @@ for (const season of [1, 2]) {
     await expect(digest).toBeHidden();
   });
 }
+
+test('independent demo downloads its local-only result via an attached link', async ({ page }) => {
+  // A detached anchor may silently fail on WebKit. The browser-test contract
+  // is that the link is in the DOM when clicked and is removed immediately
+  // afterwards; no upload or official score is involved.
+  await page.addInitScript(() => {
+    const nativeClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function (...args) {
+      if (this.download?.startsWith('community-demo-season-')) {
+        window.demoDownloadWasAttached = this.isConnected;
+      }
+      return nativeClick.apply(this, args);
+    };
+  });
+  const writes = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') writes.push(request.url());
+  });
+  await page.goto('/the-community-lab/');
+  await page.locator('#hero-start').click();
+  for (let i = 0; i < 6; i += 1) {
+    await page.locator('.answer-option').first().click();
+    await page.locator('#quiz-next').click();
+  }
+  await expect(page.locator('#result-view')).toBeVisible();
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: '下载本机结果 ↓' }).click(),
+  ]);
+  expect(download.suggestedFilename()).toBe('community-demo-season-2-result.json');
+  expect(await page.evaluate(() => window.demoDownloadWasAttached)).toBe(true);
+  expect(await page.locator('a[download^="community-demo-season-"]').count()).toBe(0);
+  const record = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(record.season).toBe(2);
+  expect(record.notice).toContain('本站原创示例');
+  expect(record).not.toHaveProperty('selections');
+  expect(writes).toEqual([]);
+});
