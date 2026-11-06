@@ -56,6 +56,7 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   const blankScale = questions.find(q => q.options.length === 6 &&
     q.options.some(o => o.value === 2 && o.ko === ''));
   expect(annotated?.readerNote).toMatch(/^AI 译注（待独立人工核对）/);
+  expect(annotated?.translationVersion).toBe('draft-0.1.4');
   expect(blankScale).toBeTruthy();
   const choices = Object.fromEntries(questions.map(q => [
     q.id, q.options.some(o => o.value === 2 && o.ko === '') ? 2 : q.options[0].value,
@@ -97,6 +98,22 @@ test('S2 title displays pinned Korean source group before its unreviewed Chinese
   const label = await heading.textContent();
   expect(label.indexOf(source.sourceGroup)).toBeLessThan(label.indexOf(question.group));
   await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');
+});
+
+test('rp11 renders the calibrated unreviewed Chinese wording beside its Korean source', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const target = sourceIndex.questions.find(question => question.sourceQuestionId === 'rp11');
+  expect(target).toBeTruthy();
+  for (let position = 1; position < target.displayPositionDerivedFromClient; position += 1) {
+    await page.locator('.full-choice').first().click();
+    await page.locator('#full-next').click();
+  }
+  await expect(page.locator('#full-group')).toContainText('原题编号 rp11');
+  await expect(page.locator('#full-ko')).toContainText('반인륜적인 행위');
+  await expect(page.locator('#full-zh')).toContainText('酷刑、屠杀等不人道行为');
+  await expect(page.locator('#full-zh')).not.toContainText('反人类');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(page.viewportSize().width);
 });
 
 test('latest selected import wins when an older local JSON file finishes reading later', async ({ page }) => {

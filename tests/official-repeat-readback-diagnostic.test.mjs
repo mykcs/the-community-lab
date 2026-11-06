@@ -122,6 +122,34 @@ test('temporal score split is independent of fixture array order, not a backend-
   assert.equal(report.rootCauseEstablished, false);
 });
 
+test('invalid but shape-matching UTC hours cannot create a chronological score claim', () => {
+  const altered = structuredClone(diagnosticSamples);
+  const a = altered.find(row => row.publicResultId === repeated[0].publicResultId);
+  a.resultCreatedAt = '2026-11-05T25:00:00.000Z';
+  const live = fakeLive();
+  live.get(a.publicResultId).createdAt = a.resultCreatedAt;
+  const report = diagnoseExistingRepeatedReadbacks(altered, live, references);
+  const group = report.readbackClusterSummary.groups[0];
+  assert.equal(group.recordedResultOrder, 'AMBIGUOUS_NONCANONICAL_TIMESTAMPS');
+  assert.deepEqual(group.chronologicalScoreRunSizes, []);
+  assert.equal(group.chronologicalScoreTransitions, null);
+  assert.equal(group.oneChronologicalBoundaryObserved, false);
+  assert.equal(report.readbackClusterSummary.conflictingInputGroups, 1);
+});
+
+test('impossible calendar dates cannot be used to assert a temporal score split', () => {
+  const altered = structuredClone(diagnosticSamples);
+  const a = altered.find(row => row.publicResultId === repeated[0].publicResultId);
+  a.resultCreatedAt = '2026-02-30T12:00:00.000Z';
+  const live = fakeLive();
+  live.get(a.publicResultId).createdAt = a.resultCreatedAt;
+  const group = diagnoseExistingRepeatedReadbacks(altered, live, references)
+    .readbackClusterSummary.groups[0];
+  assert.equal(group.recordedResultOrder, 'AMBIGUOUS_NONCANONICAL_TIMESTAMPS');
+  assert.deepEqual(group.chronologicalScoreRunSizes, []);
+  assert.equal(group.oneChronologicalBoundaryObserved, false);
+});
+
 test('duplicate recorded creation times block chronological claims', () => {
   const altered = structuredClone(diagnosticSamples);
   const a = altered.find(row => row.publicResultId === repeated[0].publicResultId);

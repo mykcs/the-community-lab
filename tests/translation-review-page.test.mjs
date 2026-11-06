@@ -263,6 +263,22 @@ test('rp12 uses natural comparative wording without changing its unreviewed draf
   assert.deepEqual(standaloneData.questions, data.questions, 'the standalone review page must stay in sync');
 });
 
+test('rp11 avoids overstating 반인륜적인 as “反人类” and stays an unreviewed AI draft', () => {
+  const question = data.questions.find(item => item.id === 'rp11');
+  assert.ok(question, 'rp11 must remain in the source dataset');
+  assert.match(question.source_text_ko, /반인륜적인 행위/);
+  assert.match(question.translation_zh_cn, /酷刑、屠杀等不人道行为/);
+  assert.doesNotMatch(question.translation_zh_cn, /反人类/);
+  assert.equal(question.translation_version, 'draft-0.1.3');
+  assert.match(question.translator_note, /待独立韩中人工复核/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.deepEqual(question.options.map(option => option.value), ['O', 'X']);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both review pages must carry the same draft');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
+});
+
 test('s1-politics-14 does not add exclusive force absent from Korean', () => {
   const question = data.questions.find(item => item.id === 's1-politics-14');
   assert.ok(question, 's1-politics-14 must remain in the source dataset');
@@ -592,12 +608,19 @@ test('review search finds Korean and Chinese option texts including local edits'
 test('both reviewer pages expose the same separately marked, unreviewed idiom note', () => {
   const idiom = data.questions.find(q => q.id === 's1-openness-11');
   assert.ok(idiom);
-  assert.equal(idiom.translation_version, 'draft-0.1.3');
+  assert.equal(idiom.translation_zh_cn, '“如果不喜欢寺庙，和尚就该离开”这句话在大多数情况下是对的。');
+  assert.equal(idiom.translation_version, 'draft-0.1.4');
+  assert.equal(idiom.source_checked_at, '2026-11-05');
+  assert.equal(idiom.review_status, 'draft');
+  assert.equal(idiom.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.match(idiom.translator_note, /显式补出条件关系.*如果/);
+  assert.match(idiom.translator_note, /仍待独立韩中人工复核/);
   assert.match(idiom.reader_note_zh_cn, /《戏赠沈后》/);
   assert.match(idiom.reader_note_zh_cn, /尚未查到可核验的最早文学出处/);
   assert.match(idiom.reader_note_zh_cn, /《警世通言/);
   assert.match(idiom.reader_note_zh_cn, /不完全等义/);
   assert.match(idiom.reader_note_zh_cn, /AI 译注（待独立人工核对）/);
+  assert.match(data.translation_review.editorial_pass, /2026-11-05 AI 预审修订 s1-openness-11/);
   assert.deepEqual(standaloneData.questions, data.questions);
   assert.match(html, /if\(q.reader_note_zh_cn\)zp.append/);
   assert.match(standaloneHtml, /if\(q.reader_note_zh_cn\)zp.append/);
