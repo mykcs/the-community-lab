@@ -6,6 +6,14 @@ const html = await readFile(new URL('../docs/translation-review/index.html', imp
 const embedded = html.match(/<script id="embedded-data" type="application\/json">([\s\S]*?)<\/script>/);
 assert.ok(embedded, 'the page must contain its self-contained translation dataset');
 const data = JSON.parse(embedded[1]);
+const reviewBaselineSnapshot = (q, edit = {}) => JSON.stringify([
+  q.source_text_ko, q.translation_version,
+  q.translation_zh_cn, q.reader_note_zh_cn ?? null, q.translator_note ?? null,
+  q.options.map(o => [o.value, o.ko, o.zh_cn]),
+  edit.translation ?? q.translation_zh_cn,
+  q.options.map((o, i) => edit.options?.[i] ?? o.zh_cn),
+]);
+
 
 const standaloneHtml = await readFile(new URL('../docs/original-question-translation-review/index.html', import.meta.url), 'utf8');
 const standaloneEmbedded = standaloneHtml.match(/<script id="embedded-data" type="application\/json">([\s\S]*?)<\/script>/);
@@ -112,7 +120,7 @@ test('both reviewer packs preserve genuine empty Korean scale captions only at S
 
 test('legacy reviewer export corrects only known placeholders and reopens old self-reported PASS', () => {
   const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
-  const restore = new Function(source + '; return validateReviewImport;')();
+  const restore = new Function('reviewBaselineSnapshot', source + '; return validateReviewImport;')(reviewBaselineSnapshot);
   const old = structuredClone(data);
   for (const q of old.questions.filter(q => q.season === 1 && q.options.length === 6)) {
     for (const o of q.options.filter(o => [2, 5].includes(o.value))) o.ko = o.value + '점';
@@ -460,12 +468,13 @@ test('page keeps review edits in browser storage without network or HTML injecti
 test('exported review JSON can be safely restored without changing source evidence', () => {
   const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
   assert.ok(source, 'the full source/version guard must be testable');
-  const restore = new Function(source + '; return validateReviewImport;')();
+  const restore = new Function('reviewBaselineSnapshot', source + '; return validateReviewImport;')(reviewBaselineSnapshot);
   const exported = structuredClone(data);
   const q = exported.questions[0];
   q.translation_zh_cn = '重新编辑的中文草稿';
   q.options[0].zh_cn = '重新编辑的中文选项';
   q.human_review_status = 'pass';
+  q.human_review_baseline_snapshot = reviewBaselineSnapshot(data.questions[0], {translation:q.translation_zh_cn,options:q.options.map(o=>o.zh_cn)});
   q.human_review_note = '复核者甲 · 双语能力说明 · 2026-10-30';
   q.human_review_note_stale = false;
   const edits = restore(exported, data);
@@ -474,6 +483,7 @@ test('exported review JSON can be safely restored without changing source eviden
     translation: '重新编辑的中文草稿',
     options: q.options.map(o => o.zh_cn),
     review: 'pass',
+    reviewedBaselineSnapshot: reviewBaselineSnapshot(data.questions[0], {translation:q.translation_zh_cn,options:q.options.map(o=>o.zh_cn)}),
     note: q.human_review_note,
     reviewNoteStale: false
   });
@@ -482,9 +492,32 @@ test('exported review JSON can be safely restored without changing source eviden
   assert.match(html, /human_review_note_stale=e\.reviewNoteStale===true/);
 });
 
+
+test('old self-reported PASS export is reopened when the AI draft baseline changed', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const restore = new Function('reviewBaselineSnapshot', source + '; return validateReviewImport;')(reviewBaselineSnapshot);
+  const old = structuredClone(data);
+  const q = old.questions.find(q => q.id === 'rp03');
+  q.human_review_status = 'pass';
+  q.human_review_note = '合成审校记录，只用于测试';
+  q.human_review_baseline_snapshot = 'outdated-bilingual-draft';
+  q.translation_zh_cn += '（仅本地历史修改）';
+  const e = restore(old, data)[q.id];
+  assert.equal(e.review, 'pending');
+  assert.equal(e.reviewNoteStale, true);
+  assert.equal(e.note, q.human_review_note);
+  assert.equal(e.translation, q.translation_zh_cn);
+  delete q.human_review_baseline_snapshot; // Legacy exports lack the field.
+  assert.equal(restore(old, data)[q.id].review, 'pending');
+  q.human_review_baseline_snapshot = reviewBaselineSnapshot(data.questions.find(item=>item.id===q.id), {translation:q.translation_zh_cn});
+  q.translation_zh_cn += '（旧自报通过后再次修改）';
+  assert.equal(restore(old, data)[q.id].review, 'pending',
+    'an edited bilingual export must not inherit a self-report from different Chinese text');
+});
+
 test('reject forged, incompatible or incomplete imported evidence without changing edits', () => {
   const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
-  const restore = new Function(source + '; return validateReviewImport;')();
+  const restore = new Function('reviewBaselineSnapshot', source + '; return validateReviewImport;')(reviewBaselineSnapshot);
   const invalid = (mutate) => {
     const json = structuredClone(data);
     mutate(json);
@@ -513,7 +546,7 @@ test('reject forged, incompatible or incomplete imported evidence without changi
 
 test('legacy offline review exports keep edits without promoting unverified permission', () => {
   const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
-  const restore = new Function(source + '; return validateReviewImport;')();
+  const restore = new Function('reviewBaselineSnapshot', source + '; return validateReviewImport;')(reviewBaselineSnapshot);
   const oldExport = structuredClone(data);
   oldExport.questions.forEach(question => { question.rights_status = 'licensed'; });
   oldExport.questions[0].translation_zh_cn = '本机合成修改，仍待独立人工审校';
@@ -532,12 +565,14 @@ test('two independently exported local reviews can be compared without promoting
   const validation = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
   const comparison = html.match(/function compareReviewExports\([^]*?\n\}/)?.[0];
   assert.ok(validation && comparison, 'safe import and comparison logic must be explicit');
-  const compare = new Function(validation + '\n' + comparison + '; return compareReviewExports;')();
+  const compare = new Function('reviewBaselineSnapshot', validation + '\n' + comparison + '; return compareReviewExports;')(reviewBaselineSnapshot);
   const left = structuredClone(data), right = structuredClone(data);
   const agreed = left.questions[0], disagreed = left.questions[1], revision = left.questions[2];
   agreed.human_review_status = 'pass';
+  agreed.human_review_baseline_snapshot = reviewBaselineSnapshot(data.questions[0]);
   agreed.human_review_note = '审校者 A · 双语依据 · 日期';
   right.questions[0].human_review_status = 'pass';
+  right.questions[0].human_review_baseline_snapshot = reviewBaselineSnapshot(data.questions[0]);
   right.questions[0].human_review_note = '审校者 B · 双语依据 · 日期';
   disagreed.translation_zh_cn = '译文版本甲';
   right.questions[1].translation_zh_cn = '译文版本乙';
@@ -574,7 +609,7 @@ test('two independently exported local reviews can be compared without promoting
 test('local review comparison rejects changed source evidence and non-self-reported approvals', () => {
   const validation = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
   const comparison = html.match(/function compareReviewExports\([^]*?\n\}/)?.[0];
-  const compare = new Function(validation + '\n' + comparison + '; return compareReviewExports;')();
+  const compare = new Function('reviewBaselineSnapshot', validation + '\n' + comparison + '; return compareReviewExports;')(reviewBaselineSnapshot);
   const clean = structuredClone(data);
   const forgedSource = structuredClone(data);
   forgedSource.questions[0].source_text_ko = '替换的韩文';
