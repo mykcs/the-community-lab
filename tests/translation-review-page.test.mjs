@@ -655,7 +655,7 @@ test('S1 politics 12 preserves the Korean causative meaning in both unreviewed d
 
 
 test('export and import preserve the pre-edit note baseline across offline reviewer devices', () => {
-  const source = html.match(/function validateReviewImport\\([^]*?\\n\\}/)?.[0];
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
   assert.ok(source);
   const restore = new Function(source + '; return validateReviewImport;')();
   const exported = structuredClone(data);
@@ -678,6 +678,6 @@ test('export and import preserve the pre-edit note baseline across offline revie
   delete legacy.questions[0].human_review_note_stale_original;
   assert.equal(restore(legacy, data)[row.id].reviewNoteStaleOriginal, undefined,
     'previous export format remains accepted without fabricating a historical baseline');
-  assert.match(html, /q\\.human_review_note_stale_original=e\\.reviewNoteStaleOriginal/);
-  assert.match(standaloneHtml, /q\\.human_review_note_stale_original=e\\.reviewNoteStaleOriginal/);
+  assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
+  assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
 });
