@@ -592,12 +592,19 @@ test('review search finds Korean and Chinese option texts including local edits'
 test('both reviewer pages expose the same separately marked, unreviewed idiom note', () => {
   const idiom = data.questions.find(q => q.id === 's1-openness-11');
   assert.ok(idiom);
-  assert.equal(idiom.translation_version, 'draft-0.1.3');
+  assert.equal(idiom.translation_zh_cn, '“如果不喜欢寺庙，和尚就该离开”这句话在大多数情况下是对的。');
+  assert.equal(idiom.translation_version, 'draft-0.1.4');
+  assert.equal(idiom.source_checked_at, '2026-11-05');
+  assert.equal(idiom.review_status, 'draft');
+  assert.equal(idiom.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.match(idiom.translator_note, /显式补出条件关系.*如果/);
+  assert.match(idiom.translator_note, /仍待独立韩中人工复核/);
   assert.match(idiom.reader_note_zh_cn, /《戏赠沈后》/);
   assert.match(idiom.reader_note_zh_cn, /尚未查到可核验的最早文学出处/);
   assert.match(idiom.reader_note_zh_cn, /《警世通言/);
   assert.match(idiom.reader_note_zh_cn, /不完全等义/);
   assert.match(idiom.reader_note_zh_cn, /AI 译注（待独立人工核对）/);
+  assert.match(data.translation_review.editorial_pass, /2026-11-05 AI 预审修订 s1-openness-11/);
   assert.deepEqual(standaloneData.questions, data.questions);
   assert.match(html, /if\(q.reader_note_zh_cn\)zp.append/);
   assert.match(standaloneHtml, /if\(q.reader_note_zh_cn\)zp.append/);

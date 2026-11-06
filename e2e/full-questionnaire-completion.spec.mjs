@@ -56,6 +56,7 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   const blankScale = questions.find(q => q.options.length === 6 &&
     q.options.some(o => o.value === 2 && o.ko === ''));
   expect(annotated?.readerNote).toMatch(/^AI 译注（待独立人工核对）/);
+  expect(annotated?.translationVersion).toBe('draft-0.1.4');
   expect(blankScale).toBeTruthy();
   const choices = Object.fromEntries(questions.map(q => [
     q.id, q.options.some(o => o.value === 2 && o.ko === '') ? 2 : q.options[0].value,
