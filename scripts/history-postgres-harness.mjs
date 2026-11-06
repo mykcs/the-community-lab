@@ -98,6 +98,12 @@ export async function createHistoryDatabase({ cronEnabled = true, applyMigration
       const initialMigration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
       const retentionMigration = await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8');
       await pg.exec(initialMigration);
+      // A previously deployed version used a different per-minute Cron name.
+      // Model that live upgrade state before applying the retention revision.
+      if (cronEnabled) {
+        await pg.query(`SELECT cron.schedule('community-history-retention-90-days', '* * * * *',
+          'SELECT community_private.purge_expired_history();')`);
+      }
       await pg.exec(retentionMigration);
     }
     return { pg, qualification, evidenceScope: EVIDENCE_SCOPE };
