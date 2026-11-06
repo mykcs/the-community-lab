@@ -350,7 +350,7 @@ test('ms07 keeps the Korean comparison and teaching priority without implying ex
   const question = data.questions.find(item => item.id === 'ms07');
   assert.ok(question, 'ms07 must remain in the source dataset');
   assert.equal(question.source_text_ko, '내 자식에게는 영리하게 돈 버는 법보다 양심에 따라 사는 법을 먼저 가르치겠다.');
-  assert.equal(question.translation_zh_cn, '教我的孩子时，我会先教如何凭良心生活，而不是先教如何精明地赚钱。');
+  assert.equal(question.translation_zh_cn, '比起教我的孩子如何精明地赚钱，我会先教孩子如何凭良心生活。');
   assert.equal(question.translation_version, 'draft-0.1.3');
   assert.match(question.translator_note, /比较助词「보다」.*先后副词「먼저」/);
   assert.match(question.translator_note, /korean\.go\.kr/);
