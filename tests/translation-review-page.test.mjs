@@ -444,7 +444,12 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
   assert.match(html, /recordTranslationEdit\(q\.id,\{options:arr\},status\)/);
   assert.match(html, /再次修改题干译文或选项.*自动退回待复核/);
   assert.match(html, /curr\.reviewNoteStale===true/);
-  assert.match(html, /note:note\.value,reviewNoteStale:false/);
+  assert.match(html, /reviewNoteStaleOriginal:staleBasis/);
+  assert.match(html, /note\.value\.trim\(\)===String\(staleBasis\)\.trim\(\)/);
+  assert.doesNotMatch(html, /note:note\.value,reviewNoteStale:false/);
+  assert.equal(edits.q1.reviewNoteStaleOriginal, 'reviewer A · bilingual evidence · 2026-10-30');
+  assert.equal(edits.q3.reviewNoteStaleOriginal, 'needs changes');
+  assert.equal(edits.q4.reviewNoteStaleOriginal, undefined);
 });
 
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
