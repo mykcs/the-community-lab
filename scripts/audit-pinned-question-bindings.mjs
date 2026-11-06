@@ -63,6 +63,36 @@ const S1_COMPOSITION = 'const ks=[...Cu("politics",a1,6),...Cu("gender",n1,6),..
 const S2_MARKER = 'const ie=["O","X"],$s=';
 const S2_ENTRY = /\{id:("(?:\\.|[^"\\])*"),group:("(?:\\.|[^"\\])*"),agreeValue:("(?:\\.|[^"\\])*"),prompt:("(?:\\.|[^"\\])*"),allowedAnswers:ie\}/g;
 
+const CAPTION_MARKER = 'label:k.allowedAnswers.length===4?';
+const S2_BUTTON_MARKER = 'ze=l==="season-2"?';
+const S2_BUTTON = /\{value:("(?:\\.|[^"\\])*"),label:("(?:\\.|[^"\\])*"),mark:("(?:\\.|[^"\\])*"),key:("(?:\\.|[^"\\])*")\}/g;
+
+// Independently read the Korean captions from the pinned source's *rendering*
+// branch. Do not trust an old snapshot of our own bilingual draft as proof
+// that the labels correspond to the same source option values.
+function readSourceOptionCaptions(source) {
+  const fourRaw = readArray(source, CAPTION_MARKER);
+  const sixRaw = readArray(source, CAPTION_MARKER + fourRaw + '[se]:');
+  if (!source.includes(CAPTION_MARKER + fourRaw + '[se]:' + sixRaw + '[se]')) {
+    throw new Error('Pinned client S1 option rendering shape changed');
+  }
+  const four = JSON.parse(fourRaw);
+  const six = JSON.parse(sixRaw);
+  if (four.length !== 4 || six.length !== 6 ||
+      [...four, ...six].some(label => typeof label !== 'string')) {
+    throw new Error('Pinned client S1 Korean option captions malformed');
+  }
+  const buttonRaw = readArray(source, S2_BUTTON_MARKER);
+  const items = [...buttonRaw.matchAll(S2_BUTTON)].map(match => match.slice(1).map(JSON.parse));
+  if (items.length !== 2 || buttonRaw.slice(1, -1).replace(S2_BUTTON, '').replace(/[,\s]/g, '') !== '') {
+    throw new Error('Pinned client S2 source button labels malformed');
+  }
+  assertSame(items.map(item => item[0]), ['O', 'X'], 'S2 button values');
+  assertSame(items.map(item => item[2]), ['O', '×'], 'S2 button visible marks');
+  assertSame(items.map(item => item[3]), ['O', 'X'], 'S2 keyboard keys');
+  return { four, six, s2: items.map(item => item[1]) };
+}
+
 export function auditPinnedQuestionBindings(bytes, pack, index, expected = EXPECTED) {
   if (!Buffer.isBuffer(bytes)) throw new TypeError('Expected raw client bytes');
   const sha256 = createHash('sha256').update(bytes).digest('hex');
@@ -75,6 +105,7 @@ export function auditPinnedQuestionBindings(bytes, pack, index, expected = EXPEC
     throw new Error('Pinned client S1 source-ID/value factory has changed');
   }
 
+  const captions = readSourceOptionCaptions(source);
   const questions = [...(pack.seasons?.[1] || []), ...(pack.seasons?.[2] || [])];
   const rows = index?.questions;
   if (!Array.isArray(rows) || questions.length !== rows.length ||
@@ -108,6 +139,8 @@ export function auditPinnedQuestionBindings(bytes, pack, index, expected = EXPEC
       assertSame(meta.reverseFlagInPublicClient, !!entry[1], 'S1 reverse flag');
       assertSame(meta.optionValues, Array.from({ length: scale }, (_, i) => i + 1), 'S1 option values');
       assertSame(draft.options.map(o => o.value), meta.optionValues, 'S1 draft option values');
+      assertSame(draft.options.map(o => o.ko), scale === 4 ? captions.four : captions.six,
+        'S1 source Korean option captions');
       optionCount += scale;
       s1Count++;
     }
@@ -133,6 +166,7 @@ export function auditPinnedQuestionBindings(bytes, pack, index, expected = EXPEC
     assertSame(draft.sourceKo, prompt, 'S2 text/source ID');
     assertSame(meta.optionValues, ['O', 'X'], 'S2 raw answer values');
     assertSame(draft.options.map(o => o.value), ['O', 'X'], 'S2 draft option values');
+    assertSame(draft.options.map(o => o.ko), captions.s2, 'S2 source Korean option captions');
     optionCount += 2;
   }
   if (s1Count + matches.length !== questions.length ||
@@ -145,6 +179,7 @@ export function auditPinnedQuestionBindings(bytes, pack, index, expected = EXPEC
     season1DerivedSourceIdsReverseFlagsAndOptionValues: s1Count,
     season2LiteralSourceIdsGroupsAgreeSidesAndOptionValues: matches.length,
     sourceOptionsCovered: optionCount,
+    originalKoreanOptionCaptionsChecked: optionCount,
     claimsNotProven: 'LIVE_DOM_PATHS_SCORING_PERMISSIONS_TRANSLATION_HUMAN_REVIEW',
   });
 }
