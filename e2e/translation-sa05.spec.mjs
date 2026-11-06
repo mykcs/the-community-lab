@@ -4,7 +4,7 @@ import { createPrivateProgressReceipt } from '../lib/full-questionnaire.mjs';
 
 const pack = loadFullQuestionnaire();
 const sa05 = pack.seasons[2].find(question => question.id === 'sa05');
-const updatedChinese = '用缴纳所得税和财产税后积累的资产传给子女时，还要征收遗产税，是对个人资产的过度侵害。';
+const updatedChinese = '积累财产时已经缴纳所得税和财产税，传给子女时还要征收遗产税，这是对个人财产的过度侵害。';
 
 test('S2 sa05 shows the fixed AI Chinese wording below unchanged Korean in both viewports', async ({ page }) => {
   // Import a synthetic, local-only progress file to reach the precise test item.

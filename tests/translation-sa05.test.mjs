@@ -9,7 +9,7 @@ const paths = [
   'docs/translation-review/index.html',
   'docs/original-question-translation-review/index.html',
 ];
-const expected = '用缴纳所得税和财产税后积累的资产传给子女时，还要征收遗产税，是对个人资产的过度侵害。';
+const expected = '积累财产时已经缴纳所得税和财产税，传给子女时还要征收遗产税，这是对个人财产的过度侵害。';
 
 test('S2 sa05 AI draft distinguishes a later inheritance tax from a second inheritance-tax levy', () => {
   const rows = paths.map(path => {
@@ -17,10 +17,11 @@ test('S2 sa05 AI draft distinguishes a later inheritance tax from a second inher
     const q = draft.questions.find(item => item.id === 'sa05');
     assert.ok(q, path);
     assert.equal(q.translation_zh_cn, expected, path);
-    assert.equal(q.translation_version, 'draft-0.1.1', path);
+    assert.equal(q.translation_version, 'draft-0.1.2', path);
     assert.equal(q.review_status, 'draft', path);
     assert.equal(q.translation_status, 'AI_DRAFT_UNREVIEWED', path);
     assert.match(q.translator_note, /不同税种/);
+    assert.match(q.translator_note, /先后关系/);
     assert.match(q.translator_note, /独立韩中人工复核/);
     assert.equal(draft.independent_bilingual_review, 'NOT_DONE');
     return q;
