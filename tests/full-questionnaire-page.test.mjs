@@ -180,7 +180,7 @@ test('S1 generated client-group labels are disclosed as local Chinese descriptio
   // S1 uses source-array group keys, not official Korean group-name strings.
   // Do not let a friendly Chinese label imply that the show named a scored axis.
   assert.ok(app.includes('本站中文题组说明（依据客户端分类索引，非官方题组名）'));
-  assert.ok(app.includes('原题编号 ' + '${q.id}' + '（本站根据客户端数组位置生成，非官方题号）'));
+  assert.ok(app.includes('原题编号 ' + '${q.id}' + '（本站根据客户端数组位置生成的索引，非官方题号）'));
   assert.ok(app.includes('label.textContent = active.season === 1'));
   assert.ok(app.includes('本站中文题组说明（非官方题组名）'));
   // The S2 original Korean domain remains visibly upstream of the Chinese draft.
