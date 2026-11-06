@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-zwQ3oAC7sejlpMl1j3bKxQHMGuBpELxqfrtcGYNoUnk=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-oHGuQKkmlfLQfyELQaql8zX0XuTjIKpORO+P/2fblbU=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <title>The Community 原题韩中译文复核台</title>
 <style>
@@ -126,7 +126,7 @@ function hasCompleteChineseDraft(q,e){
 function recordTranslationEdit(id,patch,select){
  const previous=edits[id]||{};
  const hadPass=previous.review==='pass';
- edits[id]={...previous,...patch,review:hadPass?'pending':(previous.review||'pending'),reviewNoteStale:previous.reviewNoteStale===true||hadPass};
+ edits[id]={...previous,...patch,review:hadPass?'pending':(previous.review||'pending'),reviewNoteStale:previous.reviewNoteStale===true||hadPass||Boolean(previous.note?.trim())};
  if(hadPass)select.value='pending';
  save();
 }

@@ -416,6 +416,7 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
     q1: { review: 'pass', note: 'reviewer A · bilingual evidence · 2026-10-30' },
     q2: { review: 'pass', note: 'reviewer B · 2026-10-30' },
     q3: { review: 'revise', note: 'needs changes' },
+    q4: { review: 'pending' },
   };
   let saves = 0;
   const update = new Function('edits', 'save', body + '; return recordTranslationEdit;')(edits, () => saves++);
@@ -433,9 +434,12 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
   const q3Select = { value: 'revise' };
   update('q3', { translation: '修改' }, q3Select);
   assert.equal(edits.q3.review, 'revise');
-  assert.equal(edits.q3.reviewNoteStale, false);
+  assert.equal(edits.q3.reviewNoteStale, true, 'pre-edit notes are stale even before a PASS');
   assert.equal(q3Select.value, 'revise');
-  assert.equal(saves, 3);
+  const q4Select = { value: 'pending' };
+  update('q4', { translation: '新翻译' }, q4Select);
+  assert.equal(edits.q4.reviewNoteStale, false, 'no previous note to invalidate');
+  assert.equal(saves, 4);
   assert.match(html, /recordTranslationEdit\(q\.id,\{translation:edit\.value\},status\)/);
   assert.match(html, /recordTranslationEdit\(q\.id,\{options:arr\},status\)/);
   assert.match(html, /再次修改题干译文或选项.*自动退回待复核/);
