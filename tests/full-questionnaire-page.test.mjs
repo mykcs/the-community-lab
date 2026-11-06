@@ -174,3 +174,15 @@ test('AI idiom reader notes appear after the literal Chinese prompt, never as of
   assert.match(app, /note.hidden = !q.readerNote/);
   assert.match(app, /note.textContent = q.readerNote \|\| ''/);
 });
+
+
+test('S1 generated client-group labels are disclosed as local Chinese descriptions in quiz and completion', () => {
+  // S1 uses source-array group keys, not official Korean group-name strings.
+  // Do not let a friendly Chinese label imply that the show named a scored axis.
+  assert.match(app, /本站中文题组说明（依据客户端分类索引，非官方题组名）/);
+  assert.match(app, /来源索引 \\$\{q\.id\}（本站根据客户端数组位置生成，非官方题号）/);
+  assert.match(app, /active\.season === 1[\\s\\S]*?本站中文题组说明（非官方题组名）/);
+  // The S2 original Korean domain remains visibly upstream of the Chinese draft.
+  assert.match(app, /koreanGroup\.lang = 'ko'/);
+  assert.match(app, /originalGroupNames\?\.has\(group\.label\)/);
+});
