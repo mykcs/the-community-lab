@@ -132,7 +132,7 @@ function render() {
       make('span', '', ` / ${q.group} · 原题编号 ${q.id}（客户端原有 ID）`),
     );
   } else {
-    group.textContent = `本站中文题组说明（依据客户端分类索引，非官方题组名） · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}（本站根据客户端数组位置生成，非官方题号）`;
+    group.textContent = `本站中文题组说明（依据客户端分类索引，非官方题组名） · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}（本站根据客户端数组位置生成的索引，非官方题号）`;
   }
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
