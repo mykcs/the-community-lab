@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-7PVz7OMtv816CBaIyhhYjyj/w90Vkf5x1mgn9SY44mA=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-Q+zo9hoQLqfUcuhFrz+lbX19iM4rE/I80XyaovIFfmE=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -49,9 +49,17 @@ try{
  // Preserve edits/notes, but do not silently keep a PASS granted against
  // invented Korean labels. New PASS marks carry the corrected source revision.
  for(const q of data.questions){
-  if(q.season!==1||q.options.length!==6)continue;
   const entry=restored[q.id];
-  if(entry?.review==='pass'&&entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1'){
+  if(entry?.review!=='pass')continue;
+  // Older local drafts lack a note-currency marker. If their Chinese copy
+  // differs from this source pack, the note cannot be tied to the latest text.
+  const unprovenLegacyNote=entry.reviewNoteStale===undefined&&(
+   (entry.translation!==undefined&&entry.translation!==q.translation_zh_cn)||
+   (Array.isArray(entry.options)&&entry.options.some((value,i)=>value!==q.options[i]?.zh_cn))
+  );
+  const outdatedScale=q.season===1&&q.options.length===6&&
+   entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1';
+  if(unprovenLegacyNote||outdatedScale){
    entry.review='pending';entry.reviewNoteStale=true;
   }
  }
@@ -182,7 +190,7 @@ function validateReviewImport(incoming,baseline){
   const legacyCaptions=q.season===1&&q.options.length===6&&q.options.some((option,j)=>
     [2,5].includes(option.value)&&original.options[j].value===option.value&&
     original.options[j].ko===''&&option.ko===option.value+'점');
-  const effectiveStatus=legacyCaptions&&status==='pass'?'pending':status;
+  let effectiveStatus=legacyCaptions&&status==='pass'?'pending':status;
   if(!['pending','pass','revise'].includes(status)||typeof note!=='string'||note.length>4000||
      typeof q.translation_zh_cn!=='string'||q.translation_zh_cn.length>20000||
      q.options.some(o=>typeof o.zh_cn!=='string'||o.zh_cn.length>4000)||
@@ -192,9 +200,12 @@ function validateReviewImport(incoming,baseline){
   const optionTexts=q.options.map(o=>o.zh_cn);
   const optionChanged=optionTexts.some((value,j)=>value!==original.options[j].zh_cn);
   const textChanged=q.translation_zh_cn!==original.translation_zh_cn;
-  // Older exports did not include the stale flag; conservatively require
-  // a fresh note when a changed translation is restored as pending.
-  const stale=legacyCaptions&&Boolean(note.trim())?true:
+  // Without a stale flag, an old export cannot prove that its PASS note
+  // covered changed Chinese wording. Retain the text/note but recheck the PASS.
+  const unprovenLegacyPass=status==='pass'&&q.human_review_note_stale===undefined&&
+    (textChanged||optionChanged);
+  if(unprovenLegacyPass)effectiveStatus='pending';
+  const stale=unprovenLegacyPass||(legacyCaptions&&Boolean(note.trim()))||
     (q.human_review_note_stale??(status==='pending'&&Boolean(note.trim())&&(textChanged||optionChanged)));
   if(effectiveStatus==='pass'&&(!note.trim()||stale||!q.translation_zh_cn.trim()||optionTexts.some(v=>!v.trim()))){
    throw new Error('通过状态缺少有效备注、译文或选项：'+original.id);
