@@ -16,6 +16,8 @@ test('Playwright locally rebuilds Pages paths but CI uses its exact-head build',
   assert.equal(playwrightConfig.webServer.command,
     process.env.CI ? preview : `npm run build && ${preview}`);
   assert.equal(playwrightConfig.webServer.env.COMMUNITY_DEPLOY_TARGET, 'github-pages');
+  assert.equal(playwrightConfig.webServer.env.ASTRO_PREVIEW_BACKGROUND, '0',
+    'Playwright must keep Astro preview in the foreground so it can manage the server');
   assert.equal(playwrightConfig.webServer.reuseExistingServer, false,
     'never reuse a potentially stale preview with different base paths');
 });
