@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-oHGuQKkmlfLQfyELQaql8zX0XuTjIKpORO+P/2fblbU=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-5GjOtIQ7K7FET89eimiXaFUERUEgiG9fhxbjj47w9LM=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <title>The Community 原题韩中译文复核台</title>
 <style>
@@ -44,9 +44,17 @@ try{
  // Preserve edits/notes, but do not silently keep a PASS granted against
  // invented Korean labels. New PASS marks carry the corrected source revision.
  for(const q of data.questions){
-  if(q.season!==1||q.options.length!==6)continue;
   const entry=restored[q.id];
-  if(entry?.review==='pass'&&entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1'){
+  if(entry?.review!=='pass')continue;
+  // Older local drafts lack a note-currency marker. If their Chinese copy
+  // differs from this source pack, the note cannot be tied to the latest text.
+  const unprovenLegacyNote=entry.reviewNoteStale===undefined&&(
+   (entry.translation!==undefined&&entry.translation!==q.translation_zh_cn)||
+   (Array.isArray(entry.options)&&entry.options.some((value,i)=>value!==q.options[i]?.zh_cn))
+  );
+  const outdatedScale=q.season===1&&q.options.length===6&&
+   entry.sourceCaptionRevision!=='s1-scale-empty-2-and-5@1';
+  if(unprovenLegacyNote||outdatedScale){
    entry.review='pending';entry.reviewNoteStale=true;
   }
  }
