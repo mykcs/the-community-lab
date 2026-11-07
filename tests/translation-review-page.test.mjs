@@ -51,6 +51,28 @@ test('standalone reviewer supports offline JSON handoff and comparison without u
   assert.doesNotMatch(standaloneHtml, /\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|\bsendBeacon\s*\(|\.innerHTML\s*=/);
 });
 
+test('standalone review JSON accepts object key reordering but still rejects source changes', () => {
+  const validation = standaloneHtml.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(validation);
+  const restore = new Function(validation + '; return validateReviewImport;')();
+  const reverseKeys = value => Array.isArray(value) ? value.map(reverseKeys) :
+    value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reverseKeys(item)]))
+      : value;
+  const reordered = reverseKeys(structuredClone(standaloneData));
+  reordered.questions[0].translation_zh_cn = '仅供本地回归测试的合成译文';
+  const edits = restore(reordered, standaloneData);
+  assert.equal(edits[reordered.questions[0].id].translation, '仅供本地回归测试的合成译文');
+
+  // A changed Korean source or changed source-option ordering remains forbidden.
+  const alteredText = structuredClone(reordered);
+  alteredText.questions[0].source_text_ko += 'X';
+  assert.throws(() => restore(alteredText, standaloneData), /韩文原文/);
+  const reorderedOptions = structuredClone(reordered);
+  reorderedOptions.questions[0].options.reverse();
+  assert.throws(() => restore(reorderedOptions, standaloneData), /韩文原文/);
+});
+
 test('published page is only an explicitly unreviewed draft', () => {
   assert.equal(data.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
   assert.equal(data.questions.length, 124);

@@ -47,6 +47,32 @@ test('standalone reviewer imports a same-source draft and compares two exports l
   expect(errors).toEqual([]);
 });
 
+test('standalone offline handoff accepts reordered object fields and rejects changed Korean source', async ({ page }) => {
+  const errors = [], alerts = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', dialog => { alerts.push(dialog.message()); dialog.accept(); });
+  await page.goto(standaloneUrl);
+  const reverseKeys = value => Array.isArray(value) ? value.map(reverseKeys) :
+    value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reverseKeys(item)]))
+      : value;
+  const reordered = reverseKeys(structuredClone(standaloneData));
+  reordered.questions[0].translation_zh_cn = '重排 JSON 字段后仍可离线恢复的合成译文';
+  const upload = async (name, data) => page.locator('#import-file').setInputFiles({
+    name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(data)),
+  });
+  await upload('synthetic-key-order.json', reordered);
+  await expect(page.getByLabel(`${questionId} 中文翻译`)).toHaveValue('重排 JSON 字段后仍可离线恢复的合成译文');
+  await expect(page.locator('.statusline')).toContainText('自报状态，未独立核验');
+
+  const tampered = structuredClone(reordered);
+  tampered.questions[0].source_text_ko += 'X';
+  await upload('synthetic-tampered-source.json', tampered);
+  await expect.poll(() => alerts.some(message => message.includes('导入失败'))).toBe(true);
+  await expect(page.getByLabel(`${questionId} 中文翻译`)).toHaveValue('重排 JSON 字段后仍可离线恢复的合成译文');
+  expect(errors).toEqual([]);
+});
+
 test('rp12 comparison renders with the reviewed Korean and current Chinese draft', async ({ page }) => {
   await page.goto(standaloneUrl);
   await expect(page.getByText('규칙을 철저히 지키느라 일을 그르치는 사람보다 규칙을 조금 어기더라도 성과를 내는 사람이 유능한 인재다.', { exact: true })).toBeVisible();
