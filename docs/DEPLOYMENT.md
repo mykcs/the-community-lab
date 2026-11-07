@@ -1,5 +1,17 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-05 · GitHub Pages 自有域名构建路径已准备（尚未绑定）
+
+- 新增 `COMMUNITY_PAGES_DOMAIN` 构建配置：未设置时沿用 `https://mykcs.github.io/the-community-lab/` 项目路径；设置为经确认的专属主机名时，Astro 使用该 origin 和 `/` 根路径。页面内的译审入口跟随当前 base path，发布门禁使用同一配置核对 Pages 部署 URL。
+- 将来绑定时，需把仓库 Actions variable `COMMUNITY_PAGES_DOMAIN` 与 GitHub Pages Settings 中的域名设为同一主机名；这个变量不是 secret。自定义 Actions 发布不会通过仓库内 `CNAME` 文件完成绑定，需先配置 Pages 自有域名，再按域名类型设置 DNS，之后核验 HTTPS 和精确 release SHA。[GitHub Pages 自有域名文档](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+- 用户已选择“保留 Pages＋绑定自有域名”，但尚未提供具体主机名；本次只验证了 `quiz.example.test` 的本地 root-path 构建，不代表真实域名、DNS、HTTPS、自有域名生产发布或敏感历史登录已配置。默认 Pages 正式站和私有历史 fail-closed 门保持不变。
+
+## 2026-11-05 · 当前 GitHub Pages 正式发布读回
+
+- 当前 `main` 为 `fa97c616e7c180aefec60188271b3bfb1f28e326`。PR #284 的 Pages build/deploy [run #42125647365](https://github.com/mykcs/the-community-lab/actions/runs/42125647365) 成功；线上 `/release-commit.txt` 读回与该 main SHA 一致。
+- 原题复核页 HTTP 200，已读回 PR #284 的 S2 `rp12` 草稿“比起因严格遵守规则而把事情办砸的人，稍微违反规则却能取得成果的人更有能力。”。该文案仍是 AI 草稿；124 题独立韩中人工复核仍为 `0/124`，官方评分未核实，答题结果不上传。
+- GitHub Pages 已是正式主站；Vercel Git 自动部署仍关闭。自有域名尚未绑定，不能在共享的 `mykcs.github.io` origin 启用 GitHub OAuth 或个人历史保存。
+
 ## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
 
 - [PR #270](https://github.com/mykcs/the-community-lab/pull/270) 已合并，main 提交为 `e846ab930e8dec2214f009fd8455b034c72a8547`。精确候选 head `a853f287c50d18fe07a0d23e92f9776a5091527f` 的 Verify [run #42040756382](https://github.com/mykcs/the-community-lab/actions/runs/42040756382) 与桌面／440×956 浏览器验收 [run #42040756375](https://github.com/mykcs/the-community-lab/actions/runs/42040756375) 均成功。
@@ -116,7 +128,7 @@ PR #22 合并后生产版本为 main `8f719869da1c842297b9286f5a20feadd2c88340`�
 
 网页是**双季原创韩中双语演示**：第一季原站观测 87 题、第二季 37 题；本站原创题 8 和 6。后续已获得对应 87＋37 个**客户端源题标识与元数据索引**，这仍不代表可以合法复制原题、已经完成真人韩中双语审校或掌握官方评分金标准。真实嘉宾排名与社媒归属未经核验，不提供虚构榜单。
 
-当前不要求登录、不上传答题数据、未启用数据库或 GitHub OAuth；服务器存储个人结果需先取得用户主动同意并通过 RLS、双用户交叉隔离和删除读回。仅以 Vercel Hobby 和现有工具执行，不增加付费服务。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
+正式网站仍以游客模式运行，不显示登录或保存入口，也不上传答题数据。已建立免费的 Supabase 候选后端并部署隔离与 90 天保留迁移；保存开关仍关闭，GitHub OAuth、网站环境变量、注销 Edge Function 和真实双账号隔离尚未配置或验收。正式网站绑定自有域名后才能安全启用登录。参考 [WISH](../WISH.md)、[AGENTS](../AGENTS.md)、[逐题核验门槛](VERIFICATION-MATRIX.md) 和 [翻译标准](TRANSLATION-STANDARD.md)。
 
 ## 2026-10-29 续接快照：自动连接可用，免费部署额度仍需治理
 
@@ -141,6 +153,22 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 
 此验收没有改变 Vercel Hobby 的每日限制，也没有读到该额度的剩余余额；之后的新部署仍须观察平台实际状态。没有升级付费计划或绕过限制。
 
+
+## 2026-10-30 私人历史候选状态
+
+- feat/private-history-candidate 已在本地与 main 00f1b7b60b6521dc69047c21d8ae9bf4a50135f6 同步，并通过本地 npm run check、npm run build 与游客/隐私/历史页面浏览器验收。GitHub PR #11 仍未接收这批候选更新；当前没有新的 Preview 或生产部署。
+- 历史登录与保存仍默认关闭。PGlite 合成认证回归不等于真实 Supabase、GitHub OAuth、双账号交叉隔离或删除读回验收；隐私/数据区域/保留期决策仍缺失。
+- PR #34 的 Vercel Check 在 2026-10-30 返回 api-deployments-free-per-day 与“24 小时后重试”。在平台状态变化前，不为本地候选重试部署或用其他方式规避该限制。
+
+## 2026-11-05 Supabase 候选后端部署
+
+- 用户授权创建免费资源。Supabase 组织 `The Community Lab` 为 Free；项目 `The Community Lab History` 的项目 ref 为 `hfhhjpnibrgisbkmlbzz`，创建时选择 **West US (Oregon), `us-west-2`**。项目状态读回为 `Healthy`；未升级或绑定付款方式。
+- 在 Supabase SQL Editor 应用了 PR #11 HEAD `a196050` 的私人历史迁移和 90 天保留迁移。项目启用 `pg_cron 1.6.4` 后，实时读回确认 `public.test_runs` 的 RLS 与 FORCE RLS 均开启，三条 owner/session 策略存在，捕获设置为 `enabled=false`，保留策略过滤 2160 小时前的记录。
+- 2026-11-06 Supabase SQL Editor 只读查询确认：`community-history-retention-90-days`（job id 1）为 active，调度为 `0 * * * *`；最近 10 次记录均为 `succeeded`，最近一次开始时间为 `2026-11-06 01:00:00 UTC`。这验证托管任务确实执行，不等于已经用到期／未到期结果验证删除行为。
+- PR #11 的新增迁移 `202611060001_history_retention_schedule_upgrade.sql` 针对已经应用旧版 migration 2 的项目：它只处理当前用户可见的 Cron job ID，移除旧任务名并保留唯一的每小时当前任务。该迁移尚未应用；不得通过重放已部署的 `202611050001` 文件来升级。
+- 项目仍是 Supabase Free；Dashboard 的 Last backup 显示 No backups。当前官方[备份说明](https://supabase.com/docs/guides/platform/backups)称 Free 项目没有自动数据库备份；[价格页](https://supabase.com/pricing)列出 Free 层 API／数据库日志保留 1 天。本站没有自有备份或外部导出配置，目前没有用户结果。若将来开放保存，必须说明无自动恢复保障及服务日志期限；它们与本站 90 天历史记录删除期限不同。
+- 迁移由 Dashboard SQL Editor 手动执行；没有 Supabase CLI migration-ledger 读回。2026-11-06 Dashboard 显示 GitHub Auth provider 仍禁用，Site URL 为 `http://localhost:3000` 且 Redirect URLs 为空。用户已选择 GitHub 登录，但 provider 表单中已填的客户端字段及遮蔽 secret 尚未核实对应 OAuth App 或有效性；Pages 构建变量和注销 Edge Function 仍未配置。项目中没有用户测试结果，保存功能仍关闭。`mykcs.github.io` 共享 origin 不可用于登录，需先绑定用户控制的域名，再完成 OAuth、两个真实账号互相隔离及删除读回验收。
+
 ## 2026-10-30 PR #35 自动发布验收
 
 - PR #35 head `2b355d9af854c576ae54d00b33661fdf71a82103` 的 GitHub Actions run [#40997558072](https://github.com/mykcs/the-community-lab/actions/runs/40997558072) 成功；Vercel Git Preview `dpl_FpWobo8dsYvpfVmG5AfiNa5sM69h` 为 `READY`、`source=git`，SHA 与 head 精确一致。
@@ -154,3 +182,9 @@ Vercel Git Deployment Context 当前仍将 `the-community-lab` 关联到 `mykcs/
 - [PR #39](https://github.com/mykcs/the-community-lab/pull/39) 修复缺少题库／计分版本时演示结果丢失版本来源的问题。其精确 head 的 GitHub Actions run [#41001092175](https://github.com/mykcs/the-community-lab/actions/runs/41001092175) 成功，PR 已合入。
 - 当前 main merge commit `4b2e3ee0926411c229c9ba1d494bf7c83cf0b80f` 的 GitHub Vercel status 为 `success`。Production deployment [dpl_CwsfwhXP8DfWeVthm5zzRCvM99Zd](https://vercel.com/wangrui92-team/the-community-lab/CwsfwhXP8DfWeVthm5zzRCvM99Zd) 为 `READY`、`source=git`、`target=production`，Git SHA 与 main 精确一致，并带正式域名 `the-community-lab.vercel.app` alias。正式域名可加载新首页和当前核验状态。
 - 文档分支的真实验收：[PR #41](https://github.com/mykcs/the-community-lab/pull/41) 的 `docs/**` head `e4e2925c996529cd477dd6a146e8f5c4b8936f2c` 运行 GitHub Actions [#41008346764](https://github.com/mykcs/the-community-lab/actions/runs/41008346764) 成功（`npm ci`、`npm run check`、`npm run build`）；Vercel 按该 SHA 查询返回 0 条 deployment。该次文档分支因此通过 Actions 且没有创建 Preview；同一分支规则减少了这一次 Preview deployment。Vercel 未提供每日限额余额，无法把单次抑制换算成剩余额度或保证未来不会限流。
+
+## 私人历史候选与当前 main 同步
+
+- `feat/private-history-candidate` 已在本地合并到当前 main `e2b644f733e2986ebc54d2bee71566deff6ec8c3`，并完成版本目录兼容修复和本地回归。
+- 合并提交 `f88afaa91b94645a0985eaac26a52e6f0d28976d` 已快进推送到 Draft PR #11；GitHub Actions run `41011447548` 的 `npm ci`、`npm run check`、`npm run build` 均通过。Vercel 对精确 SHA 返回 `build-rate-limit`，且按 SHA 查询无 deployment；因此没有新的 Preview 或 Production 验收。
+- 不升级套餐或绕过限额。PR #11 保持 Draft；真实 OAuth、隐私/区域/保留期决定、双真实账号隔离、删除读回和精确 head Preview 仍是任何启用或合并私人保存之前的门槛。

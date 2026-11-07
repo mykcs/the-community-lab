@@ -1,6 +1,8 @@
 import { SEASONS } from './data/questions.mjs';
 import { scoreAnswers, validateSeason } from './lib/quiz.mjs';
 import { createQuizSessions } from './lib/quiz-session.mjs';
+import { addHistorySaveAction } from './lib/history-save.mjs';
+import { browserHistoryConfig } from './lib/history-browser.mjs';
 import { GUEST_SOCIAL_DIRECTORY } from './data/guest-social-directory.mjs';
 
 for (const season of Object.values(SEASONS)) validateSeason(season);
@@ -11,6 +13,8 @@ const state = { view: 'home' };
 let active = null;
 const $ = (id) => document.getElementById(id);
 const views = { home: $('home-view'), quiz: $('quiz-view'), result: $('result-view') };
+const historyConfig = browserHistoryConfig();
+if ($('history-navigation')) $('history-navigation').hidden = !historyConfig.configured;
 
 function node(tag, className = '', content = null) {
   const element = document.createElement(tag);
@@ -185,7 +189,8 @@ function renderResult() {
   home.type = 'button';
   home.addEventListener('click', showHome);
   actions.append(restart, download, home);
-  const footnote = node('p', 'result-footnote', '隐私说明：所有答案只存在于当前页面的内存中，不会上传或写入浏览器持久存储；关闭或刷新后就会消失。下载结果时仅包含维度分数与版本信息，不含逐题答案。GitHub 登录与私人历史记录功能尚未启用。');
+  addHistorySaveAction(actions, active.result);
+  const footnote = node('p', 'result-footnote', '隐私说明：逐题答案只存在于当前页面的内存中；关闭或刷新后就会消失。下载结果仅含维度分数与版本，不含逐题答案。' + (historyConfig.saveAvailable ? '只有你另外勾选同意并选择保存，才会交接最小结果并连接私人历史。' : '私人历史新增保存尚未启用，游客结果不会上传。'));
   root.append(overline, header, grid, actions, footnote);
   switchView('result');
 }

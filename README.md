@@ -61,7 +61,7 @@
 
 **静态托管迁移（2026-10-30，已发布）：** [PR #50](https://github.com/mykcs/the-community-lab/pull/50) 合并后，`main` 提交 `7cbb659c5d16c6002767ee32a0bd062d516badbf` 的 [Pages 构建与发布](https://github.com/mykcs/the-community-lab/actions/runs/41028239651) 均成功。正式首页和独立译审页均返回 HTTP 200，主站 JS/CSS 也返回 200；实际浏览器走通了第二季 6 题、第一季 8 题、暂停续答和结果卡。440×956 CSS px 手机视口无横向溢出；它是浏览器模拟而非实体手机。Vercel Git 自动部署按官方 `git.deploymentEnabled=false` 关闭，保留旧生产快照用于回退。GitHub Pages 免费托管公开仓库、公共标准 runner 的构建不扣计费计算额度，但有 1 GB 站点大小、约 100 GB/月软流量限制，不是无限资源。Pages 只提供静态文件；PR #11 的可选登录／私人历史记录仍未上线，不能直接迁入 Pages 当作有后端。发布切换及回退规则见 [部署证据](docs/DEPLOYMENT.md)。
 
-具体架构、预算与隐私门槛见 [设计方案](docs/ARCHITECTURE.md)。
+具体架构、预算与隐私门槛见 [设计方案](docs/ARCHITECTURE.md)。可选历史已有[默认关闭的实现候选](docs/PRIVATE-HISTORY.md)，真实服务与双账号验收尚未完成，不代表生产已开放保存。
 
 ## 我们先复用哪些成熟成果
 

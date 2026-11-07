@@ -28,6 +28,11 @@ on:
 permissions:
   contents: read
 
+# Set this repository variable only after GitHub Pages has the same custom
+# domain configured. An empty value keeps the existing project-site URL.
+env:
+  COMMUNITY_PAGES_DOMAIN: ${{ vars.COMMUNITY_PAGES_DOMAIN }}
+
 concurrency:
   group: github-pages-production
   cancel-in-progress: true
@@ -47,6 +52,8 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: Verify project-path navigation and private-history candidate is static-safe
+        run: node scripts/verify-pages-history.mjs
       # Same Git SHA for the uploaded artifact and live Pages smoke check.
       # This is a public release marker, never a survey answer or credential.
       - name: Stamp build commit for exact-release verification
@@ -87,7 +94,8 @@ jobs:
         run: |
           set -euo pipefail
           base="${PAGES_URL%/}"
-          if [[ -z "$base" || "$base" != https://mykcs.github.io/the-community-lab ]]; then
+          expected_base="$(node --input-type=module -e 'import { getPagesDeploymentConfig } from "./lib/pages-deployment-config.mjs"; console.log(getPagesDeploymentConfig(process.env).publicUrl)')"
+          if [[ -z "$base" || "$base" != "$expected_base" ]]; then
             echo "Unexpected Pages release URL; refusing unverified target" >&2
             exit 1
           fi
@@ -114,4 +122,3 @@ jobs:
           grep -Fq 'id="embedded-data"' /tmp/community-pages-review.html
           grep -Fq 'aria-label="筛选季别"' /tmp/community-pages-original-review.html
           echo "Verified exact production commit and 4 public routes; browser/translation/scoring parity require separate evidence."
-

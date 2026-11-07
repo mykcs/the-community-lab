@@ -1,0 +1,22 @@
+---
+import AccountLayout from '../../layouts/AccountLayout.astro';
+import { siteRoutePath } from '../../../lib/history-config.mjs';
+const historyHref = siteRoutePath(import.meta.env.BASE_URL, 'history/');
+const homeHref = siteRoutePath(import.meta.env.BASE_URL);
+---
+<AccountLayout title="返回登录">
+  <script is:inline>
+    (() => {
+      const params = new URLSearchParams(location.search);
+      window.communityOAuthReturn = {
+        code: params.getAll('code').length === 1 ? params.get('code') : null,
+        rejected: params.has('error') || params.has('error_code') || Boolean(location.hash),
+      };
+      history.replaceState(null, '', location.pathname);
+    })();
+  </script>
+  <h1>GitHub 登录返回</h1>
+  <p id="callback-status" class="history-status" role="status" aria-live="polite">请保持此页面打开。登录本身不会保存测试结果。</p>
+  <div class="history-actions"><a class="button button-outline" href={historyHref}>打开私人历史 →</a><a class="button button-text" href={homeHref}>回到测试 →</a></div>
+  <script>import '../../../lib/history-callback.mjs';</script>
+</AccountLayout>
