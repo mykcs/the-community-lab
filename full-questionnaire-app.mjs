@@ -7,14 +7,12 @@ import {
   hasUnsavedPrivateChoices,
 } from './lib/full-questionnaire.mjs';
 import { displayedOptionCopy } from './lib/option-display.mjs';
+import { s1GroupDraftLabel } from './lib/group-display.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
 const $ = id => document.getElementById(id);
 const panes = { select: $('full-select'), quiz: $('full-quiz'), done: $('full-done') };
 const saved = new Map();
-const groupNames = {
-  politics: '公共与政治', gender: '性别观念', openness: '开放与变化', class: '阶级与生活经历',
-};
 let active = null;
 // Reading a local JSON file is async. A previously chosen, slower file must
 // never overwrite the more recent import selection or prompt to erase it.
@@ -132,7 +130,7 @@ function render() {
       make('span', '', ` / ${q.group} · 原题编号 ${q.id}（客户端原有 ID）`),
     );
   } else {
-    group.textContent = `本站中文题组说明（依据客户端分类索引，非官方题组名） · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}（本站根据客户端数组位置生成的索引，非官方题号）`;
+    group.textContent = `本站中文题组说明（依据客户端分类索引，非官方题组名） · ${s1GroupDraftLabel(q.group)} · 原题编号 ${q.id}（本站根据客户端数组位置生成的索引，非官方题号）`;
   }
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
@@ -287,8 +285,8 @@ function finish() {
       label.append(ko, make('span', '', ` / ${group.label}`));
     } else {
       label.textContent = active.season === 1
-        ? `本站中文题组说明（非官方题组名） · ${groupNames[group.label] || group.label}`
-        : (groupNames[group.label] || group.label);
+        ? `本站中文题组说明（非官方题组名） · ${s1GroupDraftLabel(group.label)}`
+        : group.label;
     }
     item.append(label, make('strong', '', `${group.answered} 道已答`));
     panel.append(item);
