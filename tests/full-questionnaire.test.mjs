@@ -8,6 +8,9 @@ import {
   hasUnsavedPrivateChoices,
 } from '../lib/full-questionnaire.mjs';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { displayedOptionCopy } from '../lib/option-display.mjs';
+import { s1GroupDraftLabel } from '../lib/group-display.mjs';
 
 const pack = loadFullQuestionnaire();
 const raw = extractDraftPack(readFileSync(new URL('../docs/translation-review/index.html', import.meta.url), 'utf8'));
@@ -107,6 +110,41 @@ test('S2 Chinese group headings participate in historical wording fingerprints',
   assert.equal(changed.seasons[1][0].translationFingerprint,
     pack.seasons[1][0].translationFingerprint,
     'S1 historical receipt hashes must not change due to the S2-only fix');
+});
+
+test('S1 displayed Chinese category names are part of the private-answer wording proof', () => {
+  const q = pack.seasons[1].find(row => !row.readerNote);
+  assert.ok(q);
+  assert.ok(s1GroupDraftLabel(q.group) !== q.group,
+    'S1 category names are site-authored display copy, not source IDs');
+
+  // Recreate the PRE-fix S1 fingerprint, which did not include the visible
+  // Chinese category. Treat its historic wording provenance as stale, while
+  // retaining its source question ID and selected raw option value.
+  const legacyHash = createHash('sha256').update(JSON.stringify([
+    q.draftZh,
+    q.options.map(option => {
+      const display = displayedOptionCopy(q, option);
+      return [option.value, display.zh, ...(display.hint ? [display.hint] : [])];
+    }),
+  ])).digest('hex');
+  assert.notEqual(q.translationFingerprint, legacyHash);
+  const legacyReceipt = createPrivateProgressReceipt(pack, 1,
+    { [q.id]: q.options[0].value }, q.order - 1);
+  legacyReceipt.selections[0].translationFingerprint = legacyHash;
+  const restored = restorePrivateProgressReceipt(pack, legacyReceipt);
+  assert.equal(restored.answers[q.id], q.options[0].value);
+  assert.deepEqual(restored.changedQuestionIds, [q.id],
+    'prior answers must not silently endorse a Chinese category title that their hash omitted');
+
+  const changed = structuredClone(pack);
+  changed.seasons[1].find(row => row.id === q.id).group =
+    q.group === 'gender' ? 'politics' : 'gender';
+  attachTranslationFingerprints(changed);
+  assert.notEqual(changed.seasons[1].find(row => row.id === q.id).translationFingerprint,
+    q.translationFingerprint, 'a changed on-screen S1 category must change the wording hash');
+  assert.equal(changed.seasons[2][0].translationFingerprint,
+    pack.seasons[2][0].translationFingerprint, 'S1 labels must not affect S2 backups');
 });
 
 test('S2 draft group labels cannot split or merge source domains in answer summaries', () => {
