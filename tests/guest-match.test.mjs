@@ -285,3 +285,26 @@ test('private-network, special-use and single-label provenance URLs cannot valid
   assert.equal(ranked.status, 'ready');
   assert.deepEqual(ranked.matches[0].social_accounts, []);
 });
+
+
+test('encoded navigation routes cannot be laundered into matched guest account links', () => {
+  const evidence = 'https://www.rfc-editor.org/rfc/rfc6761.html';
+  const links = [
+    ['Instagram', 'https://instagram.com/%68ome'],
+    ['Instagram', 'https://instagram.com/%2Fstories'],
+    ['X', 'https://x.com/%6cogin'],
+    ['YouTube', 'https://youtube.com/channel/%2Fwatch'],
+    ['YouTube', 'https://youtube.com/@guest%252Fwatch'],
+    ['YouTube', 'https://youtube.com/@%zz'],
+    // A legitimate percent-encoded Unicode handle remains acceptable.
+    ['YouTube', 'https://youtube.com/@%C3%84BC'],
+  ];
+  const ranked = rankComparableGuests(user, [guest('links', [40, -30, 0], {
+    social_accounts: links.map(([platform, profile_url]) => ({
+      platform, profile_url, identity_source_url: evidence, verified_at: '2026-10-29',
+    })),
+  })]);
+  assert.equal(ranked.status, 'ready');
+  assert.deepEqual(ranked.matches[0].social_accounts.map(a => a.profile_url),
+    ['https://youtube.com/@%C3%84BC']);
+});
