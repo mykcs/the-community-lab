@@ -108,8 +108,10 @@ jobs:
           curl -fsSL --max-time 15 "$base/" > /tmp/community-pages-home.html
           curl -fsSL --max-time 15 "$base/questionnaire/" > /tmp/community-pages-questionnaire.html
           curl -fsSL --max-time 15 "$base/translation-review/" > /tmp/community-pages-review.html
+          curl -fsSL --max-time 15 "$base/original-question-translation-review/" > /tmp/community-pages-original-review.html
           grep -Fq 'THE COMMUNITY' /tmp/community-pages-home.html
           grep -Fq 'id="full-questionnaire-data"' /tmp/community-pages-questionnaire.html
           grep -Fq 'id="embedded-data"' /tmp/community-pages-review.html
-          echo "Verified exact production commit and 3 public routes; browser/translation/scoring parity require separate evidence."
+          grep -Fq 'aria-label="筛选季别"' /tmp/community-pages-original-review.html
+          echo "Verified exact production commit and 4 public routes; browser/translation/scoring parity require separate evidence."
 
