@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 
-const target='s1-politics-01'; // Four-choice question; not the S1 scale-caption migration.
+const target='s1-politics-01'; // S1 six-choice question; source Korean levels 2/5 are blank.
 const paths=['../docs/translation-review/index.html','../docs/original-question-translation-review/index.html'];
 function fixture(path){
   const url=new URL(path,import.meta.url);
@@ -67,6 +67,9 @@ test('current imported changed-text PASS with explicit fresh marker remains self
   q.human_review_status='pass';
   q.human_review_note='合成新备注，仅代表自报';
   q.human_review_note_stale=false;
+  // A fresh note alone does not prove the S1 blank Korean scale captions
+  // were reviewed. Current exports also carry this exact source revision.
+  q.human_review_source_caption_revision='s1-scale-empty-2-and-5@1';
   await page.goto(url);
   page.on('dialog',dialog=>dialog.accept());
   await page.locator('#import-file').setInputFiles({
