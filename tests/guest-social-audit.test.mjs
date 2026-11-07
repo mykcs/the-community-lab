@@ -135,3 +135,30 @@ test('special-use domains cannot support the public guest directory, even with H
     assert.deepEqual(checked.people, [], host);
   }
 });
+
+
+test('percent-encoded navigation and hidden separators never qualify as public guest profiles', () => {
+  for (const [platform, url] of [
+    ['Instagram', 'https://instagram.com/%68ome'],
+    ['Instagram', 'https://instagram.com/%2Fstories'],
+    ['X', 'https://x.com/%6cogin'],
+    ['YouTube', 'https://youtube.com/channel/%2Fwatch'],
+    ['YouTube', 'https://youtube.com/@guest%252Fwatch'],
+    ['YouTube', 'https://youtube.com/@%zz'],
+  ]) {
+    const copy = structuredClone(source);
+    const account = copy.people[0].accounts[1];
+    account.platform = platform;
+    account.url = url;
+    assert.equal(auditGuestSocialDirectory(copy, { today: '2026-10-29' }).valid, false, url);
+  }
+});
+
+test('different encoding of one Instagram profile cannot give two guests separate identities', () => {
+  const copy = structuredClone(source);
+  copy.people[0].accounts[1].url = 'https://instagram.com/guestname';
+  copy.people[1].accounts[1].url = 'https://www.instagram.com/%67uestname';
+  const result = auditGuestSocialDirectory(copy, { today: '2026-10-29' });
+  assert.equal(result.valid, false);
+  assert.ok(result.issues.some(issue => issue.includes('profile attributed')));
+});
