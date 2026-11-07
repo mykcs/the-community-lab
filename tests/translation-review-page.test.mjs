@@ -500,6 +500,7 @@ test('exported review JSON can be safely restored without changing source eviden
   q.translation_zh_cn = '重新编辑的中文草稿';
   q.options[0].zh_cn = '重新编辑的中文选项';
   q.human_review_status = 'pass';
+  q.human_review_source_caption_revision = 's1-scale-empty-2-and-5@1';
   q.human_review_note = '复核者甲 · 双语能力说明 · 2026-10-30';
   q.human_review_note_stale = false;
   const edits = restore(exported, data);
@@ -509,7 +510,8 @@ test('exported review JSON can be safely restored without changing source eviden
     options: q.options.map(o => o.zh_cn),
     review: 'pass',
     note: q.human_review_note,
-    reviewNoteStale: false
+    reviewNoteStale: false,
+    sourceCaptionRevision: 's1-scale-empty-2-and-5@1'
   });
   assert.match(html, /const serialized=JSON\.stringify\(imported\);\s*localStorage\.setItem\(key,serialized\);\s*lastPersistedDraftRaw=serialized/);
   assert.match(html, /id="import-file" type="file"/);
@@ -532,8 +534,8 @@ test('reject forged, incompatible or incomplete imported evidence without changi
   invalid(json => { json.questions.reverse(); });
   invalid(json => { json.questions.pop(); });
   invalid(json => { json.questions[0].human_review_status = 'bilingual_reviewed'; });
-  invalid(json => { json.questions[0].human_review_status = 'pass'; });
-  invalid(json => { json.questions[0].human_review_status = 'pass'; json.questions[0].human_review_note = 'note'; json.questions[0].human_review_note_stale = true; });
+  invalid(json => { json.questions[0].human_review_status = 'pass'; json.questions[0].human_review_source_caption_revision = 's1-scale-empty-2-and-5@1'; });
+  invalid(json => { json.questions[0].human_review_status = 'pass'; json.questions[0].human_review_source_caption_revision = 's1-scale-empty-2-and-5@1'; json.questions[0].human_review_note = 'note'; json.questions[0].human_review_note_stale = true; });
   const oldExport = structuredClone(data);
   oldExport.questions[0].translation_zh_cn = '改动后等待复核';
   oldExport.questions[0].human_review_status = 'pending';
@@ -570,8 +572,10 @@ test('two independently exported local reviews can be compared without promoting
   const left = structuredClone(data), right = structuredClone(data);
   const agreed = left.questions[0], disagreed = left.questions[1], revision = left.questions[2];
   agreed.human_review_status = 'pass';
+  agreed.human_review_source_caption_revision = 's1-scale-empty-2-and-5@1';
   agreed.human_review_note = '审校者 A · 双语依据 · 日期';
   right.questions[0].human_review_status = 'pass';
+  right.questions[0].human_review_source_caption_revision = 's1-scale-empty-2-and-5@1';
   right.questions[0].human_review_note = '审校者 B · 双语依据 · 日期';
   disagreed.translation_zh_cn = '译文版本甲';
   right.questions[1].translation_zh_cn = '译文版本乙';
@@ -618,6 +622,7 @@ test('local review comparison rejects changed source evidence and non-self-repor
   assert.throws(() => compare(forgedReview, clean, data), /不合法/);
   const stalePass = structuredClone(data);
   stalePass.questions[0].human_review_status = 'pass';
+  stalePass.questions[0].human_review_source_caption_revision = 's1-scale-empty-2-and-5@1';
   stalePass.questions[0].human_review_note = '过时的备注';
   stalePass.questions[0].human_review_note_stale = true;
   assert.throws(() => compare(stalePass, clean, data), /缺少有效备注/);
@@ -695,6 +700,7 @@ test('export and import preserve the pre-edit note baseline across offline revie
   assert.equal(restored[row.id].reviewNoteStale, false);
   row.human_review_note = '旧备注：仅检查原译文  ';
   row.human_review_status = 'pass';
+  row.human_review_source_caption_revision = 's1-scale-empty-2-and-5@1';
   assert.throws(() => restore(exported, data), /通过状态缺少有效备注/,
     'undoing the old note after import must not restore a PASS');
   row.human_review_status = 'pending';
