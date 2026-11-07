@@ -1,5 +1,12 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-07 · 正式发布源仍为 GitHub Pages
+
+- GitHub `main` 为 `0a06e6b8154cba367a0bcb1f418509fdcf7577ae`；公开的 [`release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 返回同一 SHA，Pages 首页 HTTP 200。
+- PR #334 的精确提交验证、桌面／440×956 CSS px 浏览器验收和 Pages 发布均通过；该移动视口是模拟验收，不代表实体 iPhone。详见 [PR #334](https://github.com/mykcs/the-community-lab/pull/334) 与其 Actions 记录。
+- Vercel 项目存在同一 SHA 的 `READY` Production 部署，但它是手动部署，不是 Git push 自动触发。当前仓库有意通过 `vercel.json` 关闭 Vercel Git 自动部署；Vercel 仅作回退，Pages 是正式发布源。
+- 用户后续选择 Pages 主站后，恢复 Vercel 自动部署的 [Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 已按 `not_planned` 关闭。不要把历史 Vercel 自动发布记录或同 SHA 手动部署当作当前 Git 自动部署证据。
+
 ## 2026-11-05 · GitHub Pages 自有域名构建路径已准备（尚未绑定）
 
 - 新增 `COMMUNITY_PAGES_DOMAIN` 构建配置：未设置时沿用 `https://mykcs.github.io/the-community-lab/` 项目路径；设置为经确认的专属主机名时，Astro 使用该 origin 和 `/` 根路径。页面内的译审入口跟随当前 base path，发布门禁使用同一配置核对 Pages 部署 URL。
@@ -107,7 +114,7 @@ GitHub Pages 接管主站之前，项目曾完成 PR 预览与 main 生产的真
 | main 自动生产发布 | [合并 commit `44bf2f7`](https://github.com/mykcs/the-community-lab/commit/44bf2f7ffc377d77c4dfa6ad89347d3295679596) | [dpl_3DD17FdVKpCmLTUttyonbP1HkByT](https://vercel.com/wangrui92-team/the-community-lab/3DD17FdVKpCmLTUttyonbP1HkByT)：`READY`、`source=git`、`target=production`、SHA 一致、alias 包含 `the-community-lab.vercel.app` |
 | 浏览器交互回归 | [QA 记录](QA-2026-10-29.md) | 生产域名在 Chrome 440×956 和 1440×900 CSS px 双视口：第一季 8/8、第二季 6/6，韩先中后、分别暂停恢复和结果卡、无横向溢出、JS 页面错误 0、非 GET 写入请求 0 |
 
-此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。后续每次部署都需核实当前 main SHA、Vercel `source=git` 和生产域名的版本身份，不把上表快照永久视作最新。
+此处的移动视口是**真实 Chrome 的窗口模拟**，并非实体 iPhone 18 Pro Max。上表是 Vercel 作为正式发布方时的历史验收。当前主站改由 GitHub Pages 发布；只有以后明确重新启用 Vercel 正式发布时，才需核实 Vercel `source=git` 和生产域名的 SHA 身份。
 
 ## 本轮线上身份快照（2026-10-29，文档变更前）
 
