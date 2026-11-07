@@ -9,7 +9,7 @@
     "test:browser": "playwright test",
     "audit:reproduction": "node scripts/audit-reproduction.mjs",
     "check": "npm test && npm run audit:reproduction && astro check",
-    "build": "astro build",
+    "build": "astro build && node scripts/stage-review-pages.mjs",
     "dev": "astro dev",
     "preview": "astro preview"
   },

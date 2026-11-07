@@ -18,6 +18,7 @@ on:
       # Build-time modules imported by src/pages/questionnaire/index.astro.
       # Research-only probes and tests still run in PR/main verification CI,
       # but do not change the public static artifact.
+      - 'scripts/stage-review-pages.mjs'
       - 'scripts/load-full-questionnaire.mjs'
       - 'scripts/verify-korean-source-snapshot.mjs'
       - 'scripts/verify-client-display-order.mjs'
@@ -47,18 +48,11 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
-      # Same Git SHA for the uploaded artifact and live Pages smoke check.
-      # This is a public release marker, never a survey answer or credential.
+      # The shared npm build also stages both unreviewed review routes.
+      # Local preview/browser CI and the deployed artifact must be identical.
+      # This public release marker is never a survey answer or credential.
       - name: Stamp build commit for exact-release verification
         run: printf '%s\n' "$GITHUB_SHA" > dist/release-commit.txt
-      - name: Include the unreviewed bilingual translation draft on a separate route
-        run: |
-          mkdir -p dist/translation-review
-          cp docs/translation-review/index.html dist/translation-review/index.html
-      - name: Publish the standalone original-question review page
-        run: |
-          mkdir -p dist/original-question-translation-review
-          cp docs/original-question-translation-review/index.html dist/original-question-translation-review/index.html
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: ./dist
