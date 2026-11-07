@@ -162,13 +162,13 @@ test('second-season AI wording revisions preserve degree, referent, and priority
     ['rp08', '自动驾驶汽车若面临撞上多名行人的局面，应以挽救多数人为方向进行设计，即使这意味着牺牲驾驶者。'],
     ['rp10', '如果指认一名无辜者为责任人并对其施以惩罚，就能平息暴徒的愤怒、保障市民安全，那么可以牺牲这一个人。'],
     ['ms05', '如果对方是我非常讨厌的那类人，即使对我的工作成果很有帮助，我也不会在私下与其建立亲密关系。'],
-    ['ms11', '选择职业时，是否适合自己、是否有成就感应当是首要考虑，比工资到账的数额更重要。'],
+    ['ms11', '选择职业时，比起银行账户上显示的金额，更应把是否适合自己、能否获得成就感放在首位。'],
   ]);
   for (const [id, translation] of expected) {
     const question = data.questions.find(item => item.id === id);
     assert.ok(question, `${id} must remain in the source dataset`);
     assert.equal(question.translation_zh_cn, translation, id);
-    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_version, id === 'ms11' ? 'draft-0.1.2' : 'draft-0.1.1', id);
     assert.equal(question.review_status, 'draft', id);
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
   }
@@ -220,14 +220,20 @@ test('Korean-speaker references name Korea for Chinese readers and remain unrevi
 
 test('rp06 preserves torture severity and sa03 does not add an unspoken threshold', () => {
   const expected = new Map([
-    ['rp06', '一座聚集数万人的综合体育场收到炸弹威胁。若唯一能查明炸弹确切位置的方法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，就应该对他们施以酷刑。'],
+    ['rp06', '一座聚集数万人的综合体育场收到炸弹袭击预告。若查明炸弹确切位置的唯一办法是对恐怖袭击嫌疑人无辜的年幼子女施以酷刑，那就应该施以酷刑。'],
     ['sa03', '即使企业或组织按能力选人，如果人员构成偏向特定出身地、学校或性别，也有必要作出调整。'],
   ]);
   for (const [id, translation] of expected) {
     const question = data.questions.find(item => item.id === id);
     assert.ok(question, `${id} must remain in the source dataset`);
     assert.equal(question.translation_zh_cn, translation, id);
-    assert.equal(question.translation_version, 'draft-0.1.1', id);
+    assert.equal(question.translation_version, id === 'rp06' ? 'draft-0.1.2' : 'draft-0.1.1', id);
+    if (id === 'rp06') {
+      assert.match(question.source_text_ko, /폭탄 테러가 예고되었다/);
+      assert.match(question.translator_note, /자녀/);
+      assert.match(question.translator_note, /独立韩中人工复核/);
+      assert.doesNotMatch(question.translation_zh_cn, /他们/);
+    }
     assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED', id);
     assert.equal(question.review_status, 'draft', id);
   }
@@ -249,6 +255,22 @@ test('rp03 preserves the source item’s absolute priority and both review pages
   assert.deepEqual(standaloneData.questions, data.questions, 'the published standalone review page must use the canonical draft questions');
   assert.equal(standaloneData.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(standaloneData.translation_review.publishable, false);
+});
+
+test('rp01 preserves the source goal of resolving the power shortage in both unreviewed drafts', () => {
+  const question = data.questions.find(item => item.id === 'rp01');
+  assert.ok(question, 'rp01 must remain in the source dataset');
+  assert.match(question.source_text_ko, /전력 부족 사태를 해결하기 위해/);
+  assert.equal(question.translation_zh_cn, '如果为解决国家电力短缺而必须修建水坝，即使部分淹没区居民强烈反对，也有必要强行推进。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /한국어기초사전|韩国国立国语院/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.equal(question.review_status, 'draft');
+  assert.match(data.translation_review.editorial_pass, /rp01.*draft-0\.1\.1/);
+  assert.deepEqual(standaloneData.questions, data.questions, 'both reviewer pages must stay in sync');
+  assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
+  assert.equal(data.translation_review.publishable, false);
 });
 
 test('rp12 uses natural comparative wording without changing its unreviewed draft status', () => {
@@ -328,10 +350,13 @@ test('ms07 keeps the Korean comparison and teaching priority without implying ex
   const question = data.questions.find(item => item.id === 'ms07');
   assert.ok(question, 'ms07 must remain in the source dataset');
   assert.equal(question.source_text_ko, '내 자식에게는 영리하게 돈 버는 법보다 양심에 따라 사는 법을 먼저 가르치겠다.');
-  assert.equal(question.translation_zh_cn, '比起教孩子如何精明地赚钱，我会先教他们如何凭良心生活。');
-  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.equal(question.translation_zh_cn, '比起教我的孩子如何精明地赚钱，我会先教孩子如何凭良心生活。');
+  assert.equal(question.translation_version, 'draft-0.1.3');
   assert.match(question.translator_note, /比较助词「보다」.*先后副词「먼저」/);
   assert.match(question.translator_note, /korean\.go\.kr/);
+  assert.match(question.translator_note, /补回韩文「내 자식에게는」所指的“我的孩子”/);
+  assert.doesNotMatch(question.translation_zh_cn, /他们/);
+  assert.match(question.translator_note, /未明言子女人数|不限定孩子的数量/);
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.equal(question.review_status, 'draft');
   assert.match(data.translation_review.editorial_pass, /ms07/);
@@ -416,6 +441,7 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
     q1: { review: 'pass', note: 'reviewer A · bilingual evidence · 2026-10-30' },
     q2: { review: 'pass', note: 'reviewer B · 2026-10-30' },
     q3: { review: 'revise', note: 'needs changes' },
+    q4: { review: 'pending' },
   };
   let saves = 0;
   const update = new Function('edits', 'save', body + '; return recordTranslationEdit;')(edits, () => saves++);
@@ -433,14 +459,22 @@ test('editing a reviewed translation or option withdraws its self-reported pass'
   const q3Select = { value: 'revise' };
   update('q3', { translation: '修改' }, q3Select);
   assert.equal(edits.q3.review, 'revise');
-  assert.equal(edits.q3.reviewNoteStale, false);
+  assert.equal(edits.q3.reviewNoteStale, true, 'pre-edit notes are stale even before a PASS');
   assert.equal(q3Select.value, 'revise');
-  assert.equal(saves, 3);
+  const q4Select = { value: 'pending' };
+  update('q4', { translation: '新翻译' }, q4Select);
+  assert.equal(edits.q4.reviewNoteStale, false, 'no previous note to invalidate');
+  assert.equal(saves, 4);
   assert.match(html, /recordTranslationEdit\(q\.id,\{translation:edit\.value\},status\)/);
   assert.match(html, /recordTranslationEdit\(q\.id,\{options:arr\},status\)/);
   assert.match(html, /再次修改题干译文或选项.*自动退回待复核/);
   assert.match(html, /curr\.reviewNoteStale===true/);
-  assert.match(html, /note:note\.value,reviewNoteStale:false/);
+  assert.match(html, /reviewNoteStaleOriginal:staleBasis/);
+  assert.match(html, /note\.value\.trim\(\)===String\(staleBasis\)\.trim\(\)/);
+  assert.doesNotMatch(html, /note:note\.value,reviewNoteStale:false/);
+  assert.equal(edits.q1.reviewNoteStaleOriginal, 'reviewer A · bilingual evidence · 2026-10-30');
+  assert.equal(edits.q3.reviewNoteStaleOriginal, 'needs changes');
+  assert.equal(edits.q4.reviewNoteStaleOriginal, undefined);
 });
 
 test('page keeps review edits in browser storage without network or HTML injection APIs', () => {
@@ -642,4 +676,33 @@ test('S1 politics 12 preserves the Korean causative meaning in both unreviewed d
   assert.match(data.translation_review.editorial_pass, /s1-politics-12.*받게 하다/);
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
   assert.deepEqual(standaloneData.translation_review, data.translation_review);
+});
+
+
+test('export and import preserve the pre-edit note baseline across offline reviewer devices', () => {
+  const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(source);
+  const restore = new Function(source + '; return validateReviewImport;')();
+  const exported = structuredClone(data);
+  const row = exported.questions[0];
+  row.translation_zh_cn += '（合成中文编辑，仅用于测试）';
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  row.human_review_note_stale = false;
+  row.human_review_note_stale_original = '旧备注：仅检查原译文';
+  const restored = restore(exported, data);
+  assert.equal(restored[row.id].reviewNoteStaleOriginal, '旧备注：仅检查原译文');
+  assert.equal(restored[row.id].reviewNoteStale, false);
+  row.human_review_note = '旧备注：仅检查原译文  ';
+  row.human_review_status = 'pass';
+  assert.throws(() => restore(exported, data), /通过状态缺少有效备注/,
+    'undoing the old note after import must not restore a PASS');
+  row.human_review_status = 'pending';
+  row.human_review_note = '新备注：已检查修改后的译文';
+  const legacy = structuredClone(exported);
+  delete legacy.questions[0].human_review_note_stale_original;
+  assert.equal(restore(legacy, data)[row.id].reviewNoteStaleOriginal, undefined,
+    'previous export format remains accepted without fabricating a historical baseline');
+  assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
+  assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
 });

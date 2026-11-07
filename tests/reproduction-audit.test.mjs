@@ -193,6 +193,40 @@ test('optional official readback uses only GET and never prints or compares priv
   assert.doesNotMatch(JSON.stringify(result), /DO_NOT_COPY|referralCode|answers|nickname/);
 });
 
+test('official readback records request failures and continues through every synthetic sample', async () => {
+  const calls = [];
+  const fixtures = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS;
+  const fetchMock = async (url, options) => {
+    calls.push({ url, method: options.method });
+    if (calls.length === 1) {
+      throw Object.assign(new Error('private transport detail must not escape'), { name: 'TimeoutError' });
+    }
+    if (calls.length === 2) return { ok: false, status: 503 };
+    if (calls.length === 3) return { ok: true, json: async () => {
+      throw new SyntaxError('private response body must not escape');
+    } };
+    if (calls.length === 4) return { ok: true, json: async () => ({ season: 'season-2' }) };
+    const sample = fixtures.find(row => url.endsWith('/' + row.publicResultId));
+    return { ok: true, json: async () => structuredClone(sample.output) };
+  };
+
+  const result = await verifyOfficialSyntheticScoreReadbacks(fixtures, fetchMock);
+
+  assert.equal(calls.length, fixtures.length);
+  assert.ok(calls.every(call => call.method === 'GET'));
+  assert.deepEqual(result.checked.slice(0, 5).map(row => [row.status, row.errorCode]), [
+    ['REQUEST_FAILED', 'TIMEOUT'],
+    ['HTTP_ERROR', 'HTTP_503'],
+    ['INVALID_RESPONSE', 'INVALID_JSON'],
+    ['INVALID_RESPONSE', 'INVALID_SHAPE'],
+    ['MATCHED', undefined],
+  ]);
+  assert.equal(result.checked.length, fixtures.length);
+  assert.equal(result.checked[4].matchesRecordedReadback, true);
+  assert.equal(result.allMatch, false);
+  assert.doesNotMatch(JSON.stringify(result), /private transport detail|private response body/);
+});
+
 test('grouped synthetic inputs must cover every S2 source ID and follow the recorded source groups', () => {
   const samples = structuredClone(OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS);
   samples[2].input.questionIdsByChoice.O.pop();

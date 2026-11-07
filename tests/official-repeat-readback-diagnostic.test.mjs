@@ -57,26 +57,35 @@ test('read-only diagnostic pinpoints which official score fields disagree withou
     }],
     majorityDoesNotEstablishGoldStandard: true,
   });
+  assert.equal(result.schemaVersion, 's2-readback-contradiction-diagnostic@4');
+  assert.equal(result.inputEvidenceLevel, 'GUI_RECONSTRUCTION_NO_VERIFIED_POST_PAYLOAD');
+  assert.equal(result.submittedRequestPayloadVerified, false);
+  assert.equal(result.serverReceivedInputParity, 'UNKNOWN');
   assert.equal(result.rootCauseEstablished, false);
   assert.equal(result.officialScoringEquivalenceVerified, false);
   assert.deepEqual(result.pairs.map(pair => pair.status), [
-    ...Array(6).fill('CONFIRMED_REPEATED_INPUT_CONFLICT'),
-    ...Array(15).fill('REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS'),
+    ...Array(6).fill('OBSERVED_READBACK_DISAGREEMENT_FOR_UI_RECONSTRUCTED_VECTOR'),
+    ...Array(15).fill('OBSERVED_READBACK_AGREEMENT_FOR_UI_RECONSTRUCTED_VECTOR'),
   ]);
   for (const pair of result.pairs) {
     assert.equal(pair.recordedInputCount, 37);
+    assert.equal(pair.inputEvidenceLevel, 'GUI_RECONSTRUCTION_NO_VERIFIED_POST_PAYLOAD');
+    assert.equal(pair.serverReceivedInputParity, 'UNKNOWN');
     assert.equal(pair.versionFieldsMatch, true);
     assert.equal(pair.titleAndSummaryMatch, true);
     assert.equal(pair.createdAtSame, false);
     assert.equal(pair.storedAtSame, false);
     assert.equal(pair.consentVersionSame, true);
     assert.deepEqual(pair.differentOfficialFields,
-      pair.status === 'CONFIRMED_REPEATED_INPUT_CONFLICT'
+      pair.status === 'OBSERVED_READBACK_DISAGREEMENT_FOR_UI_RECONSTRUCTED_VECTOR'
         ? ['axes.원칙-결과.leftPercent', 'axes.원칙-결과.rightPercent'] : []);
   }
   const serialized = JSON.stringify(result);
   assert.doesNotMatch(serialized, /SECRET_NEVER_OUTPUT|referral|nickname|answers|2026-|publicResultId/);
   assert.doesNotMatch(serialized, /49|42|58|51/);
+  // Historical GUI observations are useful, but never upgrade them into proof
+  // of equal POST payloads or server-side score nondeterminism.
+  assert.doesNotMatch(serialized, /CONFIRMED_REPEATED_INPUT_CONFLICT|SAME_SERVER_INPUT/);
 });
 
 test('readback drift is a hard stop, never an unexamined duplicate-result finding', () => {

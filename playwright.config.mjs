@@ -52,6 +52,11 @@ export default defineConfig({
     // Avoid accidentally testing against a preview built with a different base path.
     reuseExistingServer: false,
     timeout: 120_000,
-    env: { COMMUNITY_DEPLOY_TARGET: 'github-pages' },
+    env: {
+      COMMUNITY_DEPLOY_TARGET: 'github-pages',
+      // Astro 7 automatically backgrounds preview servers when it detects an
+      // agent. Playwright must own the foreground process and its lifecycle.
+      ASTRO_PREVIEW_BACKGROUND: '0',
+    },
   },
 });

@@ -2,6 +2,10 @@
  * Narrow read-only diagnosis of already-authorized S2 synthetic readbacks.
  * Never submits answers or publishes prose, referral codes, timestamps, or
  * arbitrary API fields. Repeated outputs are NOT a scoring formula.
+ * 'verified' inputs in the historical fixture were reconstructed from observed
+ * client UI clicks; the official result GET does not echo submitted answers and
+ * historical final POST payloads/context were not captured. Therefore matching
+ * recorded vectors do NOT establish matching server-received inputs.
  */
 import { pathToFileURL } from 'node:url';
 import SOURCE_INDEX from '../data/original-question-index.json' with { type: 'json' };
@@ -161,9 +165,15 @@ export function diagnoseExistingRepeatedReadbacks(
         const mismatches = compareRecordedOfficialScoreFields(
           scoreProjection(a), scoreProjection(b)).mismatches;
         pairs.push({
-          status: mismatches.length ? 'CONFIRMED_REPEATED_INPUT_CONFLICT'
-            : 'REPEATED_INPUT_CONSISTENT_ON_RECORDED_FIELDS',
+          // The UI-reconstructed vectors match, but the server-received POST
+          // payload and all request context were not independently captured.
+          // A differing GET result is an observed discrepancy, NOT proof that
+          // an identical server-side input was scored inconsistently.
+          status: mismatches.length ? 'OBSERVED_READBACK_DISAGREEMENT_FOR_UI_RECONSTRUCTED_VECTOR'
+            : 'OBSERVED_READBACK_AGREEMENT_FOR_UI_RECONSTRUCTED_VECTOR',
           recordedInputCount: ORDER.length,
+          inputEvidenceLevel: 'GUI_RECONSTRUCTION_NO_VERIFIED_POST_PAYLOAD',
+          serverReceivedInputParity: 'UNKNOWN',
           differentOfficialFields: mismatches,
           versionFieldsMatch: VERSION_FIELDS.every(field => a[field] === b[field]),
           titleAndSummaryMatch:
@@ -182,7 +192,12 @@ export function diagnoseExistingRepeatedReadbacks(
   }
   const drifted = pairs.some(pair => pair.status === 'BLOCKED_READBACK_DRIFT');
   return {
-    schemaVersion: 's2-readback-contradiction-diagnostic@3',
+    schemaVersion: 's2-readback-contradiction-diagnostic@4',
+    // These flags are evidence *gaps*, not a claim that the historical
+    // submitted requests differed. Never infer server-side nondeterminism.
+    inputEvidenceLevel: 'GUI_RECONSTRUCTION_NO_VERIFIED_POST_PAYLOAD',
+    submittedRequestPayloadVerified: false,
+    serverReceivedInputParity: 'UNKNOWN',
     repeatedInputPairs: pairs.length,
     pairs,
     // A changed historical readback invalidates all cluster conclusions.

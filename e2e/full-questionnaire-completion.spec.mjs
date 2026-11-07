@@ -25,6 +25,7 @@ test('finished local answer audit shows original values and edits one selected q
   await expect(audit).not.toHaveAttribute('open', '');
   await audit.locator('summary').click();
   await expect(audit.locator('li')).toHaveCount(37);
+  await expect(audit.locator('li').first()).toContainText('客户端原有 ID');
   const target = audit.locator('li').nth(10);
   await expect(target).toContainText(questions[10].sourceKo);
   await expect(target).toContainText(questions[10].draftZh);
@@ -75,6 +76,7 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   await page.locator('#full-answer-audit summary').click();
   const audit = page.locator('#full-answer-audit-list');
   await expect(audit.locator('li')).toHaveCount(87);
+  await expect(audit.locator('li').first()).toContainText('本站生成索引，非官方题号');
   const annotatedRow = audit.locator('li').filter({ hasText: `源题编号 ${annotated.id}` });
   await expect(annotatedRow.locator('.full-answer-audit-note')).toHaveText(annotated.readerNote);
   const scaleRow = audit.locator('li').filter({ hasText: `源题编号 ${blankScale.id}` });
@@ -88,13 +90,29 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
   expect(writes).toEqual([]);
 });
 
+test('S1 visibly discloses that its index is site-derived, not an official question number', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=1');
+  const heading = page.locator('#full-group');
+  await expect(heading).toContainText('原题编号 s1-class-15');
+  await expect(heading).toContainText('本站根据客户端数组位置生成的索引，非官方题号');
+  await expect(heading).not.toContainText('客户端原有 ID');
+  const outbound = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') outbound.push(request.url());
+  });
+  await page.locator('.full-choice').first().click();
+  await page.locator('#full-next').click();
+  await expect(heading).toContainText('非官方题号');
+  expect(outbound).toEqual([]);
+});
+
 test('S2 title displays pinned Korean source group before its unreviewed Chinese translation', async ({ page }) => {
   const question = loadFullQuestionnaire().seasons[2][0];
   const source = sourceIndex.questions.find(q => q.sourceQuestionId === question.id);
   await page.goto('/the-community-lab/questionnaire/?season=2');
   const heading = page.locator('#full-group');
   await expect(heading.locator('[lang="ko"]')).toHaveText(source.sourceGroup);
-  await expect(heading).toContainText(` / ${question.group} · 原题编号 ${question.id}`);
+  await expect(heading).toContainText(` / ${question.group} · 原题编号 ${question.id}（客户端原有 ID）`);
   const label = await heading.textContent();
   expect(label.indexOf(source.sourceGroup)).toBeLessThan(label.indexOf(question.group));
   await expect(page.locator('#full-ko')).toHaveAttribute('lang', 'ko');
@@ -706,4 +724,107 @@ test('unconfirmed completed download stays confirmable after reopening the seaso
   await page.locator('#full-confirm-complete-backup').click();
   await expect(page.locator('#full-confirm-complete-backup')).toBeHidden();
   expect(writes).toEqual([]);
+});
+
+
+test('saving and confirming a private backup cancels an older local import still reading', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const question = pack.seasons[2][0];
+  const older = createPrivateProgressReceipt(
+    pack, 2, { [question.id]: question.options[1].value }, 0,
+  );
+  await page.addInitScript(() => {
+    const originalText = File.prototype.text;
+    window.delayedPrivateReads = [];
+    File.prototype.text = function () {
+      if (this.name !== 'delayed-before-backup.json') return originalText.call(this);
+      return new Promise((resolve, reject) => {
+        window.delayedPrivateReads.push(() => originalText.call(this).then(resolve, reject));
+      });
+    };
+  });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  await page.locator('.full-choice').first().click();
+  const dialogs = [];
+  page.on('dialog', async dialog => {
+    dialogs.push(dialog.message());
+    await dialog.accept();
+  });
+  const olderFile = {
+    name: 'delayed-before-backup.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(older)),
+  };
+  await page.locator('#full-import-file').setInputFiles(olderFile);
+  await expect.poll(() => page.evaluate(() => window.delayedPrivateReads.length)).toBe(1);
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-save').click(),
+  ]);
+  const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(exported.selections[0].selectedValue).toBe(question.options[0].value);
+  await page.evaluate(async () => {
+    await window.delayedPrivateReads[0]();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
+  expect(dialogs).toEqual([]);
+
+  // A second pending import must also lose to the user's explicit confirmation
+  // that this exact downloaded file is the current backup.
+  await page.locator('#full-import-file').setInputFiles(olderFile);
+  await expect.poll(() => page.evaluate(() => window.delayedPrivateReads.length)).toBe(2);
+  await page.locator('#full-confirm-progress-backup').click();
+  await page.evaluate(async () => {
+    await window.delayedPrivateReads[1]();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('#full-save-status')).toContainText('已按你的确认标记为已备份');
+  expect(dialogs).toEqual([]);
+});
+
+test('exporting a completed private receipt cancels a stale in-flight progress import', async ({ page }) => {
+  const pack = loadFullQuestionnaire();
+  const questions = pack.seasons[2];
+  const allAnswers = Object.fromEntries(questions.map(q => [q.id, q.options[0].value]));
+  const completed = createPrivateProgressReceipt(pack, 2, allAnswers, questions.length - 1);
+  const older = createPrivateProgressReceipt(
+    pack, 2, { [questions[0].id]: questions[0].options[1].value }, 0,
+  );
+  await page.addInitScript(() => {
+    const originalText = File.prototype.text;
+    File.prototype.text = function () {
+      if (this.name !== 'delayed-finished-import.json') return originalText.call(this);
+      return new Promise((resolve, reject) => {
+        window.releaseFinishedImport = () => originalText.call(this).then(resolve, reject);
+      });
+    };
+  });
+  await page.goto('/the-community-lab/questionnaire/');
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'completed-synthetic.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(completed)),
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  const dialogs = [];
+  page.on('dialog', async dialog => {
+    dialogs.push(dialog.message());
+    await dialog.accept();
+  });
+  await page.locator('#full-import-file').setInputFiles({
+    name: 'delayed-finished-import.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(older)),
+  });
+  await expect.poll(() => page.evaluate(() => typeof window.releaseFinishedImport)).toBe('function');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  const exported = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(exported.selections).toHaveLength(37);
+  await page.evaluate(async () => {
+    await window.releaseFinishedImport();
+    await new Promise(resolve => setTimeout(resolve, 0));
+  });
+  await expect(page.locator('#full-done')).toBeVisible();
+  await expect(page.locator('#full-done-description')).toContainText('37 道题已全部作答');
+  expect(dialogs).toEqual([]);
 });

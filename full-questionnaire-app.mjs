@@ -7,14 +7,12 @@ import {
   hasUnsavedPrivateChoices,
 } from './lib/full-questionnaire.mjs';
 import { displayedOptionCopy } from './lib/option-display.mjs';
+import { s1GroupDraftLabel } from './lib/group-display.mjs';
 
 const pack = JSON.parse(document.getElementById('full-questionnaire-data').textContent);
 const $ = id => document.getElementById(id);
 const panes = { select: $('full-select'), quiz: $('full-quiz'), done: $('full-done') };
 const saved = new Map();
-const groupNames = {
-  politics: '公共与政治', gender: '性别观念', openness: '开放与变化', class: '阶级与生活经历',
-};
 let active = null;
 // Reading a local JSON file is async. A previously chosen, slower file must
 // never overwrite the more recent import selection or prompt to erase it.
@@ -129,10 +127,10 @@ function render() {
     koreanGroup.lang = 'ko';
     group.replaceChildren(
       make('span', '', '题组 · '), koreanGroup,
-      make('span', '', ` / ${q.group} · 原题编号 ${q.id}`),
+      make('span', '', ` / ${q.group} · 原题编号 ${q.id}（客户端原有 ID）`),
     );
   } else {
-    group.textContent = `题组 · ${groupNames[q.group] || q.group} · 原题编号 ${q.id}`;
+    group.textContent = `本站中文题组说明（依据客户端分类索引，非官方题组名） · ${s1GroupDraftLabel(q.group)} · 原题编号 ${q.id}（本站根据客户端数组位置生成的索引，非官方题号）`;
   }
   $('full-ko').textContent = q.sourceKo;
   $('full-zh').textContent = q.draftZh;
@@ -143,6 +141,12 @@ function render() {
     ? '请选择一个更符合你观点的选项；下方韩文为公开客户端文字。'
     : `请选择一个选项（原题为 ${q.options.length} 级量表）。`;
   $('full-source').href = q.sourceUrl;
+  // Open a voluntary PUBLIC feedback page with source identity only. Never
+  // encode choices, translated question text, private backups or session state.
+  const feedback = new URL('https://github.com/mykcs/the-community-lab/issues/new');
+  feedback.searchParams.set('title', `韩中译文建议 · 第 ${q.season} 季 · ${q.id}`);
+  feedback.searchParams.set('body', `季别：第 ${q.season} 季\n源题索引：${q.id}\n\n建议修改的中文和语义依据（请勿填写自己的答案、真实姓名或私人资料）：\n\n韩中双语来源或审校证据（如有）：\n\n此建议仅是反馈，不代表独立人工复核通过。`);
+  $('full-report-translation').href = feedback.toString();
   // Expose the pinned public client asset, not an invented questionnaire or scoring version.
   $('full-source-fingerprint').textContent = `${pack.sourceSha256} · ${pack.observedAt}`;
   const list = $('full-choices');
@@ -192,15 +196,31 @@ function render() {
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
     });
-    // WAI-ARIA radio pattern: arrow keys change the single selected value.
-    // Space/Enter remain the button's native keyboard click handlers.
+    // Arrow keys should follow the VISIBLE layout without changing source
+    // values or DOM order. S1's 4/6-point scales form two vertical columns
+    // on desktop (1-2[-3] left, 3-4 / 4-6 right), but one column on mobile.
+    // Moving right must not unexpectedly move down a row in a value scale.
+    // Home/End always target the first/last ORIGINAL source option.
     btn.addEventListener('keydown', event => {
       const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1
         : ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 0;
       if (!direction && event.key !== 'Home' && event.key !== 'End') return;
       event.preventDefault();
-      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? list.children.length - 1
-        : (index + direction + list.children.length) % list.children.length;
+      const count = list.children.length;
+      let nextIndex;
+      if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = count - 1;
+      else if ((count === 4 || count === 6) &&
+               !window.matchMedia('(max-width: 630px)').matches) {
+        const rows = count / 2;
+        const column = Math.floor(index / rows);
+        const row = index % rows;
+        nextIndex = ['ArrowLeft', 'ArrowRight'].includes(event.key)
+          ? (1 - column) * rows + row
+          : column * rows + (row + direction + rows) % rows;
+      } else {
+        nextIndex = (index + direction + count) % count;
+      }
       const target = list.children[nextIndex];
       target.click();
       target.focus();
@@ -280,7 +300,9 @@ function finish() {
       ko.lang = 'ko';
       label.append(ko, make('span', '', ` / ${group.label}`));
     } else {
-      label.textContent = groupNames[group.label] || group.label;
+      label.textContent = active.season === 1
+        ? `本站中文题组说明（非官方题组名） · ${s1GroupDraftLabel(group.label)}`
+        : group.label;
     }
     item.append(label, make('strong', '', `${group.answered} 道已答`));
     panel.append(item);
@@ -302,7 +324,7 @@ function renderAnswerAudit(questions) {
     const row = make('li', 'full-answer-audit-item');
     const header = make('div', 'full-answer-audit-head');
     header.append(
-      make('strong', '', `第 ${index + 1} 题 · 源题编号 ${q.id}`),
+      make('strong', '', `第 ${index + 1} 题 · 源题编号 ${q.id}${q.season === 1 ? '（本站生成索引，非官方题号）' : '（客户端原有 ID）'}`),
       make('span', '', `原始选项值：${String(selected.value)}`),
     );
     const korean = make('p', 'full-answer-audit-ko', q.sourceKo);
@@ -368,6 +390,8 @@ function downloadJson(record, filename) {
 
 function download() {
   if (!active?.receipt) return;
+  // Exporting the current private record supersedes a slower, older import.
+  cancelPendingImport();
   downloadJson({
     ...active.receipt,
     notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
@@ -382,6 +406,8 @@ function download() {
 
 function saveProgress() {
   if (!active || Object.keys(active.answers).length === 0) return;
+  // The user chose to back up THIS in-memory state, not an in-flight file.
+  cancelPendingImport();
   const record = createPrivateProgressReceipt(pack, active.season, active.answers, active.index, active.answerVersions, active.answerFingerprints);
   downloadJson({
     ...record,
@@ -514,6 +540,8 @@ $('full-edit').addEventListener('click', () => {
 $('full-save').addEventListener('click', saveProgress);
 function confirmDownloadedBackup(kind) {
   if (!active || active.pendingBackupKind !== kind) return;
+  // A newer explicit confirmation must not be undone by a stale file read.
+  cancelPendingImport();
   // A confirmation belongs to this exact in-memory season and to the last
   // download request. Answer edits clear pendingBackupKind before this point.
   active.pendingBackupKind = null;

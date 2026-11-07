@@ -65,6 +65,7 @@ test('reproduction audit retains its human-readable report without --json', () =
   assert.match(result.stdout, /官方完整输入的区分力：10 份已验收输入→输出记录（非确定性计分金标准）中有 4 种不同原始答案向量/);
   assert.doesNotMatch(result.stdout, /10 份金标准/);
   assert.match(result.stdout, /可作确定性金标准的完整输入 0 份/);
+  assert.match(result.stdout, /历史最终 POST 负载及完整请求上下文未独立保存/);
   assert.match(result.stdout, /实际比较 0 份/);
   assert.match(result.stdout, /S1 87 题／476 选项；S2 37 题／74 选项/);
   assert.match(result.stdout, /许可原件未独立核验、真人双语审校未完成/);

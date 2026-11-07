@@ -78,8 +78,13 @@ emitHuman('官方完整输入的区分力：' + inputCoverage.verifiedPairs + ' 
   ' 道题曾在不同已验收样本中同时出现 O 与 X；' +
   inputCoverage.questionsObservedWithOnlyOneValue + ' 道仅观察到单一选择；相同输入的重复结果 ' +
   (inputCoverage.repeatedInputOutputsConsistent ? '一致' : '不一致') + '。');
+emitHuman('重要证据边界：上面的“已验收输入”是逐题客户端 UI 选择的重建记录；官网结果 GET 不回传服务端收到的答案。历史最终 POST 负载及完整请求上下文未独立保存，因此不同读回不能证明服务器收到了完全相同的输入，更不能证明后台计分随机变化。');
 emitHuman('不同输入向量两两对比（重复答卷不重复计数）：' + inputCoverage.comparedInputPairs + ' 对；' +
-  inputCoverage.singleQuestionContrastPairs + ' 对只差 1 题；最少/最多相差 ' +
+  inputCoverage.singleQuestionContrastPairs + ' 对客户端重建答案仅差 1 题（其中 ' +
+  inputCoverage.clientSingleQuestionPairsWithoutReadbackConflicts +
+  ' 对不涉及已知的重复读回冲突，' +
+  inputCoverage.clientSingleQuestionPairsBlockedByReadbackConflicts +
+  ' 对涉及冲突；两者均未核实服务器实际收到的完整输入）；最少/最多相差 ' +
   (inputCoverage.minPairwiseHammingDistance ?? 'UNKNOWN') + '/' +
   (inputCoverage.maxPairwiseHammingDistance ?? 'UNKNOWN') +
   ' 题。多题一起变化不能推断每题权重或评分公式。');
@@ -100,12 +105,18 @@ emitHuman('官方结果文字额外核查：既有 ' + displayCoverage.observedR
 if (process.argv.includes('--verify-live-readbacks')) {
   try {
     const fresh = await verifyOfficialSyntheticScoreReadbacks(undefined, undefined, { verifyDisplayText: true });
-    liveReadbackStatus = fresh.allMatch ? 'MATCHED_RECORDED_READBACKS' : 'MISMATCHED_RECORDED_READBACKS';
+    const unavailableCount = fresh.checked.filter(row =>
+      ['REQUEST_FAILED', 'HTTP_ERROR', 'INVALID_RESPONSE'].includes(row.status)).length;
+    liveReadbackStatus = unavailableCount > 0 ? 'FAILED'
+      : fresh.allMatch ? 'MATCHED_RECORDED_READBACKS' : 'MISMATCHED_RECORDED_READBACKS';
     liveReadbackReport = fresh;
     for (const row of fresh.checked) {
-      emitHuman('只读官方结果 ' + row.publicResultId + '：' + (row.matchesRecordedReadback
+      const message = row.status === 'MATCHED'
         ? '数值、韩文标题/说明指纹及轴标签均吻合'
-        : '数值或公开显示文字发生差异，需人工复查'));
+        : row.status === 'MISMATCH'
+          ? '数值或公开显示文字发生差异，需人工复查'
+          : '只读请求不可用（' + row.status + ' / ' + row.errorCode + '）';
+      emitHuman('只读官方结果 ' + row.publicResultId + '：' + message);
     }
     if (!fresh.allMatch) process.exitCode = 1;
   } catch (error) {
