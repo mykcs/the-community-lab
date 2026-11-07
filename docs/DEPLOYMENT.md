@@ -2,10 +2,11 @@
 
 ## 2026-11-07 · 正式发布源仍为 GitHub Pages
 
-- GitHub `main` 为 `0a06e6b8154cba367a0bcb1f418509fdcf7577ae`；公开的 [`release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 返回同一 SHA，Pages 首页 HTTP 200。
-- PR #334 的精确提交验证、桌面／440×956 CSS px 浏览器验收和 Pages 发布均通过；该移动视口是模拟验收，不代表实体 iPhone。详见 [PR #334](https://github.com/mykcs/the-community-lab/pull/334) 与其 Actions 记录。
-- Vercel 项目存在同一 SHA 的 `READY` Production 部署，但它是手动部署，不是 Git push 自动触发。当前仓库有意通过 `vercel.json` 关闭 Vercel Git 自动部署；Vercel 仅作回退，Pages 是正式发布源。
-- 用户后续选择 Pages 主站后，恢复 Vercel 自动部署的 [Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 已按 `not_planned` 关闭。不要把历史 Vercel 自动发布记录或同 SHA 手动部署当作当前 Git 自动部署证据。
+- GitHub `main` 为 `a07c5f860eb82ebc7950b6e6c5618d1986b1201e`；公开的 [`release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 精确返回同一 SHA，首页、`/questionnaire/`、`/translation-review/` 和 `/original-question-translation-review/` 均 HTTP 200。
+- PR #338 的精确 Pages 工作流、桌面／440×956 CSS px 浏览器验收和发布均通过；该移动视口是浏览器模拟，不代表实体 iPhone。详见 [PR #338](https://github.com/mykcs/the-community-lab/pull/338) 与其 Actions 记录。
+- Vercel 的 `the-community-lab` 项目仍链接 `mykcs/the-community-lab`，但仓库 `vercel.json` 设置 `git.deploymentEnabled=false`。当前 Vercel `READY` Production 部署仍是旧 SHA `0a06e6b8154cba367a0bcb1f418509fdcf7577ae`，没有随 `main` 的 `a07c5f8` 自动更新；Vercel 仅保留作回退快照。
+- 因后续选择 Pages 作为主站，[Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 已按 `not_planned` 关闭。不要把旧部署或历史 Preview 记录当作当前 Git 自动部署证据。
+- PR #11 已同步当前 `main`，PR 检查和本地桌面／440×956 浏览器模拟通过，但仍为 Draft。登录与历史保存保持关闭，等待专属域名及隐私／双账号隔离门槛完成。
 
 ## 2026-11-05 · GitHub Pages 自有域名构建路径已准备（尚未绑定）
 
