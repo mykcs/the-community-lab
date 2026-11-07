@@ -74,11 +74,26 @@ test('previous six-step backup prompts to re-confirm after source label correcti
   }
 });
 
-test('unaffected S1 four-choice and S2 bilingual wording hashes keep historical meaning', () => {
+test('S1 four-choice historic hashes require reconfirmation after adding group context; S2 hashes stay stable', () => {
   const four = pack.seasons[1].filter(q => q.options.length === 4);
   assert.ok(four.length > 0);
-  for (const question of [...four, ...pack.seasons[2]]) {
+  for (const question of four) {
+    // Before this change the Chinese S1 group label was on-screen but absent
+    // from the per-answer proof. Do not certify that old text was read.
+    const historicHash = oldFingerprint(question);
+    assert.notEqual(question.translationFingerprint, historicHash, question.id);
+    const oldReceipt = createPrivateProgressReceipt(
+      pack, 1, { [question.id]: question.options[0].value },
+      pack.seasons[1].indexOf(question), undefined, { [question.id]: historicHash },
+    );
+    const restored = restorePrivateProgressReceipt(pack, oldReceipt);
+    assert.deepEqual(restored.changedQuestionIds, [question.id]);
+    assert.equal(restored.answers[question.id], question.options[0].value);
+  }
+  for (const question of pack.seasons[2]) {
     assert.equal(question.translationFingerprint, oldFingerprint(question), question.id);
+  }
+  for (const question of [...four, ...pack.seasons[2]]) {
     for (const option of question.options) {
       assert.deepEqual(displayedOptionCopy(question, option), { koreanLabel: option.ko, zh: option.zh, hint: null });
     }
