@@ -32,6 +32,25 @@ test('standalone original-question page is published only as an unreviewed draft
   assert.doesNotMatch(standaloneHtml, /LOCAL_RESEARCH_CANDIDATE_NOT_FOR_PUBLICATION/);
 });
 
+test('standalone reviewer supports offline JSON handoff and comparison without upgrading review status', () => {
+  assert.match(standaloneHtml, /id=\"import-file\" type=\"file\"/);
+  assert.match(standaloneHtml, /id=\"compare-files\" type=\"file\"[^>]*multiple/);
+  assert.match(standaloneHtml, /本页不会自动发送译文修改或审校标记/);
+  const validation = standaloneHtml.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  const comparison = standaloneHtml.match(/function compareReviewExports\([^]*?\n\}/)?.[0];
+  assert.ok(validation && comparison, 'standalone page must validate and compare same-source exports');
+  const compare = new Function(validation + '\n' + comparison + '; return compareReviewExports;')();
+  const left = structuredClone(standaloneData), right = structuredClone(standaloneData);
+  left.questions[0].translation_zh_cn = '译文甲';
+  right.questions[0].translation_zh_cn = '译文乙';
+  const report = compare(left, right, standaloneData);
+  assert.equal(report.counts.different, 1);
+  assert.equal(report.rows[0].status, 'different');
+  assert.equal(standaloneData.questions[0].human_review_status, undefined);
+  assert.match(standaloneHtml, /不验证审校者身份、韩语能力或审校独立性/);
+  assert.doesNotMatch(standaloneHtml, /\bfetch\s*\(|\bXMLHttpRequest\b|\bWebSocket\b|\bsendBeacon\s*\(|\.innerHTML\s*=/);
+});
+
 test('published page is only an explicitly unreviewed draft', () => {
   assert.equal(data.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
   assert.equal(data.questions.length, 124);

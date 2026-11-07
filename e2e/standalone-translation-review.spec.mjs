@@ -5,6 +5,48 @@ import { expect, test } from '@playwright/test';
 const standaloneUrl = new URL('../docs/original-question-translation-review/index.html', import.meta.url).href;
 const questionId = 's1-politics-01';
 
+const { readFile } = await import('node:fs/promises');
+const standaloneHtml = await readFile(new URL('../docs/original-question-translation-review/index.html', import.meta.url), 'utf8');
+const standaloneData = JSON.parse(standaloneHtml.match(/<script id="embedded-data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+
+test('standalone reviewer imports a same-source draft and compares two exports locally', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', dialog => dialog.accept());
+  await page.goto(standaloneUrl);
+
+  const imported = structuredClone(standaloneData);
+  imported.questions[0].translation_zh_cn = '仅供浏览器验收的合成译文';
+  imported.questions[0].human_review_note = '合成备注，不含个人信息';
+  await page.locator('#import-file').setInputFiles({
+    name: 'synthetic-review.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(imported)),
+  });
+  await expect(page.getByLabel(`${questionId} 中文翻译`)).toHaveValue('仅供浏览器验收的合成译文');
+  await expect(page.locator('.statusline')).toContainText('自报状态，未独立核验');
+
+  const left = structuredClone(standaloneData);
+  const right = structuredClone(standaloneData);
+  left.questions[0].translation_zh_cn = '审校稿甲';
+  right.questions[0].translation_zh_cn = '审校稿乙';
+  await page.locator('#compare-files').setInputFiles([
+    { name: 'review-a.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(left)) },
+    { name: 'review-b.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(right)) },
+  ]);
+  await expect(page.getByRole('heading', { name: '两份审校文件的本机差异对照' })).toBeVisible();
+  await expect(page.locator('#comparison')).toContainText('译文不一致：1');
+  await expect(page.locator('#comparison')).toContainText('s1-politics-01 · 译文不同');
+  const [download] = await Promise.all([
+    page.waitForEvent('download'),
+    page.getByRole('button', { name: '下载去备注的差异 JSON' }).click(),
+  ]);
+  const summary = JSON.parse(await readFile(await download.path(), 'utf8'));
+  expect(summary.status).toBe('LOCAL_TWO_EXPORT_COMPARISON_UNVERIFIED');
+  expect(JSON.stringify(summary)).not.toContain('合成备注');
+  expect(JSON.stringify(summary)).not.toContain('审校稿甲');
+  expect(errors).toEqual([]);
+});
+
 test('rp12 comparison renders with the reviewed Korean and current Chinese draft', async ({ page }) => {
   await page.goto(standaloneUrl);
   await expect(page.getByText('규칙을 철저히 지키느라 일을 그르치는 사람보다 규칙을 조금 어기더라도 성과를 내는 사람이 유능한 인재다.', { exact: true })).toBeVisible();
