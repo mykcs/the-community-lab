@@ -30,6 +30,8 @@
 
 **2026-11-07 · 固定客户端答案映射再次只读核验**：运行 `node scripts/verify-client-option-bindings.mjs --live-readonly`，只 GET 公开客户端资源，返回的 SHA-256 仍为 `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`；S2 原始选项仍为 `O/X`，提交映射仍按源题 ID 发送，S1 选项仍来自各题允许值。输出继续标记 `scoringAlgorithmKnown=false`、`theseSubmissionFieldsAffectScore=UNKNOWN`。此次不提交答卷，不改变官方计分或嘉宾匹配资格。
 
+**2026-11-07 · 七条同向量结果的元数据字段形状复查（只读）**：对 `rp01–rp12=O` 的七条既有匿名合成结果再做 GET，仅比较 `displayName`、`referredBy`、`campaignSource`、`consentVersion`、`requestId`、`idempotencyKey`、`answers` 这些字段的存在／缺失模式，不读取或记录字段值。七条结果的字段形状相同，但原则／结果轴仍分成 `49/51` 一条与 `42/58` 六条。这个检查排除了“所选字段是否出现”这一层的结构差异，**不证明字段值、POST 请求体或服务器实际收到的答案相同**；原始 POST 仍未保存，冲突原因与评分算法仍为 `UNKNOWN`。本次仅重读已有匿名结果，没有提交新答卷。
+
 **2026-11-05 UTC · 两份冲突记录的公开 GET 字段复核（只读）**：重新读取 `rp01–rp12=O` 的两份匿名合成结果，均返回 HTTP 200，题库版本、题集短指纹、评分版本一致；公开 JSON 同时含 `createdAt`、`storedAt`、`consentVersion`，但不含服务器构建／部署标识或评分执行追踪字段。响应提供 `Date`、弱 `ETag` 与 `Cache-Control: no-cache`，没有 `Last-Modified`；这些字段不能识别计分代码版本或解释两份不同分数。当前公开客户端的 POST 还带 `X-Firebase-AppCheck` 与新 `Idempotency-Key`，但历史样本未保存这些请求上下文。两个结果的可见差异仍只在原则／结果轴（`49/51` 对 `42/58`）；不据此归因题目、请求上下文或部署变化。本次只读 GET，未提交答卷，也未复制显示文字或邀请代码。
 
 **2026-11-06 UTC · 同输入七条既有结果的版本信号复核（只读）**：对同一匿名合成答卷的七条既有结果逐条 GET，均为 HTTP 200；题库／计分版本及结果文字指纹仍与记录相符，`49/51` 与 `42/58` 的 1:6 冲突仍在。响应头名称包括 `Date`、`ETag`、`Server`、缓存节点及追踪字段；没有名称表明 build、release、version、revision、commit 或 deploy。未保存或比较每请求变化的追踪值，因它们不能直接代表计分代码版本。此次检查没有找到能把 06:52Z 后的分数变化对应到某次部署的公开信号，根因仍未知；不把时间先后当成部署因果，也未提交新答卷。
