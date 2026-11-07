@@ -105,12 +105,18 @@ emitHuman('官方结果文字额外核查：既有 ' + displayCoverage.observedR
 if (process.argv.includes('--verify-live-readbacks')) {
   try {
     const fresh = await verifyOfficialSyntheticScoreReadbacks(undefined, undefined, { verifyDisplayText: true });
-    liveReadbackStatus = fresh.allMatch ? 'MATCHED_RECORDED_READBACKS' : 'MISMATCHED_RECORDED_READBACKS';
+    const unavailableCount = fresh.checked.filter(row =>
+      ['REQUEST_FAILED', 'HTTP_ERROR', 'INVALID_RESPONSE'].includes(row.status)).length;
+    liveReadbackStatus = unavailableCount > 0 ? 'FAILED'
+      : fresh.allMatch ? 'MATCHED_RECORDED_READBACKS' : 'MISMATCHED_RECORDED_READBACKS';
     liveReadbackReport = fresh;
     for (const row of fresh.checked) {
-      emitHuman('只读官方结果 ' + row.publicResultId + '：' + (row.matchesRecordedReadback
+      const message = row.status === 'MATCHED'
         ? '数值、韩文标题/说明指纹及轴标签均吻合'
-        : '数值或公开显示文字发生差异，需人工复查'));
+        : row.status === 'MISMATCH'
+          ? '数值或公开显示文字发生差异，需人工复查'
+          : '只读请求不可用（' + row.status + ' / ' + row.errorCode + '）';
+      emitHuman('只读官方结果 ' + row.publicResultId + '：' + message);
     }
     if (!fresh.allMatch) process.exitCode = 1;
   } catch (error) {
