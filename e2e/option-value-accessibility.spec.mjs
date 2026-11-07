@@ -148,8 +148,28 @@ test('S2 radio options expose one keyboard tab stop, arrow keys select a source 
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(440);
 });
 
-test('S1 six-option source scale has one checked radio and retains all six numeric IDs under keyboard interaction', async ({ page }) => {
+test('S1 four-option keyboard navigation follows desktop columns and mobile source order', async ({ page }) => {
   await page.goto('/the-community-lab/questionnaire/?season=1');
+  const narrow = page.viewportSize().width <= 630;
+  const radio = page.getByRole('radiogroup').getByRole('radio');
+  await expect(radio).toHaveCount(4);
+  await radio.nth(0).focus();
+  for (const [key, index] of [
+    ['ArrowRight', narrow ? 1 : 2],
+    ['ArrowDown', narrow ? 2 : 3],
+    ['ArrowLeft', 1],
+    ['ArrowUp', 0],
+  ]) {
+    await page.keyboard.press(key);
+    await expect(radio.nth(index)).toBeFocused();
+    await expect(radio.nth(index)).toHaveAttribute('aria-checked', 'true');
+    await expect(radio.nth(index)).toHaveAttribute('tabindex', '0');
+  }
+});
+
+test('S1 six-option keyboard arrows match visible columns without remapping original source values', async ({ page }) => {
+  await page.goto('/the-community-lab/questionnaire/?season=1');
+  const narrow = page.viewportSize().width <= 630;
   await page.locator('.full-choice').first().click(); // Q1 is 4-option.
   await page.locator('#full-next').click();
   const radio = page.getByRole('radiogroup').getByRole('radio');
@@ -158,9 +178,20 @@ test('S1 six-option source scale has one checked radio and retains all six numer
     await expect(radio.nth(i).locator('.full-choice-mark')).toHaveText(String(i + 1));
   }
   await radio.nth(0).focus();
-  await page.keyboard.press('ArrowLeft'); // Wrap to position 6.
-  await expect(radio.nth(5)).toHaveAttribute('aria-checked', 'true');
+  for (const [key, index] of [
+    ['ArrowRight', narrow ? 1 : 3],
+    ['ArrowDown', narrow ? 2 : 4],
+    ['ArrowLeft', 1],
+    ['ArrowUp', 0],
+    ['ArrowLeft', narrow ? 5 : 3], // Wrap in the visible row/column.
+    ['End', 5],
+    ['Home', 0],
+  ]) {
+    await page.keyboard.press(key);
+    await expect(radio.nth(index)).toBeFocused();
+    await expect(radio.nth(index)).toHaveAttribute('aria-checked', 'true');
+    await expect(radio.nth(index)).toHaveAttribute('tabindex', '0');
+    await expect(radio.nth(index).locator('.full-choice-mark')).toHaveText(String(index + 1));
+  }
   await expect(page.locator('#full-next')).toBeEnabled();
-  await page.keyboard.press('Home');
-  await expect(radio.nth(0)).toHaveAttribute('aria-checked', 'true');
 });

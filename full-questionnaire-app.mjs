@@ -196,15 +196,31 @@ function render() {
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
     });
-    // WAI-ARIA radio pattern: arrow keys change the single selected value.
-    // Space/Enter remain the button's native keyboard click handlers.
+    // Arrow keys should follow the VISIBLE layout without changing source
+    // values or DOM order. S1's 4/6-point scales form two vertical columns
+    // on desktop (1-2[-3] left, 3-4 / 4-6 right), but one column on mobile.
+    // Moving right must not unexpectedly move down a row in a value scale.
+    // Home/End always target the first/last ORIGINAL source option.
     btn.addEventListener('keydown', event => {
       const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1
         : ['ArrowLeft', 'ArrowUp'].includes(event.key) ? -1 : 0;
       if (!direction && event.key !== 'Home' && event.key !== 'End') return;
       event.preventDefault();
-      const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? list.children.length - 1
-        : (index + direction + list.children.length) % list.children.length;
+      const count = list.children.length;
+      let nextIndex;
+      if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = count - 1;
+      else if ((count === 4 || count === 6) &&
+               !window.matchMedia('(max-width: 630px)').matches) {
+        const rows = count / 2;
+        const column = Math.floor(index / rows);
+        const row = index % rows;
+        nextIndex = ['ArrowLeft', 'ArrowRight'].includes(event.key)
+          ? (1 - column) * rows + row
+          : column * rows + (row + direction + rows) % rows;
+      } else {
+        nextIndex = (index + direction + count) % count;
+      }
       const target = list.children[nextIndex];
       target.click();
       target.focus();
