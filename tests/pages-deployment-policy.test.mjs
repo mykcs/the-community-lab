@@ -83,7 +83,8 @@ test('the homepage distinguishes source-question pilot from the translation revi
   assert.match(homepage, /124 题[、和]\s*550 个选项/);
   assert.match(homepage, /questionnaire\/\?season=2/);
   assert.match(homepage, /questionnaire\/\?season=1/);
-  assert.match(homepage, /非官方原题试填/);
+  assert.match(homepage, /非官方 AI 初译/);
+  assert.doesNotMatch(homepage, /source-pilot-heading|NEW \/ 124 QUESTIONS/);
   assert.match(homepage, /真人复核/);
   assert.match(homepage, /不提供官方分数或嘉宾匹配/);
 });

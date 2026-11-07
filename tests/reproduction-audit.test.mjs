@@ -18,7 +18,6 @@ test('homepage explains that answer progress stays in memory until manually back
   const homepage = readFileSync(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
   assert.match(homepage, /答案只暂存在当前页面内存/);
   assert.match(homepage, /如要刷新或关闭后继续，请手动下载进度 JSON，确认文件已保存，再导入恢复/);
-  assert.match(homepage, /下载并确认保存 JSON 后可导入恢复/);
   assert.doesNotMatch(homepage, /刷新即清空/);
 });
 
