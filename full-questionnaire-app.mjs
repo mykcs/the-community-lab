@@ -376,6 +376,8 @@ function downloadJson(record, filename) {
 
 function download() {
   if (!active?.receipt) return;
+  // Exporting the current private record supersedes a slower, older import.
+  cancelPendingImport();
   downloadJson({
     ...active.receipt,
     notice: '本机私人答题记录；不是官方分数或人物匹配。未经人工双语复核。请勿上传公开仓库。',
@@ -390,6 +392,8 @@ function download() {
 
 function saveProgress() {
   if (!active || Object.keys(active.answers).length === 0) return;
+  // The user chose to back up THIS in-memory state, not an in-flight file.
+  cancelPendingImport();
   const record = createPrivateProgressReceipt(pack, active.season, active.answers, active.index, active.answerVersions, active.answerFingerprints);
   downloadJson({
     ...record,
@@ -522,6 +526,8 @@ $('full-edit').addEventListener('click', () => {
 $('full-save').addEventListener('click', saveProgress);
 function confirmDownloadedBackup(kind) {
   if (!active || active.pendingBackupKind !== kind) return;
+  // A newer explicit confirmation must not be undone by a stale file read.
+  cancelPendingImport();
   // A confirmation belongs to this exact in-memory season and to the last
   // download request. Answer edits clear pendingBackupKind before this point.
   active.pendingBackupKind = null;
