@@ -17,6 +17,8 @@ test('verified S2 inputs expose two one-question contrasts and one repeat confli
     questionsObservedWithNoVerifiedValues: 0,
     comparedInputPairs: 6,
     singleQuestionContrastPairs: 2,
+    clientSingleQuestionPairsWithoutReadbackConflicts: 0,
+    clientSingleQuestionPairsBlockedByReadbackConflicts: 2,
     groupLocalContrastPairs: 1,
     groupLocalContrasts: [
       { sourceGroup: '원칙-결과', differingQuestions: 2, changedScoreAxisIds: ['원칙-결과'] },
@@ -82,6 +84,8 @@ test('synthetic one-question contrast is detected but does not establish algorit
   };
   const result = summarizeVerifiedOfficialScoreInputCoverage(samples);
   assert.equal(result.singleQuestionContrastPairs, 1);
+  assert.equal(result.clientSingleQuestionPairsWithoutReadbackConflicts, 0);
+  assert.equal(result.clientSingleQuestionPairsBlockedByReadbackConflicts, 1);
   assert.equal(result.groupLocalContrastPairs, 0,
     'score contrasts involving an input vector with conflicting repeated outputs are excluded');
   assert.equal(result.minPairwiseHammingDistance, 1);
@@ -91,6 +95,21 @@ test('synthetic one-question contrast is detected but does not establish algorit
   samples[3].output.scoringVersion = 'season-2-score@3';
   assert.throws(() => summarizeVerifiedOfficialScoreInputCoverage(samples),
     /金标准必须属于同一题库与计分版本/);
+});
+
+test('removing contradictory repeat readbacks leaves two clean client-vector pairs but no official parity claim', () => {
+  const conflictingRepeatIds = new Set([
+    'EvG6GUuDwVZomdTc', 'UhcZYwxcXKtGKCQA', 'Im8DirzXwGTAQygS',
+    'aMpgxXI50B7Eqrb-', '1bZs7gslVZmJHN0c', 'amhKSW8ZW7_5flNG',
+  ]);
+  const oneReadbackPerVector = OFFICIAL_SYNTHETIC_SCORE_OBSERVATIONS
+    .filter(row => !conflictingRepeatIds.has(row.publicResultId));
+  const result = summarizeVerifiedOfficialScoreInputCoverage(oneReadbackPerVector);
+  assert.equal(result.singleQuestionContrastPairs, 2);
+  assert.equal(result.clientSingleQuestionPairsWithoutReadbackConflicts, 2);
+  assert.equal(result.clientSingleQuestionPairsBlockedByReadbackConflicts, 0);
+  assert.equal(result.officialAlgorithmVerified, false,
+    'lack of a conflicting client readback is not proof of identical server request context');
 });
 
 test('no verified inputs means UNKNOWN rather than 37 questions with one value', () => {
@@ -105,6 +124,9 @@ test('no verified inputs means UNKNOWN rather than 37 questions with one value',
   assert.equal(result.questionsObservedWithOnlyOneValue, 0);
   assert.equal(result.questionsObservedWithNoVerifiedValues, 37);
   assert.equal(result.comparedInputPairs, 0);
+  assert.equal(result.singleQuestionContrastPairs, 0);
+  assert.equal(result.clientSingleQuestionPairsWithoutReadbackConflicts, 0);
+  assert.equal(result.clientSingleQuestionPairsBlockedByReadbackConflicts, 0);
   assert.equal(result.groupLocalContrastPairs, 0);
   assert.deepEqual(result.groupLocalContrasts, []);
   assert.equal(result.minPairwiseHammingDistance, null);
