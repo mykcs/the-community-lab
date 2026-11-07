@@ -32,8 +32,9 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /docs\/translation-review\/\*\*/);
   assert.match(workflow, /docs\/original-question-translation-review\/\*\*/);
   assert.match(workflow, /public\/\*\*/);
-  assert.match(workflow, /cp docs\/translation-review\/index\.html dist\/translation-review\/index\.html/);
-  assert.match(workflow, /cp docs\/original-question-translation-review\/index\.html dist\/original-question-translation-review\/index\.html/);
+  assert.doesNotMatch(workflow, /cp docs\/translation-review\/index\.html/);
+  assert.match(workflow, /scripts\/stage-review-pages\.mjs/);
+  assert.doesNotMatch(workflow, /cp docs\/original-question-translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5\.0\.1/);
   assert.match(workflow, /pages:\s*write/);
