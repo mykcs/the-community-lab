@@ -37,6 +37,7 @@ function findBuildScriptImports() {
 
 test('Pages redeploys on static build dependencies, not research-only changes', () => {
   assert.equal(publishPaths.has('scripts/**'), false);
+  assert.ok(publishPaths.has('scripts/stage-review-pages.mjs'), 'Pages must rebuild when review staging changes');
   assert.equal(publishPaths.has('tests/**'), false);
   assert.equal(publishPaths.has('e2e/**'), false);
   for (const file of findBuildScriptImports()) {
