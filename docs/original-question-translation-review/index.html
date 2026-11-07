@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-tGu8YnGB1z+hPGkv4tU4MK1KJ2QOp77kGsIbfLRc/4s=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-Mx/WKIq7tcoA/rI8ionMny/8TZYpzrINJ8+zk/oD+AY=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <title>The Community 原题韩中译文复核台</title>
 <style>
@@ -219,7 +219,17 @@ function validateReviewImport(incoming,baseline){
     delete option.zh_cn;
    }
   }
-  return JSON.stringify(copy);
+  // JSON object key insertion order is not source identity. A reviewer may
+  // reformat or reorder fields in an offline editor without changing values.
+  // Normalize object keys only; preserve all array order and exact values.
+  function canonical(value){
+   if(Array.isArray(value))return value.map(canonical);
+   if(value&&typeof value==='object')return Object.fromEntries(
+    Object.entries(value).sort(([a],[b])=>a<b?-1:a>b?1:0)
+     .map(([key,entry])=>[key,canonical(entry)]));
+   return value;
+  }
+  return JSON.stringify(canonical(copy));
  }
  if(immutableSnapshot(incoming,true)!==immutableSnapshot(baseline))throw new Error('韩文原文、来源指纹、许可记录或题库元数据已变化，拒绝覆盖');
  const imported={};
