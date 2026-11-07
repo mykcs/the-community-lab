@@ -149,6 +149,7 @@ test('percent-encoded navigation and hidden separators never qualify as public g
     const copy = structuredClone(source);
     const account = copy.people[0].accounts[1];
     account.platform = platform;
+    account.relationship = platform === 'YouTube' ? 'personal_channel' : 'personal_account';
     account.url = url;
     assert.equal(auditGuestSocialDirectory(copy, { today: '2026-10-29' }).valid, false, url);
   }
