@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { extractDraftPack, buildFullQuestionnaire } from '../lib/full-questionnaire.mjs';
 import { displayedOptionCopy } from '../lib/option-display.mjs';
+import { s1GroupDraftLabel } from '../lib/group-display.mjs';
 import { verifyKoreanSourceSnapshot, verifySourceMetadataSnapshot } from './verify-korean-source-snapshot.mjs';
 
 // SHA-256 of the Chinese wording actually shown to a respondent, including
@@ -10,6 +11,9 @@ import { verifyKoreanSourceSnapshot, verifySourceMetadataSnapshot } from './veri
 // group heading. This must use the same presentation helper as the browser.
 // Existing S2 receipts must be reconfirmed after this stricter fingerprint
 // because earlier hashes cannot establish the historical group heading.
+// S1 now binds its site-authored Chinese group heading too. Earlier S1
+// receipts lacked that visible context; preserve their values but require
+// deliberate reconfirmation rather than retroactively certifying the title.
 // Built into the static pack; no browser hashing or answer upload is needed.
 export function attachTranslationFingerprints(pack) {
   for (const q of [...pack.seasons[1], ...pack.seasons[2]]) {
@@ -21,7 +25,7 @@ export function attachTranslationFingerprints(pack) {
         return [o.value, display.zh, ...(display.hint ? [display.hint] : [])];
       }),
         ...(q.readerNote ? [q.readerNote] : []),
-        ...(q.season === 2 ? [q.group] : [])]))
+        ...(q.season === 2 ? [q.group] : [s1GroupDraftLabel(q.group)])]))
       .digest('hex');
   }
   return pack;
