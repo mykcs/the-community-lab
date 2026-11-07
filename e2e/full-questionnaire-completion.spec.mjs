@@ -134,6 +134,28 @@ test('rp11 renders the calibrated unreviewed Chinese wording beside its Korean s
     .toBeLessThanOrEqual(page.viewportSize().width);
 });
 
+test('rp09 renders the gender-neutral AI draft beside Korean without sending answers', async ({ page }) => {
+  const outbound = [];
+  page.on('request', request => {
+    if (request.method() !== 'GET') outbound.push(request.url());
+  });
+  await page.goto('/the-community-lab/questionnaire/?season=2');
+  const target = sourceIndex.questions.find(question => question.sourceQuestionId === 'rp09');
+  expect(target).toBeTruthy();
+  for (let position = 1; position < target.displayPositionDerivedFromClient; position += 1) {
+    await page.locator('.full-choice').first().click();
+    await page.locator('#full-next').click();
+  }
+  await expect(page.locator('#full-group')).toContainText('原题编号 rp09');
+  await expect(page.locator('#full-ko')).toContainText('사람이 있더라도');
+  await expect(page.locator('#full-zh'))
+    .toHaveText('即使有人被明确预测将犯下重罪，只要此人尚未犯罪，就不能预先拘押。');
+  await expect(page.locator('#full-zh')).not.toContainText('他');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(page.viewportSize().width);
+  expect(outbound).toEqual([]);
+});
+
 test('latest selected import wins when an older local JSON file finishes reading later', async ({ page }) => {
   // Synthetic private backups only; no official endpoint is contacted.
   const questions = loadFullQuestionnaire().seasons[2];
