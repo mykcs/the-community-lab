@@ -1,9 +1,10 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import { selectedDeployTarget } from './scripts/deploy-target.mjs';
 
-// Keep the existing Vercel production build usable during the Pages cutover.
-// GitHub project Pages is served below /the-community-lab/, not the domain root.
-const githubPages = process.env.COMMUNITY_DEPLOY_TARGET === 'github-pages';
+// Pages is the live site and therefore the default for local npm run build.
+// Only an explicit rollback build should use Vercel's root-relative paths.
+const githubPages = selectedDeployTarget() === 'github-pages';
 
 export default defineConfig({
   output: 'static',
