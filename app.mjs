@@ -159,9 +159,9 @@ function renderResult() {
     if (guest.season !== season.id) continue;
     const person = node('li', 'guest-social-person');
     const name = node('strong');
-    name.id = `demo-guest-name-${season.id}-${guestIndex}`;
     const koreanName = node('span', '', guest.stage_name_ko);
     koreanName.lang = 'ko';
+    koreanName.id = `demo-guest-name-${season.id}-${guestIndex}`;
     name.append(koreanName, node('span', '', ` · ${guest.accounts.some(account => account.relationship === 'co_hosted_channel') ? '节目共同频道' : '公开账号链接'}`));
     person.append(name);
     const links = node('div', 'guest-social-links');
@@ -173,13 +173,13 @@ function renderResult() {
       const link = node('a');
       link.append(platform);
       link.href = account.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
-      link.setAttribute('aria-labelledby', `${name.id} ${platform.id}`);
+      link.setAttribute('aria-labelledby', `${koreanName.id} ${platform.id}`);
       const sourceText = node('span', '', '来源 ↗');
       sourceText.id = `demo-guest-source-${season.id}-${guestIndex}-${accountIndex}`;
       const evidence = node('a', 'guest-social-source');
       evidence.append(sourceText);
       evidence.href = account.evidence_url; evidence.target = '_blank'; evidence.rel = 'noopener noreferrer';
-      evidence.setAttribute('aria-labelledby', `${name.id} ${platform.id} ${sourceText.id}`);
+      evidence.setAttribute('aria-labelledby', `${koreanName.id} ${platform.id} ${sourceText.id}`);
       links.append(link, evidence);
     }
     person.append(links, node('small', '', '核查：两名独立 Agent 的原始来源 · 2026-10-29 · 待真人复核'));
