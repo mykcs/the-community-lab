@@ -51,7 +51,6 @@ test('GitHub workflows use pinned Node 24 action releases and a fixed Ubuntu LTS
     assert.match(yaml, /node-version: ['"]?24['"]?/);
     assert.doesNotMatch(yaml, /ubuntu-latest|actions\/(?:checkout|setup-node)@v[0-9]+/);
   }
-  assert.match(verifyWorkflow, /uses: denoland\/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2\.0\.5/);
   assert.match(workflow, /uses: actions\/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5\.0\.0/);
 });
 

@@ -23,9 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
-      - name: Set up Deno for the optional Supabase Edge Function candidate
-        uses: denoland/setup-deno@22d081ff2d3a40755e97629de92e3bcbfa7cf2ed # v2.0.5
-        with:
-          deno-version: v2.5.6
+      - name: Verify pinned Deno from the official npm registry
+        run: npx --yes --registry=https://registry.npmjs.org deno@2.5.6 --version
       - name: Type-check the Supabase function without deploying
-        run: deno check --config supabase/functions/account-delete/deno.json supabase/functions/account-delete/index.ts
+        run: npx --yes --registry=https://registry.npmjs.org deno@2.5.6 check --config supabase/functions/account-delete/deno.json supabase/functions/account-delete/index.ts
