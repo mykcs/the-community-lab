@@ -744,6 +744,19 @@ test('S1 politics 12 preserves the Korean causative meaning in both unreviewed d
   assert.deepEqual(standaloneData.translation_review, data.translation_review);
 });
 
+test('S1 gender 18 does not narrow the broad Korean result term to business-only performance', () => {
+  const question = data.questions.find(q => q.id === 's1-gender-18');
+  assert.ok(question);
+  assert.equal(question.translation_zh_cn, '如果男性的平均工资高于女性，那是因为男性的工作表现更好。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /성과.*取得的结果/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+  assert.deepEqual(standaloneData.questions, data.questions);
+});
+
 
 test('export and import preserve the pre-edit note baseline across offline reviewer devices', () => {
   const source = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
