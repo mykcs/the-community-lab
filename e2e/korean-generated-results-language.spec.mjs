@@ -63,8 +63,9 @@ for (const viewport of [
       await expect(directory).toHaveCount(expectedGuests.length);
       for (const [index, guest] of expectedGuests.entries()) {
         const person = directory.nth(index);
-        await expect(person.locator('strong span[lang=ko]')).toHaveText(guest.stage_name_ko);
-        const nameId = await person.locator('strong').getAttribute('id');
+        const koreanName = person.locator('strong span[lang=ko]');
+        await expect(koreanName).toHaveText(guest.stage_name_ko);
+        const nameId = await koreanName.getAttribute('id');
         const links = person.locator('.guest-social-links a');
         await expect(links).toHaveCount(guest.accounts.length * 2);
         for (const link of await links.all()) {
