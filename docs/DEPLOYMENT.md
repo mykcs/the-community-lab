@@ -1,10 +1,17 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-11-08 · Pages 发布标记与当前 main 的对齐复核
+## 2026-11-08 · PR #349 首页季别入口已发布并验收
+
+- [PR #349](https://github.com/mykcs/the-community-lab/pull/349) 已合并到 `main`；合并提交与线上 Pages `/release-commit.txt` 均为 `25bb5d4651f5396d8c59104b8982ca9dfe8d65cf`。候选 head 为 `0ce495d77eb7f9a8225c1bca45f4bdec981b56cc`。
+- PR 精确 head 的 Verify [run #42453116752](https://github.com/mykcs/the-community-lab/actions/runs/42453116752) 与桌面／440×956 浏览器验收 [run #42453116763](https://github.com/mykcs/the-community-lab/actions/runs/42453116763) 成功。合并后 main Verify [run #42453465800](https://github.com/mykcs/the-community-lab/actions/runs/42453465800)、浏览器验收 [run #42453465745](https://github.com/mykcs/the-community-lab/actions/runs/42453465745) 与 Pages 发布 [run #42453465695](https://github.com/mykcs/the-community-lab/actions/runs/42453465695) 的结论均为成功。
+- 发布后在正式 Pages 检查首页、问卷和原题复核页均可访问；1440×900 与 440×956 CSS px 浏览器渲染中，“选择一季开始”链接跳至 `#experiments`，两季入口仍可见且可操作，无横向溢出。浏览器视口模拟不代表实体 iPhone 验收。
+- 此改动让首页首要入口先呈现两季选择，不改变题目或评分。独立韩中人工复核仍为 `0/124`，官方评分为 `UNKNOWN`，合格同季同版本嘉宾分数仍为 `0`。
+
+## 2026-11-08 · PR #349 前 Pages 发布标记与当时 main 的对齐复核
 
 - 线上 `/release-commit.txt` 返回 `4ebd7b06cdcafc54765fb4fa5a049eb364d9fa00`（HTTP 200）；该提交于 2026-11-07 23:07 UTC 合并，内容修复本机译审 JSON 导入对键顺序的依赖。首页与独立原题译审页均返回 HTTP 200。
-- 当前 GitHub `main` 为 `27cbe657637469bfd0ee070463450f709edacb7d`。GitHub 比较结果显示它比 Pages 发布提交前进 7 个提交、落后 0 个；差异只涉及研究文档、只读官方路径探针和探针测试。
-- 当前 Pages 工作流只在其公开静态构建输入变化时运行。上述 7 个提交没有改动 `src/**`、`public/**`、`data/**`、页面构建期暂存脚本或两个译审静态源目录，因此现有 Pages 发布标记仍对应最新可发布的网站内容；没有手动重部署。
+- 当时 GitHub `main` 为 `27cbe657637469bfd0ee070463450f709edacb7d`。GitHub 比较结果显示它比 Pages 发布提交前进 7 个提交、落后 0 个；差异只涉及研究文档、只读官方路径探针和探针测试。
+- 当时 Pages 工作流只在其公开静态构建输入变化时运行。上述 7 个提交没有改动 `src/**`、`public/**`、`data/**`、页面构建期暂存脚本或两个译审静态源目录，因此该时点的 Pages 发布标记与当时最新可发布的网站内容一致；未手动重部署。
 - 本次只核对发布身份、工作流路径和公开路由可用性；不替代页面渲染验收，也不改变版权、人工翻译、官方计分或嘉宾匹配状态。
 
 ## 2026-11-05 · PR #270 题号与已答进度辅助技术播报已发布
