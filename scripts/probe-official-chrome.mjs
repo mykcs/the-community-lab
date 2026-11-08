@@ -18,6 +18,18 @@ const CASES = [
 ];
 const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 440, height: 956 }];
 
+// The official site and browser automation may produce error messages with
+// page text, URLs, or local request context. Probe output may be copied into
+// public issue/CI evidence, so never forward error.message, stack or an
+// arbitrary error.name. Only these structural diagnostics are allowed.
+export function safeReadOnlyProbeFailure(error) {
+  const allowed = new Set(['TimeoutError', 'TargetClosedError', 'Error', 'TypeError', 'ReferenceError']);
+  return {
+    status: 'OBSERVATION_FAILED',
+    errorKind: allowed.has(error?.name) ? error.name : 'UNKNOWN_ERROR',
+  };
+}
+
 export function overlayGate({ assetMatches, questionVisible, optionCount, expectedOptions, sourceIdCount, rawValueCount, textMatchCount, exactSourceOptionMapping }) {
   if (!assetMatches) return 'BLOCKED_SOURCE_ASSET_DRIFT';
   if (!questionVisible || optionCount !== expectedOptions) return 'BLOCKED_QUESTION_DOM_DRIFT';
@@ -173,7 +185,7 @@ export async function probe() {
         } catch (error) {
           findings.push({
             season, viewport: `${viewport.width}x${viewport.height}`,
-            status: 'OBSERVATION_FAILED', errorName: error.name,
+            ...safeReadOnlyProbeFailure(error),
           });
           process.exitCode = 1;
         } finally {
@@ -441,7 +453,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
         if (!result.allQuestionsMatchedExactly || !result.sourceAssetPinned ||
             network.attemptedNonGetRequests !== 0 || network.resultRequestsObserved !== 0) process.exitCode = 1;
       } catch (error) {
-        findings.push({ season, viewport: `${viewport.width}x${viewport.height}`, status: 'OBSERVATION_FAILED', errorName: error.name, errorMessage: String(error.message).slice(0, 180) });
+        findings.push({ season, viewport: `${viewport.width}x${viewport.height}`, ...safeReadOnlyProbeFailure(error) });
         process.exitCode = 1;
       } finally {
         await context.close();
@@ -480,8 +492,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       backtrack: mode === '--live-path-backtrack-readonly',
       allOptions: mode === '--live-path-all-options-readonly',
     })
-      .catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
+      .catch(error => { console.error(safeReadOnlyProbeFailure(error).errorKind); process.exitCode = 1; });
   } else {
-    probe().catch(error => { console.error(error.name); process.exitCode = 1; });
+    probe().catch(error => { console.error(safeReadOnlyProbeFailure(error).errorKind); process.exitCode = 1; });
   }
 }
