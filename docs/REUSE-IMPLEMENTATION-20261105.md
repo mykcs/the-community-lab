@@ -79,6 +79,36 @@ values, copyright scope, bilingual human review and source DOM drift guards
 can all be independently established. The separate Astro site remains the
 mobile-friendly path.
 
+## Two-season return/change-path browser evidence (2026-11-08, SGT)
+
+The research-only `node scripts/probe-official-chrome.mjs --live-path-backtrack-readonly`
+mode adds a **bounded return-and-change test** to the existing pinned-client
+read-only question-order probe. On the live site's first question, it chooses
+the first visible option, observes the second question, returns using the
+official visible Back button, verifies the **same first source question and
+ordered Korean option labels**, chooses a *different* visible option, and
+verifies the **same second source question**. It then follows the existing
+first-option route and **never selects the final answer**. An unexpected
+question or option identity fails closed.
+
+- Pinned source asset: 331,501 bytes, SHA-256
+  `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`.
+- Real headless Chrome at **440×956**: S2 **37/37** and S1 **87/87**
+  exact question/label/order checks; both **2/2** first-question back/change
+  transitions restored the expected first and second source identities.
+- **Zero** non-GET/HEAD requests and **zero** result API calls; all traffic
+  after opening the public page was blocked, and no completed answer was sent.
+- These observations **do not establish** selected raw-value identity in live
+  DOM (the official buttons omit that attribute), answer persistence on all
+  pages, arbitrary branching, last-question submission or any official score.
+  The live overlay remains blocked by rights/review/source-option identity
+  gates; official parity remains `UNKNOWN`.
+
+The regression test `tests/probe-official-chrome.test.mjs` checks that a
+reordered or substituted first/second question **cannot** be declared a
+valid backtrack. This script is deliberately not run in CI or shipped as an
+installable overlay.
+
 ## Smallest next experiments and acceptance gates
 
 1. **Read-only official-site feasibility:** Under legitimate public access inspect existing client DOM and dynamic navigation; record observed source asset identity and real selectors. Do not submit new answers, defeat protection, run at scale or log answers. If no stable IDs exist, require a unique exact Korean text match before translation and do not invent IDs.
