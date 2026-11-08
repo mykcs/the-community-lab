@@ -25,6 +25,31 @@ function largeSyntheticReview() {
   return buffer;
 }
 
+test('primary reviewer imports reordered JSON object fields but rejects changed Korean source', async ({ page }) => {
+  const errors = [], alerts = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', dialog => { if (dialog.type() === 'alert') alerts.push(dialog.message()); dialog.accept(); });
+  await page.goto(reviewUrl);
+  const reverseKeys = value => Array.isArray(value) ? value.map(reverseKeys) :
+    value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reverseKeys(item)]))
+      : value;
+  const reordered = reverseKeys(structuredClone(original));
+  reordered.questions[0].translation_zh_cn = '合成重排字段导入测试';
+  const upload = (name, data) => page.locator('#import-file').setInputFiles({
+    name, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(data)),
+  });
+  await upload('reordered-keys.json', reordered);
+  await expect(page.getByLabel(`${original.questions[0].id} 中文翻译`)).toHaveValue('合成重排字段导入测试');
+  await expect(page.locator('.statusline')).toContainText('已从同一来源版本恢复');
+  const tampered = structuredClone(reordered);
+  tampered.questions[0].source_text_ko += 'X';
+  await upload('changed-Korean.json', tampered);
+  await expect.poll(() => alerts.some(message => message.includes('导入失败'))).toBe(true);
+  await expect(page.getByLabel(`${original.questions[0].id} 中文翻译`)).toHaveValue('合成重排字段导入测试');
+  expect(errors).toEqual([]);
+});
+
 test('valid multi-question reviewer export above 1 MiB can be restored and compared offline', async ({ page }) => {
   test.setTimeout(100_000);
   const buffer = largeSyntheticReview();
