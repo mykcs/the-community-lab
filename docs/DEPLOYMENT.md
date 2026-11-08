@@ -1,5 +1,12 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-08 · PR #359 对应的 GitHub Pages 发布快照
+
+- 最新 `main` 与线上 [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 均为 `3ed66d802201b65eb7952efe828b8258c3dbbc8d`；本次复核读回该标记为 HTTP 200。
+- PR #359 更新了 S2 `sa07` 的 AI 中文草稿，两份公开审核页均 HTTP 200。当前线上 `/translation-review/` 的 HTML SHA-256 为 `fc60a93d52379a0fe54a709e945acdff788bdfcbc3679490a5774bb8d1aacc5e`；`/original-question-translation-review/` 为 `1390098559e3cd80c504902de68d28aae8eba17dcb875f306c31b69dd1a9dd81`。
+- PR #359 精确 head `591e4af8ec6fd1fc0f965e3132389ce4c981b041` 的 Verify [run #42483103853](https://github.com/mykcs/the-community-lab/actions/runs/42483103853)、桌面／440×956 浏览器验收 [run #42483103852](https://github.com/mykcs/the-community-lab/actions/runs/42483103852) 和译审草稿验证 [run #42483103858](https://github.com/mykcs/the-community-lab/actions/runs/42483103858) 均成功。
+- 本次只修订中文草稿并保留 `AI_DRAFT_UNREVIEWED`；原始韩文与 O/X 选择值未改。独立韩中人工复核仍为 `0/124`，官方计分仍为 `UNKNOWN`，符合版本门槛的嘉宾向量仍为 `0`。
+
 ## 2026-11-08 · PR #355 对应的 GitHub Pages 发布快照
 
 - PR #355 发布时的 `main` 为 `7eafe68363295c4f61b834c0a6f4ac3c66f58608`；线上 [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 返回 HTTP 200，内容与当时的 `main` 完全一致。
@@ -7,7 +14,7 @@
 - 线上 `/translation-review/` 与 `/original-question-translation-review/` 均返回 HTTP 200；其 HTML SHA-256 分别为 `ea2e4879988627384f906a97365b96144d0e0e3323137a1f88365404f1669721` 和 `5814dea31025e28641c4c6bc620434cf7f56b3a67d407d3355a13c371af29186`，与 `main` 对应源文件一致。
 - PR #355 只修正 S1 `s1-class-10` AI 中文草稿多出的最高级，保留 `AI_DRAFT_UNREVIEWED`；独立韩中人工复核仍 `0/124`，官方计分仍为 `UNKNOWN`，合格同版本嘉宾向量仍为 `0`。发布成功不改变这些内容门槛。
 
-PR #356 于 2026-11-08 合并为 `16129217a9f5c973c8895fcb42c225023c00b574`，仅修改本部署文档；GitHub Pages 工作流的路径筛选不包含 `docs/DEPLOYMENT.md`。合并后读回的 `/release-commit.txt` 仍是 `7eafe683...`，所以线上主站继续提供该次已验收的静态内容版本，直到下一次符合路径条件的 Pages 发布。
+PR #356 于 2026-11-08 合并为 `16129217a9f5c973c8895fcb42c225023c00b574`，仅修改本部署文档；GitHub Pages 工作流的路径筛选不包含 `docs/DEPLOYMENT.md`。合并后读回的 `/release-commit.txt` 仍是 `7eafe683...`，所以线上主站继续提供该次已验收的静态内容版本，直到下一次符合路径条件的 Pages 发布。后续 PR #359 更新了静态译审源；本节顶部记录了新发布身份与线上读回。
 
 ## 2026-11-08 · PR #355 前的 main 发布快照（历史记录）
 
