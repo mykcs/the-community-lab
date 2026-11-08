@@ -73,6 +73,26 @@ test('standalone review JSON accepts object key reordering but still rejects sou
   assert.throws(() => restore(reorderedOptions, standaloneData), /韩文原文/);
 });
 
+test('primary reviewer accepts reordered JSON object fields without accepting altered Korean source', () => {
+  const validation = html.match(/function validateReviewImport\([^]*?\n\}/)?.[0];
+  assert.ok(validation);
+  const restore = new Function(validation + '; return validateReviewImport;')();
+  const reverseKeys = value => Array.isArray(value) ? value.map(reverseKeys) :
+    value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).reverse().map(([key, item]) => [key, reverseKeys(item)]))
+      : value;
+  const reordered = reverseKeys(structuredClone(data));
+  reordered.questions[0].translation_zh_cn = '合成测试译文';
+  const edits = restore(reordered, data);
+  assert.equal(edits[reordered.questions[0].id].translation, '合成测试译文');
+  const changedKorean = structuredClone(reordered);
+  changedKorean.questions[0].source_text_ko += 'X';
+  assert.throws(() => restore(changedKorean, data), /韩文原文/);
+  const swappedOptions = structuredClone(reordered);
+  swappedOptions.questions[0].options.reverse();
+  assert.throws(() => restore(swappedOptions, data), /韩文原文/);
+});
+
 test('published page is only an explicitly unreviewed draft', () => {
   assert.equal(data.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
   assert.equal(data.questions.length, 124);

@@ -1,18 +1,25 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-11-07 · 正式发布源仍为 GitHub Pages
+## 2026-11-08 · PR #349 首页季别入口已发布并验收
 
-- GitHub `main` 为 `a07c5f860eb82ebc7950b6e6c5618d1986b1201e`；公开的 [`release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 精确返回同一 SHA，首页、`/questionnaire/`、`/translation-review/` 和 `/original-question-translation-review/` 均 HTTP 200。
-- PR #338 的精确 Pages 工作流、桌面／440×956 CSS px 浏览器验收和发布均通过；该移动视口是浏览器模拟，不代表实体 iPhone。详见 [PR #338](https://github.com/mykcs/the-community-lab/pull/338) 与其 Actions 记录。
-- Vercel 的 `the-community-lab` 项目仍链接 `mykcs/the-community-lab`，但仓库 `vercel.json` 设置 `git.deploymentEnabled=false`。当前 Vercel `READY` Production 部署仍是旧 SHA `0a06e6b8154cba367a0bcb1f418509fdcf7577ae`，没有随 `main` 的 `a07c5f8` 自动更新；Vercel 仅保留作回退快照。
-- 因后续选择 Pages 作为主站，[Issue #3](https://github.com/mykcs/the-community-lab/issues/3) 已按 `not_planned` 关闭。不要把旧部署或历史 Preview 记录当作当前 Git 自动部署证据。
-- PR #11 已同步当前 `main`，PR 检查和本地桌面／440×956 浏览器模拟通过，但仍为 Draft。登录与历史保存保持关闭，等待专属域名及隐私／双账号隔离门槛完成。
+- [PR #349](https://github.com/mykcs/the-community-lab/pull/349) 已合并到 `main`；合并提交与线上 Pages `/release-commit.txt` 均为 `25bb5d4651f5396d8c59104b8982ca9dfe8d65cf`。候选 head 为 `0ce495d77eb7f9a8225c1bca45f4bdec981b56cc`。
+- PR 精确 head 的 Verify [run #42453116752](https://github.com/mykcs/the-community-lab/actions/runs/42453116752) 与桌面／440×956 浏览器验收 [run #42453116763](https://github.com/mykcs/the-community-lab/actions/runs/42453116763) 成功。合并后 main Verify [run #42453465800](https://github.com/mykcs/the-community-lab/actions/runs/42453465800)、浏览器验收 [run #42453465745](https://github.com/mykcs/the-community-lab/actions/runs/42453465745) 与 Pages 发布 [run #42453465695](https://github.com/mykcs/the-community-lab/actions/runs/42453465695) 的结论均为成功。
+- 发布后在正式 Pages 检查首页、问卷和原题复核页均可访问；1440×900 与 440×956 CSS px 浏览器渲染中，“选择一季开始”链接跳至 `#experiments`，两季入口仍可见且可操作，无横向溢出。浏览器视口模拟不代表实体 iPhone 验收。
+- 此改动让首页首要入口先呈现两季选择，不改变题目或评分。独立韩中人工复核仍为 `0/124`，官方评分为 `UNKNOWN`，合格同季同版本嘉宾分数仍为 `0`。
 
-## 2026-11-05 · GitHub Pages 自有域名构建路径已准备（尚未绑定）
+## 2026-11-08 · PR #349 前 Pages 发布标记与当时 main 的对齐复核
 
-- 新增 `COMMUNITY_PAGES_DOMAIN` 构建配置：未设置时沿用 `https://mykcs.github.io/the-community-lab/` 项目路径；设置为经确认的专属主机名时，Astro 使用该 origin 和 `/` 根路径。页面内的译审入口跟随当前 base path，发布门禁使用同一配置核对 Pages 部署 URL。
-- 将来绑定时，需把仓库 Actions variable `COMMUNITY_PAGES_DOMAIN` 与 GitHub Pages Settings 中的域名设为同一主机名；这个变量不是 secret。自定义 Actions 发布不会通过仓库内 `CNAME` 文件完成绑定，需先配置 Pages 自有域名，再按域名类型设置 DNS，之后核验 HTTPS 和精确 release SHA。[GitHub Pages 自有域名文档](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
-- 用户已选择“保留 Pages＋绑定自有域名”，但尚未提供具体主机名；本次只验证了 `quiz.example.test` 的本地 root-path 构建，不代表真实域名、DNS、HTTPS、自有域名生产发布或敏感历史登录已配置。默认 Pages 正式站和私有历史 fail-closed 门保持不变。
+- 线上 `/release-commit.txt` 返回 `4ebd7b06cdcafc54765fb4fa5a049eb364d9fa00`（HTTP 200）；该提交于 2026-11-07 23:07 UTC 合并，内容修复本机译审 JSON 导入对键顺序的依赖。首页与独立原题译审页均返回 HTTP 200。
+- 当时 GitHub `main` 为 `27cbe657637469bfd0ee070463450f709edacb7d`。GitHub 比较结果显示它比 Pages 发布提交前进 7 个提交、落后 0 个；差异只涉及研究文档、只读官方路径探针和探针测试。
+- 当时 Pages 工作流只在其公开静态构建输入变化时运行。上述 7 个提交没有改动 `src/**`、`public/**`、`data/**`、页面构建期暂存脚本或两个译审静态源目录，因此该时点的 Pages 发布标记与当时最新可发布的网站内容一致；未手动重部署。
+- 本次只核对发布身份、工作流路径和公开路由可用性；不替代页面渲染验收，也不改变版权、人工翻译、官方计分或嘉宾匹配状态。
+
+## 2026-11-08 · PR #11 登录与自有域名状态
+
+- PR #11 的私有答卷历史仍为 Draft 候选；网站登录与历史保存继续关闭。
+- Pages 构建支持 `COMMUNITY_PAGES_DOMAIN`：未设置时使用 `https://mykcs.github.io/the-community-lab/` 项目路径，设置专属主机名后使用根路径。绑定时需让仓库 Actions variable 与 Pages Settings 的主机名一致；自定义 Actions 发布不通过仓库内 `CNAME` 文件完成绑定。真实主机名尚未提供，DNS、HTTPS 与自有域名发布均未配置。
+- 用户选择美国西部、90 天保留和 GitHub 登录。Supabase Free 项目已部署在 US West (Oregon)，RLS 与每小时保留任务已配置；但尚未完成到期数据删除实测、GitHub Provider、网站 OAuth 环境变量、注销 Edge Function 与真实双账号隔离验收。GitHub OAuth App 已创建，Provider 需要 Client ID 与 Secret；不要把 Secret 提交到仓库。
+- 即使 Provider 配置完成，共享的 `mykcs.github.io` origin 也不会启用登录或历史保存。启用前仍需专属域名、明确同意、RLS 双账号隔离、删除读回与隐私验收。GitHub Pages 仍为正式发布源，Vercel Git 自动部署保持关闭。
 
 ## 2026-11-05 · 当前 GitHub Pages 正式发布读回
 
