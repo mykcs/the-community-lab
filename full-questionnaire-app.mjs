@@ -55,6 +55,23 @@ function make(tag, className = '', text = null) {
   return element;
 }
 
+// Chinese guidance quotes historical Korean placeholder tokens.
+// Preserve the visible text exactly and mark only the Korean tokens.
+function localizedOptionHint(tag, className, hint) {
+  const wrapper = make(tag, className);
+  for (const part of hint.split(/([25]점)/gu)) {
+    if (!part) continue;
+    if (/^[25]점$/u.test(part)) {
+      const ko = make('span', '', part);
+      ko.lang = 'ko';
+      wrapper.append(ko);
+    } else {
+      wrapper.append(document.createTextNode(part));
+    }
+  }
+  return wrapper;
+}
+
 function view(name) {
   for (const [key, panel] of Object.entries(panes)) panel.hidden = name !== key;
   window.scrollTo({ top: 0, behavior: 'instant' });
@@ -173,7 +190,7 @@ function render() {
       display.koreanLabel ?? '当前客户端此档无韩文文字标签');
     ko.lang = display.koreanLabel === null ? 'zh-CN' : 'ko';
     copy.append(ko, make('span', 'full-choice-zh', display.zh));
-    if (display.hint) copy.append(make('span', 'full-choice-hint', display.hint));
+    if (display.hint) copy.append(localizedOptionHint('span', 'full-choice-hint', display.hint));
     btn.append(mark, copy);
     btn.addEventListener('click', () => {
       cancelPendingImport();
@@ -351,7 +368,7 @@ function renderAnswerAudit(questions) {
     // explanation could make a historical choice look more certain than it is.
     if (q.readerNote) row.append(make('p', 'full-answer-audit-note', q.readerNote));
     row.append(chosen);
-    if (copy.hint) row.append(make('p', 'full-answer-audit-hint', copy.hint));
+    if (copy.hint) row.append(localizedOptionHint('p', 'full-answer-audit-hint', copy.hint));
     // A legacy backup may preserve the raw source answer but not the exact
     // Chinese text shown when it was chosen. Never present today's AI wording
     // as if it were verified historical answer provenance.
