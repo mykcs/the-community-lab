@@ -9,7 +9,7 @@ const paths = [
   'docs/translation-review/index.html',
   'docs/original-question-translation-review/index.html',
 ];
-const expectedZh = '贫困者之所以无法摆脱贫困，主要是因为他们自身意志力不足、努力不够。';
+const expectedZh = '贫困者之所以无法摆脱贫困，主要是因为他们自身的意志和努力都不够。';
 
 test('S2 sa04 preserves the Korean causal attribution without awkward Chinese wording', () => {
   const drafts = paths.map(path => extractDraftPack(readFileSync(path, 'utf8')));
@@ -18,8 +18,9 @@ test('S2 sa04 preserves the Korean causal attribution without awkward Chinese wo
     assert.ok(q);
     assert.match(q.source_text_ko, /본인의 의지와 노력이 부족/);
     assert.equal(q.translation_zh_cn, expectedZh);
-    assert.equal(q.translation_version, 'draft-0.1.1');
-    assert.match(q.translator_note, /因果判断/);
+    assert.equal(q.translation_version, 'draft-0.1.2');
+    assert.match(q.translator_note, /原因归于/);
+    assert.match(q.translator_note, /意志力/);
     assert.match(q.translator_note, /独立韩中人工复核/);
     assert.equal(q.review_status, 'draft');
     assert.equal(q.translation_status, 'AI_DRAFT_UNREVIEWED');

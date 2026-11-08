@@ -18,6 +18,8 @@ for (const route of ['translation-review', 'original-question-translation-review
     await expect(page.locator('#count')).toContainText('124');
     await page.getByLabel('筛选季别').selectOption('2');
     await expect(page.locator('#count')).toContainText('37 / 124');
+    await expect(page.getByLabel('sa04 中文翻译')).toHaveValue(
+      '贫困者之所以无法摆脱贫困，主要是因为他们自身的意志和努力都不够。');
     await page.getByLabel('筛选季别').selectOption('1');
     await expect(page.locator('#count')).toContainText('87 / 124');
     expect(scriptErrors).toEqual([]);
