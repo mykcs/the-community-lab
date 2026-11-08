@@ -165,17 +165,17 @@ const base = import.meta.env.BASE_URL;
                 <section class="guest-social-season" aria-labelledby={`guest-social-season-${seasonId}`}>
                   <h3 id={`guest-social-season-${seasonId}`}>第 {seasonId} 季</h3>
                   <ul class="guest-social-directory">
-                    {socialPeople.filter(person => person.season === seasonId).map(person => (
+                    {socialPeople.filter(person => person.season === seasonId).map((person, personIndex) => (
                       <li class="guest-social-person">
-                        <strong lang="ko">{person.stage_name_ko}</strong>
+                        <strong id={`guest-social-name-${seasonId}-${personIndex}`} lang="ko">{person.stage_name_ko}</strong>
                         <div class="guest-social-links">
-                          {person.accounts.map(account => (
+                          {person.accounts.map((account, accountIndex) => (
                             <span class="guest-social-account">
-                              <a href={account.url} target="_blank" rel="noopener noreferrer" aria-label={`${person.stage_name_ko} 的公开 ${account.platform}${account.relationship === 'co_hosted_channel' ? '共同频道' : '主页'}链接`}>
-                                {account.platform}{account.relationship === 'co_hosted_channel' ? '（共同频道）' : ''} <span aria-hidden="true">↗</span>
+                              <a href={account.url} target="_blank" rel="noopener noreferrer" aria-labelledby={`guest-social-name-${seasonId}-${personIndex} guest-social-platform-${seasonId}-${personIndex}-${accountIndex}`}>
+                                <span id={`guest-social-platform-${seasonId}-${personIndex}-${accountIndex}`}>{account.platform}{account.relationship === 'co_hosted_channel' ? '（共同频道）' : ''}</span> <span aria-hidden="true">↗</span>
                               </a>
-                              <a class="guest-social-source" href={account.evidence_url} target="_blank" rel="noopener noreferrer" aria-label={`${person.stage_name_ko} 的 ${account.platform} 链接核查来源`}>
-                                核查来源
+                              <a class="guest-social-source" href={account.evidence_url} target="_blank" rel="noopener noreferrer" aria-labelledby={`guest-social-name-${seasonId}-${personIndex} guest-social-platform-${seasonId}-${personIndex}-${accountIndex} guest-social-source-${seasonId}-${personIndex}-${accountIndex}`}>
+                                <span id={`guest-social-source-${seasonId}-${personIndex}-${accountIndex}`}>核查来源</span>
                               </a>
                             </span>
                           ))}
@@ -201,7 +201,7 @@ const base = import.meta.env.BASE_URL;
         <section id="quiz-view" class="view quiz-view" hidden aria-labelledby="quiz-heading">
           <div class="quiz-header"><button id="quiz-exit" class="back-button" type="button"><span aria-hidden="true">←</span> 返回入口 / 暂停</button><div class="quiz-top-marker" id="quiz-season-label">SEASON 02</div></div>
           <div class="quiz-progress-info"><span id="quiz-count">第 01 / 06 题</span><span id="quiz-percent" aria-live="polite">已答 0 / 6 题</span></div><progress id="quiz-progress" class="progress-track" value="0" max="6" aria-label="已答题目进度"></progress>
-          <div class="quiz-layout"><div class="quiz-aside"><span class="aside-index">VALUES STUDY</span><strong id="quiz-axis-name">原则与结果</strong><p>每一个回答都只是你在这个情境下的选择，没有标准答案。</p><span class="aside-mark" aria-hidden="true">Q<span>.</span></span></div><div class="question-panel"><span class="question-label" id="quiz-heading">한국어 · 자체 제작 예시 / 韩文原创示例</span><h1 class="question-korean" id="question-ko" lang="ko" tabindex="-1"></h1><div class="translation-divider"><span>中文翻译 · 待独立双语复核</span><span>↘</span></div><p class="question-chinese" id="question-zh"></p><p class="answer-instruction" id="answer-instruction"></p><div id="answer-options" class="answer-options" role="group" aria-label="请选择答案"></div><div class="quiz-bottom"><button id="quiz-back" class="button button-outline" type="button">← 上一题</button><button id="quiz-next" class="button button-primary" type="button" disabled>确认，继续 <span aria-hidden="true">→</span></button></div><div class="quiz-disclaimer">本站原创演示题，并非节目官方原题。两季进度分别暂存在当前页面，返回入口可继续；刷新或关闭页面会清空，不会上传。</div></div></div>
+          <div class="quiz-layout"><div class="quiz-aside"><span class="aside-index">VALUES STUDY</span><strong id="quiz-axis-name">原则与结果</strong><p>每一个回答都只是你在这个情境下的选择，没有标准答案。</p><span class="aside-mark" aria-hidden="true">Q<span>.</span></span></div><div class="question-panel"><span class="question-label" id="quiz-heading"><span lang="ko">한국어 · 자체 제작 예시</span> / 韩文原创示例</span><h1 class="question-korean" id="question-ko" lang="ko" tabindex="-1"></h1><div class="translation-divider"><span>中文翻译 · 待独立双语复核</span><span>↘</span></div><p class="question-chinese" id="question-zh"></p><p class="answer-instruction" id="answer-instruction"></p><div id="answer-options" class="answer-options" role="group" aria-label="请选择答案"></div><div class="quiz-bottom"><button id="quiz-back" class="button button-outline" type="button">← 上一题</button><button id="quiz-next" class="button button-primary" type="button" disabled>确认，继续 <span aria-hidden="true">→</span></button></div><div class="quiz-disclaimer">本站原创演示题，并非节目官方原题。两季进度分别暂存在当前页面，返回入口可继续；刷新或关闭页面会清空，不会上传。</div></div></div>
         </section>
 
         <section id="result-view" class="view result-view" hidden aria-labelledby="result-title"><div id="result-content"></div></section>
