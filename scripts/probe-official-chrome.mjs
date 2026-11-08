@@ -209,12 +209,26 @@ export function auditReadOnlyQuestionOrder(observedIds, expectedIds) {
   };
 }
 
-/** Guard the two-step, local-only back-and-rechoose experiment. No score claim. */
-export function auditReadOnlyBacktrack({ firstId, revisitedFirstId, nextId, revisitedNextId } = {}, expectedIds) {
-  return Array.isArray(expectedIds) && expectedIds.length > 1 &&
-    typeof firstId === 'string' && typeof nextId === 'string' &&
-    firstId !== nextId && firstId === expectedIds[0] && nextId === expectedIds[1] &&
-    revisitedFirstId === firstId && revisitedNextId === nextId;
+/** Sample the first, middle, and penultimate transition without reaching submit. */
+export function readOnlyBacktrackPositions(questionCount) {
+  if (!Number.isInteger(questionCount) || questionCount < 3) {
+    throw new Error('invalid read-only backtrack question count');
+  }
+  return [...new Set([0, Math.floor((questionCount - 1) / 2), questionCount - 2])];
+}
+
+/** Guard one local-only back-and-rechoose transition. No score claim. */
+export function auditReadOnlyBacktrack({
+  questionIndex, currentId, revisitedCurrentId, nextId, revisitedNextId,
+} = {}, expectedIds) {
+  if (!Array.isArray(expectedIds) || !Number.isInteger(questionIndex) ||
+      questionIndex < 0 || questionIndex >= expectedIds.length - 1) return false;
+  const expectedCurrent = expectedIds[questionIndex];
+  const expectedNext = expectedIds[questionIndex + 1];
+  return typeof expectedCurrent === 'string' && typeof expectedNext === 'string' &&
+    expectedCurrent !== expectedNext && currentId === expectedCurrent &&
+    revisitedCurrentId === expectedCurrent && nextId === expectedNext &&
+    revisitedNextId === expectedNext;
 }
 
 export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
@@ -270,7 +284,8 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
       const page = await context.newPage();
       const questionIds = [];
       const mismatchCount = { question: 0, ambiguous: 0 };
-      let backtrackValidated = false;
+      const backtrackPositions = backtrack ? readOnlyBacktrackPositions(expected.length) : [];
+      const backtrackChecks = [];
       try {
         const response = await page.goto(`${ORIGIN}/season/${season}/test`, {
           waitUntil: 'domcontentloaded', timeout: 20000,
@@ -311,33 +326,33 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           await page.waitForFunction(previousHeading =>
             (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
           dom.headingText, { timeout: 5000 });
-          if (backtrack && index === 0) {
-            // Exercise a real first-question back/edit path without completing a
-            // survey. Fail closed on the pinned source identity and options.
+          if (backtrackPositions.includes(index)) {
+            // Exercise first, middle, and penultimate return/edit paths without
+            // completing a survey. Fail closed on pinned source identities.
             const readVisibleQuestion = () => page.evaluate(() => ({
               headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
               optionLabels: [...document.querySelectorAll('.question button')]
                 .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0)
                 .map(button => button.querySelector('span')?.textContent ?? ''),
             }));
-            const secondBefore = await readVisibleQuestion();
-            const secondMapping = exactVisibleOptionLabelMapping(secondBefore, expected);
-            if (secondMapping?.sourceId !== expected[1]?.id ||
+            const nextBefore = await readVisibleQuestion();
+            const nextMapping = exactVisibleOptionLabelMapping(nextBefore, expected);
+            if (nextMapping?.sourceId !== expected[index + 1]?.id ||
                 await page.locator('.question button.back:visible').count() !== 1) {
-              throw new Error('BACKTRACK_SECOND_QUESTION_DRIFT');
+              throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
             }
             await page.locator('.question button.back:visible').click();
             await page.waitForFunction(heading =>
               document.querySelector('.question h1')?.textContent?.trim() === heading,
             dom.headingText, { timeout: 5000 });
-            const firstAgain = await readVisibleQuestion();
-            const restored = exactVisibleOptionLabelMapping(firstAgain, expected);
-            if (restored?.sourceId !== mapping.sourceId || firstAgain.optionLabels.length < 2) {
-              throw new Error('BACKTRACK_FIRST_QUESTION_DRIFT');
+            const revisitedCurrent = await readVisibleQuestion();
+            const restored = exactVisibleOptionLabelMapping(revisitedCurrent, expected);
+            if (restored?.sourceId !== mapping.sourceId || revisitedCurrent.optionLabels.length < 2) {
+              throw new Error('BACKTRACK_CURRENT_QUESTION_DRIFT');
             }
             // Select a different visible button; never infer any server raw
             // values from its displayed index. Outgoing requests stay blocked.
-            const oppositeIndex = choiceIndex === 0 ? firstAgain.optionLabels.length - 1 : 0;
+            const oppositeIndex = choiceIndex === 0 ? revisitedCurrent.optionLabels.length - 1 : 0;
             await page.evaluate(buttonIndex => {
               const choices = [...document.querySelectorAll('.question button')]
                 .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0);
@@ -346,17 +361,22 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
             }, oppositeIndex);
             await page.waitForFunction(heading =>
               (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== heading,
-            firstAgain.headingText, { timeout: 5000 });
-            const secondAfter = await readVisibleQuestion();
-            const reentered = exactVisibleOptionLabelMapping(secondAfter, expected);
-            backtrackValidated = auditReadOnlyBacktrack({
-              firstId: mapping.sourceId, revisitedFirstId: restored.sourceId,
-              nextId: secondMapping.sourceId, revisitedNextId: reentered?.sourceId,
+            revisitedCurrent.headingText, { timeout: 5000 });
+            const revisitedNext = await readVisibleQuestion();
+            const reentered = exactVisibleOptionLabelMapping(revisitedNext, expected);
+            const validated = auditReadOnlyBacktrack({
+              questionIndex: index, currentId: mapping.sourceId,
+              revisitedCurrentId: restored.sourceId,
+              nextId: nextMapping?.sourceId, revisitedNextId: reentered?.sourceId,
             }, expected.map(q => q.id));
-            if (!backtrackValidated) throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
+            backtrackChecks.push({ questionIndex: index, validated });
+            if (!validated) throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
           }
         }
         const expectedIds = expected.map(question => question.id);
+        const backtrackValidated = !backtrack ||
+          backtrackChecks.length === backtrackPositions.length &&
+          backtrackChecks.every(check => check.validated);
         const { completeUniqueQuestionSet, orderedPathMatchesPinnedClient } =
           auditReadOnlyQuestionOrder(questionIds, expectedIds);
         const orderSha256 = createHash('sha256').update(questionIds.join('\n')).digest('hex');
@@ -367,7 +387,8 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
             mismatchCount.question === 0 && mismatchCount.ambiguous === 0 && (!backtrack || backtrackValidated),
           completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
-          choiceStrategy, backtrackAttempted: backtrack, backtrackValidated,
+          choiceStrategy, backtrackAttempted: backtrack,
+          backtrackPositions, backtrackChecks, backtrackValidated,
           orderedSourceIdsSha256: orderSha256,
           mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
           attemptedNonGetRequests: network.attemptedNonGetRequests,
@@ -386,8 +407,13 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
     }
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
-      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; last answer not selected',
+      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; first, middle and penultimate answers may be changed; last answer not selected',
       choiceStrategy, backtrackAttempted: backtrack,
+      backtrackPositionsBySeason: backtrack
+        ? Object.fromEntries(Object.entries(pack.seasons).map(([season, questions]) => [
+          season, readOnlyBacktrackPositions(questions.length),
+        ]))
+        : {},
       findings,
     }, null, 2));
   } finally {
