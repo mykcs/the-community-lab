@@ -37,9 +37,11 @@ test('the public front door puts current 37-question source pilot before the unr
   assert.match(readme, /同原题、同选项、同答案、同官网结果/);
   assert.match(readme, /官方计分公式仍未知/);
   assert.match(home, /我们的目标不是另写一套测试/);
-  const sourceAction = home.indexOf('试填第二季 37 题 · 非官方 AI 初译');
-  const demoAction = home.indexOf('另看 6 道本站原创演示');
-  assert.ok(sourceAction >= 0 && demoAction > sourceAction, '原题试填必须排在原创演示主按钮前');
+  assert.match(home, /<a href="#experiments" class="button button-primary">选择一季开始/);
+  const seasonChoice = home.indexOf('id="experiments"');
+  assert.ok(seasonChoice > home.indexOf('选择一季开始'), '首屏主按钮应先引导用户选择季别');
+  assert.ok(home.indexOf('questionnaire\\/?season=2') > seasonChoice);
+  assert.ok(home.indexOf('questionnaire\\/?season=1') > seasonChoice);
   assert.match(home, /真人韩中复核目前为 0\/124/);
   assert.match(home, /不能获得官方分数/);
   assert.match(read('src/pages/questionnaire/index.astro'), /这里不显示官方分数或嘉宾匹配/);
