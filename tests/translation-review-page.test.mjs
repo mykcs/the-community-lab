@@ -786,3 +786,59 @@ test('export and import preserve the pre-edit note baseline across offline revie
   assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
   assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
 });
+
+test('S1 gender 01 names menstrual leave clearly and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 's1-gender-01');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '여성들이 보건휴가(생리휴가)를 주말에 붙여 쓰는 것은 정당한 권리행사이므로 비난할 수 없다.');
+  assert.equal(question.translation_zh_cn, '女性把经期假（生理假）连着周末一起休，是正当行使权利，不应受到指责。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /劳动基准法/);
+  assert.match(question.translator_note, /law\.go\.kr/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+  assert.deepEqual(standaloneData.questions, data.questions);
+});
+test('S2 sa12 preserves the limiting force of 만으로 and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 'sa12');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '모두에게 동일한 시험 기회를 주는 것만으로 공정한 경쟁 조건은 충분히 갖춰진 것이다.');
+  assert.equal(question.translation_zh_cn, '仅仅给每个人同等的考试机会，公平竞争的条件就已经充分具备了。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /국립국어원|韩国国立国语院/);
+  assert.match(question.translator_note, /onlineQna/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});
+
+test('S2 ms02 preserves salary as a purpose condition and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 'ms02');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '더 높은 연봉을 위해서라면 가족·친구와의 시간을 포기할 수 있다.');
+  assert.equal(question.translation_zh_cn, '如果是为了更高的年薪，我可以放弃与家人和朋友相处的时间。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /연봉/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});
+
+test('S1 gender 08 retains annual-salary scope and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 's1-gender-08');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '남자와 여자가 같은 직업에 같은 연봉을 받고 있다면 실은 여자가 더 유능할 것이다.');
+  assert.equal(question.translation_zh_cn, '如果男性和女性从事同一职业、领取相同年薪，实际上女性会更有能力。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /연봉/);
+  assert.match(question.translator_note, /ParaWordNo=67549/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});

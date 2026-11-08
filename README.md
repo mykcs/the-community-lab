@@ -96,6 +96,8 @@ npm run check
 npm run build
 ```
 
+默认 `npm run build` 生成与正式 **GitHub Pages** 同路径（`/the-community-lab/`）的静态产物，包含两份公开 AI 译审草稿，可直接本地预览。只有明确检查旧 Vercel 回退构建时，才使用 `COMMUNITY_DEPLOY_TARGET=vercel npm run build`（不触发线上部署）。
+
 题库审计会分别报出第一季 **87 道原站可观察题 vs 8 道演示题**、第二季 **37 vs 6**，并明确「原版等价尚未验证」。这些数字不能直接被当作复刻完成百分比。
 
 项目已设置每小时推进任务，要求在 WISH、版权、隐私和权限边界内主动修 Bug、验证、更新进度，并用新加坡时间汇报；可复用流程计划沉淀为 [Hourly Project Steward](https://github.com/mykcs/myk-skills/tree/main/hourly-project-steward)。

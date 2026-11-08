@@ -1,8 +1,9 @@
 import { copyFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { selectedDeployTarget } from './deploy-target.mjs';
 
-// Match the actual GitHub Pages artifact in BOTH local preview and Actions.
+// Match the same Pages artifact in normal local builds, preview and Actions.
 // These are the already-public, explicitly unreviewed source-draft pages;
 // copying them here does not upgrade translation, rights or scoring status.
 export const REVIEW_ROUTES = [
@@ -21,7 +22,7 @@ export function stageReviewPages(repositoryRoot = process.cwd()) {
 
 // Vercel is only an unchanged rollback snapshot; Pages owns these routes.
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url) &&
-    process.env.COMMUNITY_DEPLOY_TARGET === 'github-pages') {
+    selectedDeployTarget() === 'github-pages') {
   stageReviewPages();
   console.log('Staged two source-draft reviewer routes for GitHub Pages.');
 }

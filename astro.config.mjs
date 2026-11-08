@@ -1,10 +1,11 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
+import { selectedDeployTarget } from './scripts/deploy-target.mjs';
 import { getPagesDeploymentConfig } from './lib/pages-deployment-config.mjs';
 
-// Keep the Vercel rollback build and existing GitHub project URL stable. When a
-// verified custom Pages hostname is configured, the same site builds at `/`.
-const githubPages = process.env.COMMUNITY_DEPLOY_TARGET === 'github-pages';
+// Pages is the live site and therefore the default for local npm run build.
+// Only an explicit rollback build uses Vercel's root-relative paths.
+const githubPages = selectedDeployTarget() === 'github-pages';
 const pages = githubPages ? getPagesDeploymentConfig(process.env) : null;
 
 export default defineConfig({

@@ -19,6 +19,7 @@ on:
       # Research-only probes and tests still run in PR/main verification CI,
       # but do not change the public static artifact.
       - 'scripts/stage-review-pages.mjs'
+      - 'scripts/deploy-target.mjs'
       - 'scripts/load-full-questionnaire.mjs'
       - 'scripts/verify-korean-source-snapshot.mjs'
       - 'scripts/verify-client-display-order.mjs'

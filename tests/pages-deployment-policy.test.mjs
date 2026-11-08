@@ -34,6 +34,7 @@ test('Pages builds static site from main after all project checks', () => {
   assert.match(workflow, /public\/\*\*/);
   assert.doesNotMatch(workflow, /cp docs\/translation-review\/index\.html/);
   assert.match(workflow, /scripts\/stage-review-pages\.mjs/);
+  assert.match(workflow, /scripts\/deploy-target\.mjs/);
   assert.doesNotMatch(workflow, /cp docs\/original-question-translation-review\/index\.html/);
   assert.match(workflow, /path:\s*\.\/dist/);
   assert.match(workflow, /uses: actions\/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5\.0\.1/);
@@ -107,10 +108,13 @@ test('the homepage value-axis figure is illustrative, Chinese-readable, and not 
 
 test('Astro preserves Vercel rollback and selects project-path or custom-root Pages config', () => {
   assert.match(astro, /output:\s*'static'/);
-  assert.match(astro, /process\.env\.COMMUNITY_DEPLOY_TARGET === 'github-pages'/);
+  assert.match(astro, /selectedDeployTarget\(\) === 'github-pages'/);
+  assert.match(astro, /scripts\/deploy-target\.mjs/);
   assert.match(astro, /getPagesDeploymentConfig\(process\.env\)/);
   assert.match(astro, /https:\/\/the-community-lab\.vercel\.app/);
   const pagesConfig = readFileSync(new URL('../lib/pages-deployment-config.mjs', import.meta.url), 'utf8');
+  assert.match(pagesConfig, /PROJECT_PAGES_SITE\s*=\s*'https:\/\/mykcs\.github\.io'/);
+  assert.match(pagesConfig, /PROJECT_PAGES_BASE\s*=\s*'\/the-community-lab\/'/);
   assert.match(pagesConfig, /\/the-community-lab\//);
   assert.match(pagesConfig, /COMMUNITY_PAGES_DOMAIN/);
   assert.match(pagesConfig, /endsWith\('\.github\.io'\)/);
