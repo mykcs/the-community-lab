@@ -1,6 +1,13 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-11-08 18:06 UTC · 当前 GitHub Pages 正式发布快照
+## 2026-11-08 18:18 UTC · 当前 GitHub Pages 正式发布快照
+
+- GitHub `main` 与 Pages [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 均为 `72f53085df6510b238c36d78f3fcf3c72b1e768f`。main ref 与发布标记分别通过 GitHub API 和正式站 HTTP GET 读回；该版本由 PR #367 合并产生。
+- 在此发布版本上，用隔离的 440×956 Playwright 上下文走完 S1 87/87 和 S2 37/37，并进入本站本机完成页；两季均 HTTP 200、无横向溢出、页面错误 0、非 GET/HEAD 请求 0。未下载答案、未向原站提交；记录见 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1#issuecomment-6725249068)。
+- 当前正式站只负责公开 Pages；PR #11 仍是 Draft，登录与云端历史保持关闭。Vercel 保留为手动回退，不是正式发布源。
+- 这是 `2026-11-08 18:18 UTC` 的状态快照。部署工作流不包含 `docs/DEPLOYMENT.md`，因此本文件的后续文档提交不会改变 Pages 内容发布标记。
+
+## 2026-11-08 18:06 UTC · GitHub Pages 发布与答题验收快照（历史）
 
 - GitHub `main` 为 `e3ebe5ed8fd6b3e3db993f828a59219ce4ecaad1`；Pages 的 [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 现场返回相同 SHA。main ref 来自 GitHub API 读回，发布标记来自正式站 HTTP GET。
 - 正式首页与两季试填页均正常响应。隔离 Playwright 视口中完成 S1 87/87 与 S2 37/37，进入本站本机完成页；440×956 下无横向溢出、页面错误 0、非 GET/HEAD 请求 0。答卷未上传、未下载；验收细节见 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1#issuecomment-6725120881)。
