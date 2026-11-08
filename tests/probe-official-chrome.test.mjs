@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
-  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyBacktrackPositions,
-  auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
+  auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -134,8 +134,22 @@ test('readonly path can choose last visible source option without guessing value
   assert.equal(readOnlyPathChoiceIndex(2, 'first'), 0);
   assert.equal(readOnlyPathChoiceIndex(2, 'last'), 1);
   assert.equal(readOnlyPathChoiceIndex(6, 'last'), 5);
+  assert.deepEqual(readOnlyPathChoiceIndices(6, 'all'), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(readOnlyPathChoiceIndices(2, 'all'), [0, 1]);
   assert.throws(() => readOnlyPathChoiceIndex(0, 'last'), /invalid read-only option strategy/);
   assert.throws(() => readOnlyPathChoiceIndex(2, 'random'), /invalid read-only option strategy/);
+  assert.throws(() => readOnlyPathChoiceIndices(0, 'all'), /invalid read-only option strategy/);
+  assert.throws(() => readOnlyPathChoiceIndices(2, 'random'), /invalid read-only option strategy/);
+});
+
+test('read-only all-option coverage requires every visible option index once in order', () => {
+  assert.equal(auditReadOnlyOptionCoverage([0, 1, 2, 3, 4, 5], 6), true);
+  assert.equal(auditReadOnlyOptionCoverage([0, 1], 2), true);
+  assert.equal(auditReadOnlyOptionCoverage([0, 2], 2), false);
+  assert.equal(auditReadOnlyOptionCoverage([0, 1, 1], 3), false);
+  assert.equal(auditReadOnlyOptionCoverage([1, 0], 2), false);
+  assert.equal(auditReadOnlyOptionCoverage([0], 0), false);
+  assert.equal(auditReadOnlyOptionCoverage(null, 2), false);
 });
 
 test('read-only path preserves intentionally blank source labels exactly', () => {
