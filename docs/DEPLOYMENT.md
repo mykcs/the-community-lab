@@ -1,5 +1,12 @@
 # 部署与持续集成 · 2026-10-29 起
 
+## 2026-11-08 · 当前 main 的 GitHub Pages 发布读回
+
+- 当前 `main` 为 `3604eca540ce4dc18d5272d3b6092ba26f35543a`；线上 [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 返回 HTTP 200，内容与该 SHA 完全一致。
+- 该精确 SHA 的 Verify [run #42460018906](https://github.com/mykcs/the-community-lab/actions/runs/42460018906)、桌面／440×956 浏览器验收 [run #42460018931](https://github.com/mykcs/the-community-lab/actions/runs/42460018931)、译审草稿验证 [run #42460018954](https://github.com/mykcs/the-community-lab/actions/runs/42460018954) 和 Pages 发布 [run #42460018921](https://github.com/mykcs/the-community-lab/actions/runs/42460018921) 均为 `success`。
+- 只读检查首页、第二季问卷、译审草稿、原题复核页，四条线上路由均返回 HTTP 200。此次核对没有提交答卷；这些 HTTP 状态不替代完整浏览器交互验收。
+- 译文人工复核仍为 `0/124`，官方计分仍为 `UNKNOWN`，符合来源与版本门槛的嘉宾向量仍为 `0`；这些内容门槛不因发布成功而改变。
+
 ## 2026-11-08 · PR #349 首页季别入口已发布并验收
 
 - [PR #349](https://github.com/mykcs/the-community-lab/pull/349) 已合并到 `main`；合并提交与线上 Pages `/release-commit.txt` 均为 `25bb5d4651f5396d8c59104b8982ca9dfe8d65cf`。候选 head 为 `0ce495d77eb7f9a8225c1bca45f4bdec981b56cc`。
