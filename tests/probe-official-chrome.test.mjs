@@ -2,7 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
   auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
-  auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack,
+  safeReadOnlyProbeFailure } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -190,4 +191,26 @@ test('read-only backtrack requires the same pinned question and next identity at
   assert.equal(auditReadOnlyBacktrack({ ...visit, questionIndex: -1 }, expected), false);
   assert.equal(auditReadOnlyBacktrack(visit, ['fictional-first']), false);
   assert.equal(auditReadOnlyBacktrack(visit, null), false);
+});
+
+test('read-only probe failures cannot leak untrusted browser error messages or names', () => {
+  const privateText = 'sensitive.example/path?nickname=private-한글-and-source-text';
+  const suspicious = new Error(privateText);
+  suspicious.name = privateText;
+  suspicious.stack = privateText;
+  assert.deepEqual(safeReadOnlyProbeFailure(suspicious), {
+    status: 'OBSERVATION_FAILED',
+    errorKind: 'UNKNOWN_ERROR',
+  });
+  const timeout = new Error(privateText);
+  timeout.name = 'TimeoutError';
+  assert.deepEqual(safeReadOnlyProbeFailure(timeout), {
+    status: 'OBSERVATION_FAILED',
+    errorKind: 'TimeoutError',
+  });
+  for (const failure of [null, undefined, privateText, { message: privateText, name: 'CustomBrowserError' }]) {
+    const report = JSON.stringify(safeReadOnlyProbeFailure(failure));
+    assert.doesNotMatch(report, /private|nickname|한글|sensitive/);
+    assert.equal(JSON.parse(report).errorKind, 'UNKNOWN_ERROR');
+  }
 });
