@@ -193,6 +193,7 @@ function render() {
       $('full-next').disabled = false;
       updateProgress(questions);
       $('full-save').disabled = false;
+      $('full-save').hidden = false;
       $('full-save-status').textContent = '';
       $('full-finish-review').disabled = Object.keys(active.answers).length !== questions.length || Boolean(active.needsReview?.size);
     });
@@ -235,6 +236,7 @@ function render() {
   $('full-jump-position').value = String(active.index + 1);
   $('full-finish-review').disabled = answered !== questions.length || Boolean(active.needsReview?.size);
   $('full-save').disabled = answered === 0;
+  $('full-save').hidden = answered === 0;
   $('full-confirm-progress-backup').hidden = active.pendingBackupKind !== 'progress';
   $('full-save-status').textContent = active.pendingBackupKind === 'progress'
     ? '已请求浏览器下载。请先核对 JSON 文件确实保存，再点击“我已确认文件保存”；否则离开页面仍会提示未备份。'

@@ -36,11 +36,19 @@ test('season two answers, navigation, and in-memory resume work', async ({ page 
   await page.locator('[data-start-season="2"]').click();
   await expect(page.locator('#full-count')).toContainText('已答 0 / 37');
   await expect(page.locator('.full-choice')).toHaveCount(2);
+  await expect(page.locator('#full-save')).toBeHidden();
+  await expect(page.locator('.full-progress-head')).toBeInViewport();
+  await expect(page.locator('#full-ko')).toBeInViewport();
+  await expect(page.locator('#full-zh')).toBeInViewport();
+  await expect(page.locator('.full-choice').nth(0)).toBeInViewport();
+  await expect(page.locator('.full-choice').nth(1)).toBeInViewport();
   await expectNoHorizontalOverflow(page);
 
   await page.locator('.full-choice').first().click();
   await expect(page.locator('#full-count')).toContainText('已答 1 / 37');
   await expect(page.locator('.full-choice').first()).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('#full-save')).toBeVisible();
+  await expect(page.locator('#full-next')).toBeInViewport();
   await page.locator('#full-next').click();
   await expect(page.locator('#full-position')).toContainText('第 02 / 37 题');
   await page.locator('#full-prev').click();
@@ -81,9 +89,11 @@ test('season one local download works and a reload never restores it automatical
   await page.goto('/the-community-lab/questionnaire/');
   await page.locator('[data-start-season="1"]').click();
   await expect(page.locator('#full-save')).toBeDisabled();
+  await expect(page.locator('#full-save')).toBeHidden();
   await page.locator('.full-choice').first().click();
   await expect(page.locator('#full-count')).toContainText('已答 1 / 87');
   await expect(page.locator('#full-save')).toBeEnabled();
+  await expect(page.locator('#full-save')).toBeVisible();
 
   const [download] = await Promise.all([
     page.waitForEvent('download'),
