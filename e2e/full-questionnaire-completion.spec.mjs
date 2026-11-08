@@ -85,6 +85,7 @@ test('completed S1 audit retains reader notes and source-blank scale explanation
     .toContainText('不是官网原文');
   await expect(scaleRow.locator('.full-answer-audit-hint'))
     .toContainText('方向是本站根据六级顺序的辅助说明');
+  await expect(scaleRow.locator('.full-answer-audit-hint span[lang=ko]')).toHaveText('2점');
   expect(await page.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(page.viewportSize().width);
   expect(writes).toEqual([]);

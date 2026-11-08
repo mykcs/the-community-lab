@@ -161,7 +161,7 @@ const base = import.meta.env.BASE_URL;
                   <ul class="guest-social-directory">
                     {socialPeople.filter(person => person.season === seasonId).map(person => (
                       <li class="guest-social-person">
-                        <strong>{person.stage_name_ko}</strong>
+                        <strong lang="ko">{person.stage_name_ko}</strong>
                         <div class="guest-social-links">
                           {person.accounts.map(account => (
                             <span class="guest-social-account">
