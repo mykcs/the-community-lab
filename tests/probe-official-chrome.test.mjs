@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
-  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyBacktrackPositions,
+  auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -149,16 +150,25 @@ test('read-only path preserves intentionally blank source labels exactly', () =>
   }, entries), null);
 });
 
-test('read-only backtrack requires same pinned first and second source identities', () => {
+test('read-only backtrack samples first, middle and penultimate transitions', () => {
+  assert.deepEqual(readOnlyBacktrackPositions(87), [0, 43, 85]);
+  assert.deepEqual(readOnlyBacktrackPositions(37), [0, 18, 35]);
+  assert.throws(() => readOnlyBacktrackPositions(2), /invalid read-only backtrack question count/);
+  assert.throws(() => readOnlyBacktrackPositions(0), /invalid read-only backtrack question count/);
+});
+
+test('read-only backtrack requires the same pinned question and next identity at each sampled position', () => {
   const expected = ['fictional-first', 'fictional-second', 'fictional-last'];
   const visit = {
-    firstId: 'fictional-first', revisitedFirstId: 'fictional-first',
-    nextId: 'fictional-second', revisitedNextId: 'fictional-second',
+    questionIndex: 1, currentId: 'fictional-second', revisitedCurrentId: 'fictional-second',
+    nextId: 'fictional-last', revisitedNextId: 'fictional-last',
   };
   assert.equal(auditReadOnlyBacktrack(visit, expected), true);
-  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedFirstId: 'wrong' }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedCurrentId: 'wrong' }, expected), false);
   assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedNextId: 'wrong' }, expected), false);
-  assert.equal(auditReadOnlyBacktrack({ ...visit, nextId: visit.firstId }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, nextId: visit.currentId }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, questionIndex: 2 }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, questionIndex: -1 }, expected), false);
   assert.equal(auditReadOnlyBacktrack(visit, ['fictional-first']), false);
   assert.equal(auditReadOnlyBacktrack(visit, null), false);
 });
