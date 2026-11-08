@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
-  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -147,4 +147,18 @@ test('read-only path preserves intentionally blank source labels exactly', () =>
   assert.equal(exactVisibleOptionLabelMapping({
     headingText: 'Q.가상의 척도 질문입니다.', optionLabels: ['1', '보통', '3'],
   }, entries), null);
+});
+
+test('read-only backtrack requires same pinned first and second source identities', () => {
+  const expected = ['fictional-first', 'fictional-second', 'fictional-last'];
+  const visit = {
+    firstId: 'fictional-first', revisitedFirstId: 'fictional-first',
+    nextId: 'fictional-second', revisitedNextId: 'fictional-second',
+  };
+  assert.equal(auditReadOnlyBacktrack(visit, expected), true);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedFirstId: 'wrong' }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedNextId: 'wrong' }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, nextId: visit.firstId }, expected), false);
+  assert.equal(auditReadOnlyBacktrack(visit, ['fictional-first']), false);
+  assert.equal(auditReadOnlyBacktrack(visit, null), false);
 });
