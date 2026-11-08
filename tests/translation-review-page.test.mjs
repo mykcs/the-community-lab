@@ -801,3 +801,16 @@ test('S1 gender 01 names menstrual leave clearly and remains an unreviewed draft
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
   assert.deepEqual(standaloneData.questions, data.questions);
 });
+test('S2 sa12 preserves the limiting force of 만으로 and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 'sa12');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '모두에게 동일한 시험 기회를 주는 것만으로 공정한 경쟁 조건은 충분히 갖춰진 것이다.');
+  assert.equal(question.translation_zh_cn, '仅仅给每个人同等的考试机会，公平竞争的条件就已经充分具备了。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /국립국어원|韩国国立国语院/);
+  assert.match(question.translator_note, /onlineQna/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});
