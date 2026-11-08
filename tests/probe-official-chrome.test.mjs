@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
   auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
   auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack,
@@ -213,4 +214,10 @@ test('read-only probe failures cannot leak untrusted browser error messages or n
     assert.doesNotMatch(report, /private|nickname|한글|sensitive/);
     assert.equal(JSON.parse(report).errorKind, 'UNKNOWN_ERROR');
   }
+});
+
+test('both official read-only probe modes never include untrusted exception details in reports', () => {
+  const source = readFileSync(new URL('../scripts/probe-official-chrome.mjs', import.meta.url), 'utf8');
+  assert.doesNotMatch(source, /errorMessage:\s*|errorName:\s*error\.name|String\(error\.message\)/);
+  assert.equal((source.match(/\.\.\.safeReadOnlyProbeFailure\(error\)/g) || []).length, 2);
 });

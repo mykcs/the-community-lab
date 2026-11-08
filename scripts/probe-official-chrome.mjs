@@ -185,7 +185,7 @@ export async function probe() {
         } catch (error) {
           findings.push({
             season, viewport: `${viewport.width}x${viewport.height}`,
-            status: 'OBSERVATION_FAILED', errorName: error.name,
+            ...safeReadOnlyProbeFailure(error),
           });
           process.exitCode = 1;
         } finally {
