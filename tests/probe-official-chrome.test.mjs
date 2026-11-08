@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
-  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
+  auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -133,8 +134,22 @@ test('readonly path can choose last visible source option without guessing value
   assert.equal(readOnlyPathChoiceIndex(2, 'first'), 0);
   assert.equal(readOnlyPathChoiceIndex(2, 'last'), 1);
   assert.equal(readOnlyPathChoiceIndex(6, 'last'), 5);
+  assert.deepEqual(readOnlyPathChoiceIndices(6, 'all'), [0, 1, 2, 3, 4, 5]);
+  assert.deepEqual(readOnlyPathChoiceIndices(2, 'all'), [0, 1]);
   assert.throws(() => readOnlyPathChoiceIndex(0, 'last'), /invalid read-only option strategy/);
   assert.throws(() => readOnlyPathChoiceIndex(2, 'random'), /invalid read-only option strategy/);
+  assert.throws(() => readOnlyPathChoiceIndices(0, 'all'), /invalid read-only option strategy/);
+  assert.throws(() => readOnlyPathChoiceIndices(2, 'random'), /invalid read-only option strategy/);
+});
+
+test('read-only all-option coverage requires every visible option index once in order', () => {
+  assert.equal(auditReadOnlyOptionCoverage([0, 1, 2, 3, 4, 5], 6), true);
+  assert.equal(auditReadOnlyOptionCoverage([0, 1], 2), true);
+  assert.equal(auditReadOnlyOptionCoverage([0, 2], 2), false);
+  assert.equal(auditReadOnlyOptionCoverage([0, 1, 1], 3), false);
+  assert.equal(auditReadOnlyOptionCoverage([1, 0], 2), false);
+  assert.equal(auditReadOnlyOptionCoverage([0], 0), false);
+  assert.equal(auditReadOnlyOptionCoverage(null, 2), false);
 });
 
 test('read-only path preserves intentionally blank source labels exactly', () => {
@@ -149,16 +164,30 @@ test('read-only path preserves intentionally blank source labels exactly', () =>
   }, entries), null);
 });
 
-test('read-only backtrack requires same pinned first and second source identities', () => {
+test('read-only backtrack covers every transition before the unanswered final question', () => {
+  const seasonOne = readOnlyBacktrackPositions(87);
+  const seasonTwo = readOnlyBacktrackPositions(37);
+  assert.equal(seasonOne.length, 86);
+  assert.equal(seasonTwo.length, 36);
+  assert.deepEqual(seasonOne, Array.from({ length: 86 }, (_, index) => index));
+  assert.deepEqual(seasonTwo, Array.from({ length: 36 }, (_, index) => index));
+  assert.deepEqual(readOnlyBacktrackPositions(3), [0, 1]);
+  assert.throws(() => readOnlyBacktrackPositions(2), /invalid read-only backtrack question count/);
+  assert.throws(() => readOnlyBacktrackPositions(0), /invalid read-only backtrack question count/);
+});
+
+test('read-only backtrack requires the same pinned question and next identity at each transition', () => {
   const expected = ['fictional-first', 'fictional-second', 'fictional-last'];
   const visit = {
-    firstId: 'fictional-first', revisitedFirstId: 'fictional-first',
-    nextId: 'fictional-second', revisitedNextId: 'fictional-second',
+    questionIndex: 1, currentId: 'fictional-second', revisitedCurrentId: 'fictional-second',
+    nextId: 'fictional-last', revisitedNextId: 'fictional-last',
   };
   assert.equal(auditReadOnlyBacktrack(visit, expected), true);
-  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedFirstId: 'wrong' }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedCurrentId: 'wrong' }, expected), false);
   assert.equal(auditReadOnlyBacktrack({ ...visit, revisitedNextId: 'wrong' }, expected), false);
-  assert.equal(auditReadOnlyBacktrack({ ...visit, nextId: visit.firstId }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, nextId: visit.currentId }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, questionIndex: 2 }, expected), false);
+  assert.equal(auditReadOnlyBacktrack({ ...visit, questionIndex: -1 }, expected), false);
   assert.equal(auditReadOnlyBacktrack(visit, ['fictional-first']), false);
   assert.equal(auditReadOnlyBacktrack(visit, null), false);
 });

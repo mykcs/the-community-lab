@@ -2,8 +2,9 @@
  * Manual Chrome-only read-only DOM reconnaissance, NOT a public overlay.
  * Usage: node scripts/probe-official-chrome.mjs --live-readonly
  *        node scripts/probe-official-chrome.mjs --live-path-readonly
- * It never chooses an answer or submits a result, and it does not print
- * Korean questions, options, nickname, cookies, or answer vectors.
+ *        node scripts/probe-official-chrome.mjs --live-path-all-options-readonly
+ * Path modes use synthetic choices in anonymous sessions but never submit a
+ * result. No mode prints Korean prompts/options, nickname, cookies, or vectors.
  */
 import { createHash } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
@@ -209,12 +210,26 @@ export function auditReadOnlyQuestionOrder(observedIds, expectedIds) {
   };
 }
 
-/** Guard the two-step, local-only back-and-rechoose experiment. No score claim. */
-export function auditReadOnlyBacktrack({ firstId, revisitedFirstId, nextId, revisitedNextId } = {}, expectedIds) {
-  return Array.isArray(expectedIds) && expectedIds.length > 1 &&
-    typeof firstId === 'string' && typeof nextId === 'string' &&
-    firstId !== nextId && firstId === expectedIds[0] && nextId === expectedIds[1] &&
-    revisitedFirstId === firstId && revisitedNextId === nextId;
+/** Cover every transition that can lead to another question without reaching submit. */
+export function readOnlyBacktrackPositions(questionCount) {
+  if (!Number.isInteger(questionCount) || questionCount < 3) {
+    throw new Error('invalid read-only backtrack question count');
+  }
+  return Array.from({ length: questionCount - 1 }, (_, index) => index);
+}
+
+/** Guard one local-only back-and-rechoose transition. No score claim. */
+export function auditReadOnlyBacktrack({
+  questionIndex, currentId, revisitedCurrentId, nextId, revisitedNextId,
+} = {}, expectedIds) {
+  if (!Array.isArray(expectedIds) || !Number.isInteger(questionIndex) ||
+      questionIndex < 0 || questionIndex >= expectedIds.length - 1) return false;
+  const expectedCurrent = expectedIds[questionIndex];
+  const expectedNext = expectedIds[questionIndex + 1];
+  return typeof expectedCurrent === 'string' && typeof expectedNext === 'string' &&
+    expectedCurrent !== expectedNext && currentId === expectedCurrent &&
+    revisitedCurrentId === expectedCurrent && nextId === expectedNext &&
+    revisitedNextId === expectedNext;
 }
 
 export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
@@ -225,9 +240,24 @@ export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
   return strategy === 'last' ? optionCount - 1 : 0;
 }
 
+export function readOnlyPathChoiceIndices(optionCount, strategy = 'first') {
+  if (!Number.isInteger(optionCount) || optionCount < 1 ||
+      !['first', 'last', 'all'].includes(strategy)) {
+    throw new Error('invalid read-only option strategy');
+  }
+  if (strategy === 'all') return Array.from({ length: optionCount }, (_, index) => index);
+  return [readOnlyPathChoiceIndex(optionCount, strategy)];
+}
+
+export function auditReadOnlyOptionCoverage(observedIndices, expectedOptionCount) {
+  return Number.isInteger(expectedOptionCount) && expectedOptionCount > 0 &&
+    Array.isArray(observedIndices) && observedIndices.length === expectedOptionCount &&
+    observedIndices.every((index, position) => index === position);
+}
+
 /** One complete visible path per season; the last answer is NEVER selected. */
-export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = false } = {}) {
-  readOnlyPathChoiceIndex(1, choiceStrategy);
+export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = false, allOptions = false } = {}) {
+  readOnlyPathChoiceIndices(1, allOptions ? 'all' : choiceStrategy);
   const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
@@ -270,7 +300,9 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
       const page = await context.newPage();
       const questionIds = [];
       const mismatchCount = { question: 0, ambiguous: 0 };
-      let backtrackValidated = false;
+      const backtrackPositions = backtrack ? readOnlyBacktrackPositions(expected.length) : [];
+      const backtrackChecks = [];
+      const optionCoverageChecks = [];
       try {
         const response = await page.goto(`${ORIGIN}/season/${season}/test`, {
           waitUntil: 'domcontentloaded', timeout: 20000,
@@ -281,17 +313,14 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
         network.frozen = true;
         await page.locator('button').first().click({ timeout: 5000 });
         await page.locator('.question h1').first().waitFor({ timeout: 5000 });
+        const readVisibleQuestion = () => page.evaluate(() => ({
+          headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
+          optionLabels: [...document.querySelectorAll('.question button')]
+            .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0)
+            .map(button => button.querySelector('span')?.textContent ?? ''),
+        }));
         for (let index = 0; index < expected.length; index++) {
-          const dom = await page.evaluate(() => {
-            const heading = document.querySelector('.question h1');
-            const buttons = [...document.querySelectorAll('.question button')].filter(button =>
-              !button.classList.contains('back') && button.getClientRects().length > 0
-            );
-            return {
-              headingText: heading?.textContent?.trim() ?? '',
-              optionLabels: buttons.map(button => button.querySelector('span')?.textContent ?? ''),
-            };
-          });
+          const dom = await readVisibleQuestion();
           const mapping = exactVisibleOptionLabelMapping(dom, expected);
           const sourceMatches = exactSuffixSourceMatches(dom.headingText, expected);
           if (sourceMatches.length !== 1) mismatchCount.ambiguous++;
@@ -299,64 +328,94 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           if (mapping) questionIds.push(mapping.sourceId);
           if (index === expected.length - 1) break;
           if (!mapping) break;
-          const choiceIndex = readOnlyPathChoiceIndex(dom.optionLabels.length, choiceStrategy);
-          await page.evaluate(index => {
-            const answerButtons = [...document.querySelectorAll('.question button')].filter(button =>
-              !button.classList.contains('back') && button.getClientRects().length > 0
-            );
-            const answer = answerButtons[index];
-            if (!answer) throw new Error('visible answer button missing');
-            answer.click();
-          }, choiceIndex);
-          await page.waitForFunction(previousHeading =>
-            (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
-          dom.headingText, { timeout: 5000 });
-          if (backtrack && index === 0) {
-            // Exercise a real first-question back/edit path without completing a
-            // survey. Fail closed on the pinned source identity and options.
-            const readVisibleQuestion = () => page.evaluate(() => ({
-              headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
-              optionLabels: [...document.querySelectorAll('.question button')]
-                .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0)
-                .map(button => button.querySelector('span')?.textContent ?? ''),
-            }));
-            const secondBefore = await readVisibleQuestion();
-            const secondMapping = exactVisibleOptionLabelMapping(secondBefore, expected);
-            if (secondMapping?.sourceId !== expected[1]?.id ||
-                await page.locator('.question button.back:visible').count() !== 1) {
-              throw new Error('BACKTRACK_SECOND_QUESTION_DRIFT');
-            }
-            await page.locator('.question button.back:visible').click();
-            await page.waitForFunction(heading =>
-              document.querySelector('.question h1')?.textContent?.trim() === heading,
-            dom.headingText, { timeout: 5000 });
-            const firstAgain = await readVisibleQuestion();
-            const restored = exactVisibleOptionLabelMapping(firstAgain, expected);
-            if (restored?.sourceId !== mapping.sourceId || firstAgain.optionLabels.length < 2) {
-              throw new Error('BACKTRACK_FIRST_QUESTION_DRIFT');
-            }
-            // Select a different visible button; never infer any server raw
-            // values from its displayed index. Outgoing requests stay blocked.
-            const oppositeIndex = choiceIndex === 0 ? firstAgain.optionLabels.length - 1 : 0;
+          const choiceIndices = readOnlyPathChoiceIndices(dom.optionLabels.length,
+            allOptions ? 'all' : choiceStrategy);
+          const observedOptionIndices = [];
+          for (const [choicePass, choiceIndex] of choiceIndices.entries()) {
             await page.evaluate(buttonIndex => {
-              const choices = [...document.querySelectorAll('.question button')]
-                .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0);
-              if (!choices[buttonIndex]) throw new Error('BACKTRACK_ALTERNATE_MISSING');
-              choices[buttonIndex].click();
-            }, oppositeIndex);
-            await page.waitForFunction(heading =>
-              (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== heading,
-            firstAgain.headingText, { timeout: 5000 });
-            const secondAfter = await readVisibleQuestion();
-            const reentered = exactVisibleOptionLabelMapping(secondAfter, expected);
-            backtrackValidated = auditReadOnlyBacktrack({
-              firstId: mapping.sourceId, revisitedFirstId: restored.sourceId,
-              nextId: secondMapping.sourceId, revisitedNextId: reentered?.sourceId,
-            }, expected.map(q => q.id));
-            if (!backtrackValidated) throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
+              const answerButtons = [...document.querySelectorAll('.question button')].filter(button =>
+                !button.classList.contains('back') && button.getClientRects().length > 0
+              );
+              const answer = answerButtons[buttonIndex];
+              if (!answer) throw new Error('visible answer button missing');
+              answer.click();
+            }, choiceIndex);
+            await page.waitForFunction(previousHeading =>
+              (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
+            dom.headingText, { timeout: 5000 });
+            const nextBefore = await readVisibleQuestion();
+            const nextMapping = exactVisibleOptionLabelMapping(nextBefore, expected);
+            const nextIdentityCorrect = nextMapping?.sourceId === expected[index + 1]?.id &&
+              await page.locator('.question button.back:visible').count() === 1;
+            if (!nextIdentityCorrect) throw new Error('NEXT_QUESTION_SOURCE_DRIFT');
+            observedOptionIndices.push(choiceIndex);
+
+            if (allOptions && choicePass < choiceIndices.length - 1) {
+              await page.locator('.question button.back:visible').click();
+              await page.waitForFunction(heading =>
+                document.querySelector('.question h1')?.textContent?.trim() === heading,
+              dom.headingText, { timeout: 5000 });
+              const revisitedCurrent = await readVisibleQuestion();
+              const revisitedMapping = exactVisibleOptionLabelMapping(revisitedCurrent, expected);
+              if (revisitedMapping?.sourceId !== mapping.sourceId ||
+                  JSON.stringify(revisitedCurrent.optionLabels) !== JSON.stringify(dom.optionLabels)) {
+                throw new Error('ALL_OPTIONS_CURRENT_QUESTION_DRIFT');
+              }
+            } else if (!allOptions && backtrackPositions.includes(index)) {
+              // Exercise every return/edit transition without completing a
+              // survey. Fail closed on pinned source identities.
+              await page.locator('.question button.back:visible').click();
+              await page.waitForFunction(heading =>
+                document.querySelector('.question h1')?.textContent?.trim() === heading,
+              dom.headingText, { timeout: 5000 });
+              const revisitedCurrent = await readVisibleQuestion();
+              const restored = exactVisibleOptionLabelMapping(revisitedCurrent, expected);
+              if (restored?.sourceId !== mapping.sourceId || revisitedCurrent.optionLabels.length < 2) {
+                throw new Error('BACKTRACK_CURRENT_QUESTION_DRIFT');
+              }
+              // Select a different visible button; never infer any server raw
+              // values from its displayed index. Outgoing requests stay blocked.
+              const oppositeIndex = choiceIndex === 0 ? revisitedCurrent.optionLabels.length - 1 : 0;
+              await page.evaluate(buttonIndex => {
+                const choices = [...document.querySelectorAll('.question button')]
+                  .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0);
+                if (!choices[buttonIndex]) throw new Error('BACKTRACK_ALTERNATE_MISSING');
+                choices[buttonIndex].click();
+              }, oppositeIndex);
+              await page.waitForFunction(heading =>
+                (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== heading,
+              revisitedCurrent.headingText, { timeout: 5000 });
+              const revisitedNext = await readVisibleQuestion();
+              const reentered = exactVisibleOptionLabelMapping(revisitedNext, expected);
+              const validated = auditReadOnlyBacktrack({
+                questionIndex: index, currentId: mapping.sourceId,
+                revisitedCurrentId: restored.sourceId,
+                nextId: nextMapping?.sourceId, revisitedNextId: reentered?.sourceId,
+              }, expected.map(q => q.id));
+              backtrackChecks.push({ questionIndex: index, validated });
+              if (!validated) throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
+            }
+          }
+          const optionCoverageValidated = auditReadOnlyOptionCoverage(
+            observedOptionIndices, dom.optionLabels.length,
+          );
+          if (allOptions) {
+            optionCoverageChecks.push({
+              questionIndex: index, expectedOptionCount: dom.optionLabels.length,
+              observedOptionIndices, allOptionsNavigateToExpectedNext: optionCoverageValidated,
+            });
+            if (!optionCoverageValidated) throw new Error('ALL_OPTIONS_COVERAGE_INCOMPLETE');
           }
         }
         const expectedIds = expected.map(question => question.id);
+        const backtrackValidated = !backtrack ||
+          backtrackChecks.length === backtrackPositions.length &&
+          backtrackChecks.every(check => check.validated);
+        const allOptionsValidated = allOptions
+          ? optionCoverageChecks.length === expected.length - 1 &&
+            optionCoverageChecks.every(check => check.allOptionsNavigateToExpectedNext &&
+              check.expectedOptionCount === expected[check.questionIndex]?.options.length)
+          : null;
         const { completeUniqueQuestionSet, orderedPathMatchesPinnedClient } =
           auditReadOnlyQuestionOrder(questionIds, expectedIds);
         const orderSha256 = createHash('sha256').update(questionIds.join('\n')).digest('hex');
@@ -365,9 +424,13 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           sourceAssetPinned: liveAsset === ASSET_PATH,
           expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
           allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
-            mismatchCount.question === 0 && mismatchCount.ambiguous === 0 && (!backtrack || backtrackValidated),
+            mismatchCount.question === 0 && mismatchCount.ambiguous === 0 &&
+            (!backtrack || backtrackValidated) && (!allOptions || allOptionsValidated),
           completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
-          choiceStrategy, backtrackAttempted: backtrack, backtrackValidated,
+          choiceStrategy: allOptions ? 'all' : choiceStrategy,
+          backtrackAttempted: backtrack,
+          backtrackPositions, backtrackChecks, backtrackValidated,
+          allOptionsAttempted: allOptions, optionCoverageChecks, allOptionsValidated,
           orderedSourceIdsSha256: orderSha256,
           mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
           attemptedNonGetRequests: network.attemptedNonGetRequests,
@@ -386,8 +449,16 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
     }
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
-      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; last answer not selected',
-      choiceStrategy, backtrackAttempted: backtrack,
+      method: allOptions
+        ? 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; each visible option is selected and advanced to the exact next question; returns to the current question between choices; post-start network frozen; last answer not selected'
+        : 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; every non-final answer may be changed after backtracking; last answer not selected',
+      choiceStrategy: allOptions ? 'all' : choiceStrategy,
+      backtrackAttempted: backtrack, allOptionsAttempted: allOptions,
+      backtrackPositionsBySeason: backtrack
+        ? Object.fromEntries(Object.entries(pack.seasons).map(([season, questions]) => [
+          season, readOnlyBacktrackPositions(questions.length),
+        ]))
+        : {},
       findings,
     }, null, 2));
   } finally {
@@ -398,13 +469,17 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const mode = process.argv[2];
   if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly',
-    '--live-path-last-option-readonly', '--live-path-backtrack-readonly'].includes(mode)) {
+    '--live-path-last-option-readonly', '--live-path-backtrack-readonly',
+    '--live-path-all-options-readonly'].includes(mode)) {
     console.error('Explicit read-only probe mode required; no automatic official-site requests.');
     process.exitCode = 2;
   } else if (mode === '--live-path-readonly' || mode === '--live-path-last-option-readonly' ||
-    mode === '--live-path-backtrack-readonly') {
+    mode === '--live-path-backtrack-readonly' || mode === '--live-path-all-options-readonly') {
     const choiceStrategy = mode === '--live-path-last-option-readonly' ? 'last' : 'first';
-    probePathReadOnly({ choiceStrategy, backtrack: mode === '--live-path-backtrack-readonly' })
+    probePathReadOnly({ choiceStrategy,
+      backtrack: mode === '--live-path-backtrack-readonly',
+      allOptions: mode === '--live-path-all-options-readonly',
+    })
       .catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
   } else {
     probe().catch(error => { console.error(error.name); process.exitCode = 1; });
