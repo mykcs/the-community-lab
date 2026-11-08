@@ -814,3 +814,17 @@ test('S2 sa12 preserves the limiting force of 만으로 and remains an unreviewe
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
 });
+
+test('S2 ms02 preserves salary as a purpose condition and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 'ms02');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '더 높은 연봉을 위해서라면 가족·친구와의 시간을 포기할 수 있다.');
+  assert.equal(question.translation_zh_cn, '如果是为了更高的年薪，我可以放弃与家人和朋友相处的时间。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /연봉/);
+  assert.match(question.translator_note, /krdict\.korean\.go\.kr/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});
