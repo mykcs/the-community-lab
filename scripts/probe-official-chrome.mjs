@@ -190,8 +190,36 @@ export async function probe() {
   }
 }
 
-/** One complete visible question path per season; no last answer is selected. */
-export async function probePathReadOnly() {
+/**
+ * A complete but reordered set is NOT a passing pinned-client path audit.
+ * These identities are already sourced from the local fixed client pack.
+ */
+export function auditReadOnlyQuestionOrder(observedIds, expectedIds) {
+  if (!Array.isArray(observedIds) || !Array.isArray(expectedIds) ||
+      expectedIds.length === 0) throw new Error('invalid read-only path identity');
+  const observed = new Set(observedIds);
+  const expected = new Set(expectedIds);
+  const completeUniqueQuestionSet = observedIds.length === expectedIds.length &&
+    observed.size === expected.size && expected.size === expectedIds.length &&
+    [...expected].every(id => observed.has(id));
+  return {
+    completeUniqueQuestionSet,
+    orderedPathMatchesPinnedClient: completeUniqueQuestionSet &&
+      expectedIds.every((id, index) => observedIds[index] === id),
+  };
+}
+
+export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
+  if (!Number.isInteger(optionCount) || optionCount < 1 ||
+      !['first', 'last'].includes(strategy)) {
+    throw new Error('invalid read-only option strategy');
+  }
+  return strategy === 'last' ? optionCount - 1 : 0;
+}
+
+/** One complete visible path per season; the last answer is NEVER selected. */
+export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
+  readOnlyPathChoiceIndex(1, choiceStrategy);
   const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
@@ -262,29 +290,31 @@ export async function probePathReadOnly() {
           if (mapping) questionIds.push(mapping.sourceId);
           if (index === expected.length - 1) break;
           if (!mapping) break;
-          await page.evaluate(() => {
-            const firstAnswer = [...document.querySelectorAll('.question button')].find(button =>
+          const choiceIndex = readOnlyPathChoiceIndex(dom.optionLabels.length, choiceStrategy);
+          await page.evaluate(index => {
+            const answerButtons = [...document.querySelectorAll('.question button')].filter(button =>
               !button.classList.contains('back') && button.getClientRects().length > 0
             );
-            if (!firstAnswer) throw new Error('visible answer button missing');
-            firstAnswer.click();
-          });
+            const answer = answerButtons[index];
+            if (!answer) throw new Error('visible answer button missing');
+            answer.click();
+          }, choiceIndex);
           await page.waitForFunction(previousHeading =>
             (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
           dom.headingText, { timeout: 5000 });
         }
         const expectedIds = expected.map(question => question.id);
-        const observedIds = new Set(questionIds);
-        const expectedIdSet = new Set(expectedIds);
-        const completeUniqueQuestionSet = questionIds.length === expectedIds.length &&
-          observedIds.size === expectedIdSet.size && [...expectedIdSet].every(id => observedIds.has(id));
+        const { completeUniqueQuestionSet, orderedPathMatchesPinnedClient } =
+          auditReadOnlyQuestionOrder(questionIds, expectedIds);
         const orderSha256 = createHash('sha256').update(questionIds.join('\n')).digest('hex');
         const result = {
           season, viewport: `${viewport.width}x${viewport.height}`, httpStatus: response?.status(),
           sourceAssetPinned: liveAsset === ASSET_PATH,
           expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
-          allQuestionsMatchedExactly: completeUniqueQuestionSet && mismatchCount.question === 0,
-          completeUniqueQuestionSet, orderedSourceIdsSha256: orderSha256,
+          allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
+            mismatchCount.question === 0 && mismatchCount.ambiguous === 0,
+          completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
+          choiceStrategy, orderedSourceIdsSha256: orderSha256,
           mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
           attemptedNonGetRequests: network.attemptedNonGetRequests,
           blockedRequestsAfterStart: network.deniedAfterStart,
@@ -302,7 +332,8 @@ export async function probePathReadOnly() {
     }
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
-      method: 'headless Chrome; anonymous session; 440x956; exact Korean question and ordered option-label matching; post-start network frozen; last answer not selected',
+      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; last answer not selected',
+      choiceStrategy,
       findings,
     }, null, 2));
   } finally {
@@ -312,11 +343,13 @@ export async function probePathReadOnly() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const mode = process.argv[2];
-  if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly'].includes(mode)) {
-    console.error('Explicit --live-readonly or --live-path-readonly required; no automatic official-site requests.');
+  if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly',
+    '--live-path-last-option-readonly'].includes(mode)) {
+    console.error('Explicit --live-readonly, --live-path-readonly or --live-path-last-option-readonly required; no automatic official-site requests.');
     process.exitCode = 2;
-  } else if (mode === '--live-path-readonly') {
-    probePathReadOnly().catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
+  } else if (mode === '--live-path-readonly' || mode === '--live-path-last-option-readonly') {
+    const choiceStrategy = mode === '--live-path-last-option-readonly' ? 'last' : 'first';
+    probePathReadOnly({ choiceStrategy }).catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
   } else {
     probe().catch(error => { console.error(error.name); process.exitCode = 1; });
   }

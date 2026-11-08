@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping } from '../scripts/probe-official-chrome.mjs';
+import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
+  auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -111,6 +112,29 @@ test('read-only path maps visible Korean labels to one exact source question in 
   assert.equal(exactVisibleOptionLabelMapping({
     headingText: 'Q.가상의 질문입니다.', optionLabels: ['동의', '비동의'],
   }, [...entries, { ...entries[0], id: 'fictional-02' }]), null);
+});
+
+test('read-only path rejects a reordered complete source set', () => {
+  assert.deepEqual(auditReadOnlyQuestionOrder(['s1', 's2', 's3'], ['s1', 's2', 's3']), {
+    completeUniqueQuestionSet: true, orderedPathMatchesPinnedClient: true,
+  });
+  assert.deepEqual(auditReadOnlyQuestionOrder(['s3', 's2', 's1'], ['s1', 's2', 's3']), {
+    completeUniqueQuestionSet: true, orderedPathMatchesPinnedClient: false,
+  });
+  assert.deepEqual(auditReadOnlyQuestionOrder(['s1', 's1', 's3'], ['s1', 's2', 's3']), {
+    completeUniqueQuestionSet: false, orderedPathMatchesPinnedClient: false,
+  });
+  assert.deepEqual(auditReadOnlyQuestionOrder(['s1', 's2'], ['s1', 's2', 's3']), {
+    completeUniqueQuestionSet: false, orderedPathMatchesPinnedClient: false,
+  });
+});
+
+test('readonly path can choose last visible source option without guessing values', () => {
+  assert.equal(readOnlyPathChoiceIndex(2, 'first'), 0);
+  assert.equal(readOnlyPathChoiceIndex(2, 'last'), 1);
+  assert.equal(readOnlyPathChoiceIndex(6, 'last'), 5);
+  assert.throws(() => readOnlyPathChoiceIndex(0, 'last'), /invalid read-only option strategy/);
+  assert.throws(() => readOnlyPathChoiceIndex(2, 'random'), /invalid read-only option strategy/);
 });
 
 test('read-only path preserves intentionally blank source labels exactly', () => {
