@@ -150,14 +150,19 @@ test('read-only path preserves intentionally blank source labels exactly', () =>
   }, entries), null);
 });
 
-test('read-only backtrack samples first, middle and penultimate transitions', () => {
-  assert.deepEqual(readOnlyBacktrackPositions(87), [0, 43, 85]);
-  assert.deepEqual(readOnlyBacktrackPositions(37), [0, 18, 35]);
+test('read-only backtrack covers every transition before the unanswered final question', () => {
+  const seasonOne = readOnlyBacktrackPositions(87);
+  const seasonTwo = readOnlyBacktrackPositions(37);
+  assert.equal(seasonOne.length, 86);
+  assert.equal(seasonTwo.length, 36);
+  assert.deepEqual(seasonOne, Array.from({ length: 86 }, (_, index) => index));
+  assert.deepEqual(seasonTwo, Array.from({ length: 36 }, (_, index) => index));
+  assert.deepEqual(readOnlyBacktrackPositions(3), [0, 1]);
   assert.throws(() => readOnlyBacktrackPositions(2), /invalid read-only backtrack question count/);
   assert.throws(() => readOnlyBacktrackPositions(0), /invalid read-only backtrack question count/);
 });
 
-test('read-only backtrack requires the same pinned question and next identity at each sampled position', () => {
+test('read-only backtrack requires the same pinned question and next identity at each transition', () => {
   const expected = ['fictional-first', 'fictional-second', 'fictional-last'];
   const visit = {
     questionIndex: 1, currentId: 'fictional-second', revisitedCurrentId: 'fictional-second',

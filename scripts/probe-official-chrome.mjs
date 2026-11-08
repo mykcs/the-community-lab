@@ -209,12 +209,12 @@ export function auditReadOnlyQuestionOrder(observedIds, expectedIds) {
   };
 }
 
-/** Sample the first, middle, and penultimate transition without reaching submit. */
+/** Cover every transition that can lead to another question without reaching submit. */
 export function readOnlyBacktrackPositions(questionCount) {
   if (!Number.isInteger(questionCount) || questionCount < 3) {
     throw new Error('invalid read-only backtrack question count');
   }
-  return [...new Set([0, Math.floor((questionCount - 1) / 2), questionCount - 2])];
+  return Array.from({ length: questionCount - 1 }, (_, index) => index);
 }
 
 /** Guard one local-only back-and-rechoose transition. No score claim. */
@@ -327,8 +327,8 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
             (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
           dom.headingText, { timeout: 5000 });
           if (backtrackPositions.includes(index)) {
-            // Exercise first, middle, and penultimate return/edit paths without
-            // completing a survey. Fail closed on pinned source identities.
+            // Exercise every return/edit transition without completing a
+            // survey. Fail closed on pinned source identities.
             const readVisibleQuestion = () => page.evaluate(() => ({
               headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
               optionLabels: [...document.querySelectorAll('.question button')]
@@ -407,7 +407,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
     }
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
-      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; first, middle and penultimate answers may be changed; last answer not selected',
+      method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; every non-final answer may be changed after backtracking; last answer not selected',
       choiceStrategy, backtrackAttempted: backtrack,
       backtrackPositionsBySeason: backtrack
         ? Object.fromEntries(Object.entries(pack.seasons).map(([season, questions]) => [
