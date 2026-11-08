@@ -786,3 +786,18 @@ test('export and import preserve the pre-edit note baseline across offline revie
   assert.match(html, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
   assert.match(standaloneHtml, /q\.human_review_note_stale_original=e\.reviewNoteStaleOriginal/);
 });
+
+test('S1 gender 01 names menstrual leave clearly and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 's1-gender-01');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '여성들이 보건휴가(생리휴가)를 주말에 붙여 쓰는 것은 정당한 권리행사이므로 비난할 수 없다.');
+  assert.equal(question.translation_zh_cn, '女性把经期假（生理假）连着周末一起休，是正当行使权利，不应受到指责。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /劳动基准法/);
+  assert.match(question.translator_note, /law\.go\.kr/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+  assert.deepEqual(standaloneData.questions, data.questions);
+});
