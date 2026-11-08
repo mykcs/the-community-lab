@@ -828,3 +828,17 @@ test('S2 ms02 preserves salary as a purpose condition and remains an unreviewed 
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
 });
+
+test('S1 gender 08 retains annual-salary scope and remains an unreviewed draft', () => {
+  const question = data.questions.find(q => q.id === 's1-gender-08');
+  assert.ok(question);
+  assert.equal(question.source_text_ko, '남자와 여자가 같은 직업에 같은 연봉을 받고 있다면 실은 여자가 더 유능할 것이다.');
+  assert.equal(question.translation_zh_cn, '如果男性和女性从事同一职业、领取相同年薪，实际上女性会更有能力。');
+  assert.equal(question.translation_version, 'draft-0.1.1');
+  assert.match(question.translator_note, /연봉/);
+  assert.match(question.translator_note, /ParaWordNo=67549/);
+  assert.match(question.translator_note, /仍待独立韩中人工复核/);
+  assert.equal(question.review_status, 'draft');
+  assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
+  assert.deepEqual(standaloneData.questions.find(q => q.id === question.id), question);
+});
