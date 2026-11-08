@@ -411,10 +411,11 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
         const backtrackValidated = !backtrack ||
           backtrackChecks.length === backtrackPositions.length &&
           backtrackChecks.every(check => check.validated);
-        const allOptionsValidated = !allOptions ||
-          optionCoverageChecks.length === expected.length - 1 &&
-          optionCoverageChecks.every(check => check.allOptionsNavigateToExpectedNext &&
-            check.expectedOptionCount === expected[check.questionIndex]?.options.length);
+        const allOptionsValidated = allOptions
+          ? optionCoverageChecks.length === expected.length - 1 &&
+            optionCoverageChecks.every(check => check.allOptionsNavigateToExpectedNext &&
+              check.expectedOptionCount === expected[check.questionIndex]?.options.length)
+          : null;
         const { completeUniqueQuestionSet, orderedPathMatchesPinnedClient } =
           auditReadOnlyQuestionOrder(questionIds, expectedIds);
         const orderSha256 = createHash('sha256').update(questionIds.join('\n')).digest('hex');
@@ -424,7 +425,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
           allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
             mismatchCount.question === 0 && mismatchCount.ambiguous === 0 &&
-            (!backtrack || backtrackValidated) && allOptionsValidated,
+            (!backtrack || backtrackValidated) && (!allOptions || allOptionsValidated),
           completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
           choiceStrategy: allOptions ? 'all' : choiceStrategy,
           backtrackAttempted: backtrack,
