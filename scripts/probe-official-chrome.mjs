@@ -209,6 +209,14 @@ export function auditReadOnlyQuestionOrder(observedIds, expectedIds) {
   };
 }
 
+/** Guard the two-step, local-only back-and-rechoose experiment. No score claim. */
+export function auditReadOnlyBacktrack({ firstId, revisitedFirstId, nextId, revisitedNextId } = {}, expectedIds) {
+  return Array.isArray(expectedIds) && expectedIds.length > 1 &&
+    typeof firstId === 'string' && typeof nextId === 'string' &&
+    firstId !== nextId && firstId === expectedIds[0] && nextId === expectedIds[1] &&
+    revisitedFirstId === firstId && revisitedNextId === nextId;
+}
+
 export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
   if (!Number.isInteger(optionCount) || optionCount < 1 ||
       !['first', 'last'].includes(strategy)) {
@@ -218,7 +226,7 @@ export function readOnlyPathChoiceIndex(optionCount, strategy = 'first') {
 }
 
 /** One complete visible path per season; the last answer is NEVER selected. */
-export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
+export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = false } = {}) {
   readOnlyPathChoiceIndex(1, choiceStrategy);
   const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -262,6 +270,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
       const page = await context.newPage();
       const questionIds = [];
       const mismatchCount = { question: 0, ambiguous: 0 };
+      let backtrackValidated = false;
       try {
         const response = await page.goto(`${ORIGIN}/season/${season}/test`, {
           waitUntil: 'domcontentloaded', timeout: 20000,
@@ -302,6 +311,50 @@ export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
           await page.waitForFunction(previousHeading =>
             (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
           dom.headingText, { timeout: 5000 });
+          if (backtrack && index === 0) {
+            // Exercise a real first-question back/edit path without completing a
+            // survey. Fail closed on the pinned source identity and options.
+            const readVisibleQuestion = () => page.evaluate(() => ({
+              headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
+              optionLabels: [...document.querySelectorAll('.question button')]
+                .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0)
+                .map(button => button.querySelector('span')?.textContent ?? ''),
+            }));
+            const secondBefore = await readVisibleQuestion();
+            const secondMapping = exactVisibleOptionLabelMapping(secondBefore, expected);
+            if (secondMapping?.sourceId !== expected[1]?.id ||
+                await page.locator('.question button.back:visible').count() !== 1) {
+              throw new Error('BACKTRACK_SECOND_QUESTION_DRIFT');
+            }
+            await page.locator('.question button.back:visible').click();
+            await page.waitForFunction(heading =>
+              document.querySelector('.question h1')?.textContent?.trim() === heading,
+            dom.headingText, { timeout: 5000 });
+            const firstAgain = await readVisibleQuestion();
+            const restored = exactVisibleOptionLabelMapping(firstAgain, expected);
+            if (restored?.sourceId !== mapping.sourceId || firstAgain.optionLabels.length < 2) {
+              throw new Error('BACKTRACK_FIRST_QUESTION_DRIFT');
+            }
+            // Select a different visible button; never infer any server raw
+            // values from its displayed index. Outgoing requests stay blocked.
+            const oppositeIndex = choiceIndex === 0 ? firstAgain.optionLabels.length - 1 : 0;
+            await page.evaluate(buttonIndex => {
+              const choices = [...document.querySelectorAll('.question button')]
+                .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0);
+              if (!choices[buttonIndex]) throw new Error('BACKTRACK_ALTERNATE_MISSING');
+              choices[buttonIndex].click();
+            }, oppositeIndex);
+            await page.waitForFunction(heading =>
+              (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== heading,
+            firstAgain.headingText, { timeout: 5000 });
+            const secondAfter = await readVisibleQuestion();
+            const reentered = exactVisibleOptionLabelMapping(secondAfter, expected);
+            backtrackValidated = auditReadOnlyBacktrack({
+              firstId: mapping.sourceId, revisitedFirstId: restored.sourceId,
+              nextId: secondMapping.sourceId, revisitedNextId: reentered?.sourceId,
+            }, expected.map(q => q.id));
+            if (!backtrackValidated) throw new Error('BACKTRACK_NEXT_QUESTION_DRIFT');
+          }
         }
         const expectedIds = expected.map(question => question.id);
         const { completeUniqueQuestionSet, orderedPathMatchesPinnedClient } =
@@ -312,9 +365,10 @@ export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
           sourceAssetPinned: liveAsset === ASSET_PATH,
           expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
           allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
-            mismatchCount.question === 0 && mismatchCount.ambiguous === 0,
+            mismatchCount.question === 0 && mismatchCount.ambiguous === 0 && (!backtrack || backtrackValidated),
           completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
-          choiceStrategy, orderedSourceIdsSha256: orderSha256,
+          choiceStrategy, backtrackAttempted: backtrack, backtrackValidated,
+          orderedSourceIdsSha256: orderSha256,
           mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
           attemptedNonGetRequests: network.attemptedNonGetRequests,
           blockedRequestsAfterStart: network.deniedAfterStart,
@@ -333,7 +387,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
       method: 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; last answer not selected',
-      choiceStrategy,
+      choiceStrategy, backtrackAttempted: backtrack,
       findings,
     }, null, 2));
   } finally {
@@ -344,12 +398,14 @@ export async function probePathReadOnly({ choiceStrategy = 'first' } = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const mode = process.argv[2];
   if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly',
-    '--live-path-last-option-readonly'].includes(mode)) {
-    console.error('Explicit --live-readonly, --live-path-readonly or --live-path-last-option-readonly required; no automatic official-site requests.');
+    '--live-path-last-option-readonly', '--live-path-backtrack-readonly'].includes(mode)) {
+    console.error('Explicit read-only probe mode required; no automatic official-site requests.');
     process.exitCode = 2;
-  } else if (mode === '--live-path-readonly' || mode === '--live-path-last-option-readonly') {
+  } else if (mode === '--live-path-readonly' || mode === '--live-path-last-option-readonly' ||
+    mode === '--live-path-backtrack-readonly') {
     const choiceStrategy = mode === '--live-path-last-option-readonly' ? 'last' : 'first';
-    probePathReadOnly({ choiceStrategy }).catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
+    probePathReadOnly({ choiceStrategy, backtrack: mode === '--live-path-backtrack-readonly' })
+      .catch(error => { console.error(`${error.name}: ${String(error.message).slice(0, 180)}`); process.exitCode = 1; });
   } else {
     probe().catch(error => { console.error(error.name); process.exitCode = 1; });
   }
