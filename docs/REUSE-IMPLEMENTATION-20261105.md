@@ -143,3 +143,37 @@ The research-only command `node scripts/probe-bilingual-visual-readonly.mjs --li
 - Six synthetic desktop/mobile browser tests at `e2e/official-bilingual-visual-probe.spec.mjs` pass, including source drift, reversed option labels, intentionally blank Korean scale labels, unchanged button click behavior and cleanup.
 
 **Evidence boundary:** This demonstrates *temporary display feasibility*, not verified live raw option values, server-received answers, official scoring parity, production browser compatibility or translation quality. Independent human Korean/Chinese review remains **0/124**. No installable official-site overlay may be published until explicit permission scope, bilingual review, consent/disclosure and interaction drift guards are met. Keep the independent Astro site as the mobile-friendly primary path.
+
+## Label-present click, Back, and re-render on the pinned official client (2026-11-09, SGT)
+
+The original visual probe removed the Chinese labels **before** clicking each
+source answer, so a successful 248-state display check did not verify that a
+visitor could interact while the assistance was visible. The separate, explicit
+research mode (scripts/probe-bilingual-visual-readonly.mjs --live-interaction-readonly)
+addresses this smaller question without releasing any userscript:
+
+- Four independent anonymous headless Chrome contexts (S1/S2 × **1440×900**
+  / **440×956**) identify the exact pinned Korean first question and ordered
+  source option labels; source asset and live script path are checked before
+  any local Start or answer interaction.
+- Inert Chinese AI-draft **sibling** labels are inserted, then an original
+  **non-final** host answer is clicked while labels remain visible. The probe
+  verifies the browser-local source ID/raw value, cleans every label, and
+  observes the exact second question. The host Back control returns to the
+  identical first question/option order; the probe repeats with the **other
+  end** option, verifies the second question and updated raw value. Unexpected
+  source identity, changed original controls, missing labels at click,
+  unexpected stored value, or residual labels fails closed.
+- Observed **8/8** bilingual non-final host clicks, **4/4** return/re-entry
+  cycles, **8/8** browser-local source-value checks and **32/32** transient
+  Chinese labels rendered/removed. **0** non-GET/HEAD requests, **0** result
+  API calls, **0** completed answers submitted. Mobile/desktop synthetic
+  regressions passed **10/10**, including missing non-final proof, invalid
+  indices, changed choice, and source-label drift.
+- The experiment covers the **first→second→back→changed first→second** path
+  only; it does not validate the remaining question positions, last-question
+  submission, arbitrary event interleavings, official server receipt,
+  full answer persistence, or scoring. The Chinese remains an **unreviewed AI
+  draft** and is removed immediately, so this is **not** a visitor-facing
+  official-site translation tool. The independent Astro site remains primary.
+  Human review remains **0/124** and score parity is **UNKNOWN**.

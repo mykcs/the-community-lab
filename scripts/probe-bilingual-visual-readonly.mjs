@@ -14,6 +14,7 @@ import {
   assertPinnedLiveSourceAsset,
   exactVisibleOptionLabelMapping,
   safeReadOnlyProbeFailure,
+  auditReadOnlyStoredRawChoice,
 } from './probe-official-chrome.mjs';
 
 const ORIGIN = 'https://thecommunity.co.kr';
@@ -56,6 +57,15 @@ export function inspectTemporaryBilingualVisual(candidate) {
       candidate.exactKoreanOptionLabels.length !== candidate.draftChineseOptionLabels.length) {
     return fail('BLOCKED_INCOMPLETE_DRAFT');
   }
+  // Only the separate pinned, non-final research caller may request a click.
+  // No click occurs if the supplied identity or any visual gate fails.
+  const clickRequested = Object.hasOwn(candidate, 'clickWhileRenderedIndex');
+  if (clickRequested && (candidate.nonFinalSourcePositionVerified !== true ||
+      !Number.isInteger(candidate.clickWhileRenderedIndex) ||
+      candidate.clickWhileRenderedIndex < 0 ||
+      candidate.clickWhileRenderedIndex >= candidate.exactKoreanOptionLabels.length)) {
+    return fail('BLOCKED_UNSAFE_INTERACTION');
+  }
   const heading = document.querySelector('.question h1');
   const buttons = [...document.querySelectorAll('.question button')]
     .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0);
@@ -70,6 +80,7 @@ export function inspectTemporaryBilingualVisual(candidate) {
   const originalButtons = buttons.map(button => button.outerHTML);
   const labels = [];
   let result = fail('BLOCKED_RENDER');
+  let clickedWithLabels = false;
   try {
     const append = (source, chinese) => {
       const span = document.createElement('span');
@@ -97,18 +108,129 @@ export function inspectTemporaryBilingualVisual(candidate) {
       originalControlsUnchanged,
       overflowPx,
     };
+    if (clickRequested && result.passed) {
+      // The official button's own handler sees the visible Chinese siblings.
+      // Never rewrite its original label, input value or listener.
+      clickedWithLabels = labels.every(label => label.isConnected) &&
+        heading.outerHTML === originalHeading &&
+        buttons.every((button, index) => button.outerHTML === originalButtons[index]);
+      if (!clickedWithLabels) throw new Error('BLOCKED_LABELS_NOT_VISIBLE_AT_CLICK');
+      buttons[candidate.clickWhileRenderedIndex].click();
+    }
   } finally {
     for (const label of labels) label.remove();
   }
   return {
     ...result,
+    clickTriggeredWithLabels: clickedWithLabels,
+    // When a real host click re-renders its own controls, their markup is
+    // expected to change. The research labels must still leave no residue.
     cleanupComplete: document.querySelectorAll('[data-temporary-bilingual-visual-probe]').length === 0 &&
-      heading.outerHTML === originalHeading &&
-      buttons.every((button, index) => button.outerHTML === originalButtons[index]),
+      (clickRequested || (heading.outerHTML === originalHeading &&
+        buttons.every((button, index) => button.outerHTML === originalButtons[index]))),
   };
 }
 
-async function observe() {
+async function readVisibleQuestion(page) {
+  return page.evaluate(() => ({
+    headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
+    optionLabels: [...document.querySelectorAll('.question button')]
+      .filter(button => !button.classList.contains('back') && button.getClientRects().length > 0)
+      .map(button => button.querySelector('span')?.textContent ?? ''),
+  }));
+}
+
+/** The host's transient local answer map only; never log its raw contents. */
+async function verifyAnonymousBrowserLocalValue(page, sourceId, rawValue) {
+  for (let attempt = 0; attempt < 8; attempt++) {
+    const candidates = await page.evaluate(id => {
+      const found = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        try {
+          const value = JSON.parse(localStorage.getItem(localStorage.key(i)));
+          if (value && typeof value === 'object' && !Array.isArray(value) &&
+              Object.hasOwn(value, id)) found.push(value[id]);
+        } catch { /* Unrelated browser-local keys need not contain JSON. */ }
+      }
+      return found;
+    }, sourceId);
+    if (auditReadOnlyStoredRawChoice(candidates, rawValue)) return true;
+    await new Promise(resolve => setTimeout(resolve, 40));
+  }
+  return false;
+}
+
+/** Bounded first→second→back→different-choice→second test, never last answer. */
+async function observeLabelledClickBack(page, expected, network, season, viewport) {
+  if (expected.length < 3) throw new Error('BLOCKED_UNSAFE_QUESTION_COUNT');
+  const first = await readVisibleQuestion(page);
+  const candidate = makeTemporaryBilingualCandidate(first, expected);
+  if (!candidate || !first.headingText.endsWith(expected[0].sourceKo)) {
+    throw new Error('BLOCKED_SOURCE_TEXT_IDENTITY');
+  }
+  const click = async choiceIndex => {
+    const checked = await readVisibleQuestion(page);
+    if (checked.headingText !== first.headingText ||
+        JSON.stringify(checked.optionLabels) !== JSON.stringify(first.optionLabels)) {
+      throw new Error('BLOCKED_RETURNED_QUESTION_DRIFT');
+    }
+    const result = await page.evaluate(inspectTemporaryBilingualVisual, {
+      ...candidate, nonFinalSourcePositionVerified: true,
+      clickWhileRenderedIndex: choiceIndex,
+    });
+    if (!result.passed || !result.clickTriggeredWithLabels || !result.cleanupComplete) {
+      throw new Error('BLOCKED_LABELLED_CLICK_OR_CLEANUP');
+    }
+    await page.waitForFunction(previous =>
+      (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previous,
+    first.headingText, { timeout: 5000 });
+    if (!await verifyAnonymousBrowserLocalValue(page, expected[0].id,
+      expected[0].options[choiceIndex].value)) {
+      throw new Error('BLOCKED_BROWSER_LOCAL_RAW_VALUE');
+    }
+    const next = await readVisibleQuestion(page);
+    if (!makeTemporaryBilingualCandidate(next, [expected[1]]) ||
+        !next.headingText.endsWith(expected[1].sourceKo)) {
+      throw new Error('BLOCKED_NEXT_QUESTION_IDENTITY');
+    }
+    return { result, next };
+  };
+
+  const firstClick = await click(0);
+  if (await page.locator('.question button.back:visible').count() !== 1) {
+    throw new Error('BLOCKED_BACK_CONTROL_IDENTITY');
+  }
+  await page.locator('.question button.back:visible').click();
+  await page.waitForFunction(previous =>
+    (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previous,
+  firstClick.next.headingText, { timeout: 5000 });
+  const returned = await readVisibleQuestion(page);
+  if (returned.headingText !== first.headingText ||
+      JSON.stringify(returned.optionLabels) !== JSON.stringify(first.optionLabels)) {
+    throw new Error('BLOCKED_BACK_RESTORE_DRIFT');
+  }
+
+  const changedClick = await click(first.optionLabels.length - 1);
+  if (changedClick.next.headingText !== firstClick.next.headingText ||
+      JSON.stringify(changedClick.next.optionLabels) !== JSON.stringify(firstClick.next.optionLabels) ||
+      network.nonGetRequests || network.resultRequests) {
+    throw new Error('BLOCKED_REENTER_OR_NETWORK');
+  }
+  return {
+    season, viewport: viewport.width + 'x' + viewport.height,
+    verifiedBilingualNonFinalClicks: 2,
+    verifiedBackAndReentry: 1,
+    verifiedBrowserLocalRawValues: 2,
+    inertChineseLabelsRenderedAndRemoved:
+      firstClick.result.labelsRendered + changedClick.result.labelsRendered,
+    originalHostControlMarkupUnchangedAtClick: true,
+    zeroResidualChineseLabels: true,
+    nonGetRequests: network.nonGetRequests, resultRequests: network.resultRequests,
+    finalAnswerSubmitted: false, status: 'RESEARCH_ONLY_NOT_OFFICIAL_EQUIVALENCE',
+  };
+}
+
+async function observe({ interaction = false } = {}) {
   const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   try {
@@ -154,6 +276,10 @@ async function observe() {
           await page.locator('button').first().click({ timeout: 5000 });
           await page.locator('.question h1').first().waitFor({ timeout: 5000 });
           const expected = pack.seasons[season];
+          if (interaction) {
+            observations.push(await observeLabelledClickBack(page, expected, network, season, viewport));
+            continue;
+          }
           for (let index = 0; index < expected.length; index++) {
             const observed = await page.evaluate(() => ({
               headingText: document.querySelector('.question h1')?.textContent?.trim() ?? '',
@@ -205,7 +331,8 @@ async function observe() {
       }
     }
     console.log(JSON.stringify({
-      mode: 'temporary-headless-Chrome-visual-only',
+      mode: interaction ? 'pinned-client-temporary-label-click-back-reentry' :
+        'temporary-headless-Chrome-visual-only',
       pinnedSourceSha256: SHA256,
       translationStatus: 'AI_DRAFT_UNREVIEWED',
       publishedOfficialSiteUserscript: false,
@@ -218,11 +345,12 @@ async function observe() {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  if (!process.argv.includes('--live-readonly')) {
-    console.error('Explicit --live-readonly required; no official requests sent');
+  const interaction = process.argv.includes('--live-interaction-readonly');
+  if (!process.argv.includes('--live-readonly') && !interaction) {
+    console.error('Explicit --live-readonly or --live-interaction-readonly required; no official requests sent');
     process.exitCode = 1;
   } else {
-    observe().catch(() => {
+    observe({ interaction }).catch(() => {
       console.error('Research-only bilingual visual observation failed; no official result submitted');
       process.exitCode = 1;
     });
