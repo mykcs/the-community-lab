@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
   auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
   auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack,
-  safeReadOnlyProbeFailure } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyStoredRawChoice, safeReadOnlyProbeFailure } from '../scripts/probe-official-chrome.mjs';
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
@@ -220,4 +220,18 @@ test('both official read-only probe modes never include untrusted exception deta
   const source = readFileSync(new URL('../scripts/probe-official-chrome.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /errorMessage:\s*|errorName:\s*error\.name|String\(error\.message\)/);
   assert.equal((source.match(/\.\.\.safeReadOnlyProbeFailure\(error\)/g) || []).length, 2);
+});
+
+test('live read-only raw-value evidence requires exactly one exact local source-value binding', () => {
+  // Only synthetic values: no official results, user answers or localStorage content.
+  assert.equal(auditReadOnlyStoredRawChoice(['O'], 'O'), true);
+  assert.equal(auditReadOnlyStoredRawChoice([6], 6), true);
+  assert.equal(auditReadOnlyStoredRawChoice([], 'O'), false);
+  assert.equal(auditReadOnlyStoredRawChoice(['X'], 'O'), false);
+  assert.equal(auditReadOnlyStoredRawChoice(['O', 'O'], 'O'), false);
+  assert.equal(auditReadOnlyStoredRawChoice(['6'], 6), false);
+  assert.equal(auditReadOnlyStoredRawChoice([6], '6'), false);
+  assert.equal(auditReadOnlyStoredRawChoice(null, 'O'), false);
+  assert.equal(auditReadOnlyStoredRawChoice(['O'], null), false);
+  assert.equal(auditReadOnlyStoredRawChoice([null], null), false);
 });
