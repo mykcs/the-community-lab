@@ -156,11 +156,14 @@ test('test-only candidate can match recorded cases but NEVER prove general offic
   ]));
   const result = await compareCandidateAgainstRecordedOfficialPairs(input =>
     outputsByInput.get(JSON.stringify(input.selections)), stableObservations);
-  assert.equal(result.status, 'RECORDED_SAMPLE_MATCH_ONLY');
+  assert.equal(result.status, 'RECORDED_NUMERIC_SAMPLE_MATCH_DISPLAY_UNVERIFIED');
   assert.equal(result.comparedPairs, 4);
-  assert.equal(result.allRecordedPairsMatch, true);
+  assert.equal(result.allRecordedNumericFieldsMatch, true);
+  assert.equal(result.allRecordedPairsMatch, false);
   assert.equal(result.officialAlgorithmVerified, false);
-  assert.ok(result.cases.every(row => row.matches));
+  assert.ok(result.cases.every(row => !row.matches && row.numericMatches &&
+    row.displayStatus === 'NOT_PROVIDED' &&
+    row.mismatches.join() === 'officialDisplay.notProvided'));
   assert.deepEqual(result.cases.map(row => row.publicResultId), fixtures.map(row => row.publicResultId));
 
   const wrong = await compareCandidateAgainstRecordedOfficialPairs(() => fixtures[0].expectedOutput, stableObservations);
@@ -182,4 +185,38 @@ test('candidate exceptions fail closed and cannot leak exception messages into a
   await assert.rejects(compareCandidateAgainstRecordedOfficialPairs({}, stableObservations), TypeError);
   const source = readFileSync(new URL('../lib/official-score-parity.mjs', import.meta.url), 'utf8');
   assert.doesNotMatch(source, /\b(fetch|XMLHttpRequest|sendBeacon)\s*\(|api\/v1\/results/);
+});
+
+test('forged source display text cannot pass full official-result acceptance even with exact score fields', async () => {
+  const fakeText = 'synthetic-false-official-title-no-personal-data';
+  const resultsByInput = new Map(fixtures.map(fixture => [
+    JSON.stringify(fixture.input.selections), fixture.expectedOutput,
+  ]));
+  const result = await compareCandidateAgainstRecordedOfficialPairs(input => {
+    const original = resultsByInput.get(JSON.stringify(input.selections));
+    return {
+      ...original,
+      // A Chinese result title may differ; only an explicitly declared
+      // Korean-source claim is compared against the recorded Korean digests.
+      title: '合成中文标题，不作为韩文来源指纹',
+      summary: '合成中文解释，未经过独立双语审校',
+      sourceKoreanDisplay: {
+        title: fakeText,
+        summary: fakeText,
+        axes: original.axes.map(axis => ({
+          id: axis.id,
+          leftLabel: axis.id.split('-')[0],
+          rightLabel: axis.id.split('-')[1],
+        })),
+      },
+    };
+  }, stableObservations);
+  assert.equal(result.status, 'RECORDED_SAMPLE_MISMATCH');
+  assert.equal(result.allRecordedNumericFieldsMatch, true);
+  assert.equal(result.allRecordedPairsMatch, false);
+  assert.ok(result.cases.every(row => row.numericMatches && !row.matches &&
+    row.displayStatus === 'MISMATCH' &&
+    row.mismatches.includes('title.sha256') &&
+    row.mismatches.includes('summary.sha256')));
+  assert.doesNotMatch(JSON.stringify(result), /synthetic-false-official-title-no-personal-data/);
 });
