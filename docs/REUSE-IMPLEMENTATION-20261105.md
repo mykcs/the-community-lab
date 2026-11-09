@@ -130,3 +130,16 @@ A new explicit `node scripts/probe-official-chrome.mjs --live-path-local-values-
 ## Deliberately excluded
 
 No new copyrighted questions, fabricated official site selectors, copied guest scores, third-party-site changes, installable live-site userscript, OAuth, account storage, real participant answers or API credentials.
+
+
+## Isolated official-DOM bilingual visual feasibility (2026-11-09, SGT)
+
+The research-only command `node scripts/probe-bilingual-visual-readonly.mjs --live-readonly` tests transient Korean-first/Chinese-after labels on the **real** version-pinned official page, without changing any source button or submitting a completed answer. It is not a public userscript, extension, installation guide, scoring adapter or Astro production asset.
+
+- Current client: 331,501 bytes, SHA-256 `59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e`.
+- Isolated anonymous headless Chrome at **1440×900 and 440×956** matched S1 **87/87** and S2 **37/37** visible questions and ordered Korean option labels in **each** viewport: **248/248 display states**, not 248 independently translated questions.
+- **1,348** inert sibling Chinese labels were temporarily rendered and then removed. All checked states retained the original Korean text, original heading/button markup, Korean-first/Chinese-after order, complete cleanup and no horizontal overflow. The final answer was never selected.
+- All post-start navigation was network-frozen: **0 non-GET/HEAD requests, 0 result API calls, 0 submitted complete answers**. The report contains no source prose, answers, nickname, cookies or private identifiers.
+- Six synthetic desktop/mobile browser tests at `e2e/official-bilingual-visual-probe.spec.mjs` pass, including source drift, reversed option labels, intentionally blank Korean scale labels, unchanged button click behavior and cleanup.
+
+**Evidence boundary:** This demonstrates *temporary display feasibility*, not verified live raw option values, server-received answers, official scoring parity, production browser compatibility or translation quality. Independent human Korean/Chinese review remains **0/124**. No installable official-site overlay may be published until explicit permission scope, bilingual review, consent/disclosure and interaction drift guards are met. Keep the independent Astro site as the mobile-friendly primary path.
