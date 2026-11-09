@@ -18,6 +18,12 @@ const corrections = {
     version: 'draft-0.1.2', oldVersion: 'draft-0.1.1',
     note: /先后关系/,
   },
+  ms05: {
+    ko: '내가 정말 싫어하는 종류의 사람이라면 나의 직업적 성과에 큰 도움이 되어도 사적으로 친밀한 관계를 갖지 않겠다.',
+    zh: '如果对方是我非常讨厌的那类人，即使对我的工作成果很有帮助，我也不会在私下与其深交。',
+    version: 'draft-0.1.2', oldVersion: 'draft-0.1.1',
+    note: /亲密关系.*恋爱.*深交.*仍待独立韩中人工复核/,
+  },
   ms07: {
     ko: '내 자식에게는 영리하게 돈 버는 법보다 양심에 따라 사는 법을 먼저 가르치겠다.',
     zh: '比起教我的孩子如何精明地赚钱，我会先教孩子如何凭良心生活。',
@@ -26,7 +32,7 @@ const corrections = {
   },
 };
 
-test('two S2 AI wording corrections keep the same Korean sources, O/X values and unpublished review status', () => {
+test('S2 AI wording corrections keep the same Korean sources, O/X values and unpublished review status', () => {
   const drafts = pages.map(path => extractDraftPack(readFileSync(path, 'utf8')));
   for (const [id, expected] of Object.entries(corrections)) {
     const rows = drafts.map(draft => {
@@ -49,6 +55,8 @@ test('two S2 AI wording corrections keep the same Korean sources, O/X values and
   assert.doesNotMatch(corrections.ms07.zh, /他们|她们/);
   assert.match(corrections.ms07.zh, /我的孩子/);
   assert.match(corrections.ms07.zh, /先教/);
+  assert.doesNotMatch(corrections.ms05.zh, /亲密关系/);
+  assert.match(corrections.ms05.zh, /私下与其深交/);
   const pack = loadFullQuestionnaire();
   for (const [id, expected] of Object.entries(corrections)) {
     assert.equal(pack.seasons[2].find(q => q.id === id)?.draftZh, expected.zh);
@@ -57,7 +65,7 @@ test('two S2 AI wording corrections keep the same Korean sources, O/X values and
   assert.equal(verifyKoreanSourceSnapshot(pack), true);
 });
 
-test('S2 prior-version local answer records retain raw O/X and require confirmation after both corrections', () => {
+test('S2 prior-version local answer records retain raw O/X and require confirmation after S2 corrections', () => {
   const pack = loadFullQuestionnaire();
   const questions = pack.seasons[2];
   for (const [id, expected] of Object.entries(corrections)) {
