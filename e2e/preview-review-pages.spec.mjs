@@ -14,6 +14,10 @@ for (const route of ['translation-review', 'original-question-translation-review
     const response = await page.goto(`/the-community-lab/${route}/`);
     expect(response?.status()).toBe(200);
     await expect(page.locator('#embedded-data')).toHaveCount(1);
+    const rightsNotice = page.locator('.notice').first();
+    await expect(rightsNotice).toContainText('用户确认已获第一、二季当前公开材料的非营利中文翻译与转载授权');
+    await expect(rightsNotice).toContainText('许可期限未说明');
+    await expect(rightsNotice).not.toContainText('且无期限');
     await expect(page.getByLabel('筛选季别')).toHaveValue('all');
     await expect(page.locator('#count')).toContainText('124');
     await page.getByLabel('筛选季别').selectOption('2');
