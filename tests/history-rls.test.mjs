@@ -113,6 +113,11 @@ test('PG_RULES_WITH_SYNTHETIC_AUTH: canonical migration enforces private history
         command: 'SELECT community_private.purge_expired_history();' }]);
       const definition = (await pg.query("SELECT pg_get_functiondef('community_private.purge_expired_history()'::regprocedure) AS sql")).rows[0].sql;
       assert.match(definition, /created_at\s*<=\s*pg_catalog\.now\(\)\s*-\s*interval '90 days'/i);
+      const retentionIndexes = (await pg.query(`SELECT indexname FROM pg_indexes
+        WHERE schemaname='public' AND tablename='test_runs'
+          AND indexname IN ('test_runs_created_at_retention', 'test_runs_retention_created')
+        ORDER BY indexname`)).rows;
+      assert.deepEqual(retentionIndexes, [{ indexname: 'test_runs_created_at_retention' }]);
 
       const insertAsOwner = actor => asActor(pg, 'authenticated', actor, async () => (await insertHistory(pg, payload())).rows[0].id);
       const expiredId = await insertAsOwner(ACTORS.a);

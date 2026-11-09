@@ -133,6 +133,7 @@ export async function createHistoryDatabase({
       const initialMigration = await readFile(new URL('../supabase/migrations/202610290001_private_history.sql', import.meta.url), 'utf8');
       const retentionMigration = await readFile(new URL('../supabase/migrations/202611050001_history_retention.sql', import.meta.url), 'utf8');
       const upgradeMigration = await readFile(new URL('../supabase/migrations/202611060001_history_retention_schedule_upgrade.sql', import.meta.url), 'utf8');
+      const indexDedupMigration = await readFile(new URL('../supabase/migrations/202611080001_history_retention_index_dedup.sql', import.meta.url), 'utf8');
       await pg.exec(initialMigration);
       if (cronEnabled) {
         await setSyntheticCronState(pg, preRetentionCronState);
@@ -140,6 +141,7 @@ export async function createHistoryDatabase({
       await pg.exec(retentionMigration);
       if (cronEnabled) await setSyntheticCronState(pg, preUpgradeCronState);
       await pg.exec(upgradeMigration);
+      await pg.exec(indexDedupMigration);
     }
     return { pg, qualification, evidenceScope: EVIDENCE_SCOPE };
   } catch (error) {
