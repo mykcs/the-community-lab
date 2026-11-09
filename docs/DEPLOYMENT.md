@@ -1,6 +1,16 @@
 # 部署与持续集成 · 2026-10-29 起
 
-## 2026-11-08 18:18 UTC · 当前 GitHub Pages 正式发布快照
+## 2026-11-09 00:49 UTC · 当前 GitHub Pages 发布状态（2026-11-08 PT）
+
+- GitHub `main` 与正式 Pages 的 `/release-commit.txt` 均为 `b6979595595d587a56f158085365ca9b7d4c948b`。前者通过 GitHub 元数据读回，后者通过正式站 HTTP GET 读回。
+- 首页、S1 问卷和 S2 问卷路由均返回 HTTP 200；三个页面的 `Last-Modified` 均为 2026-11-09 00:07:40 UTC。当前 Pages 仍是正式发布源。
+- Vercel 最新 production 快照仍指向旧 main `0a06e6b8154cba367a0bcb1f418509fdcf7577ae`，没有当前 main 的自动更新证据；Vercel 保留作静态回退，不是当前正式发布源。
+- PR #11 仍是 Draft，网站登录和云端历史保存保持关闭。2026-11-08 PT 的 Supabase 后台只读读回显示 GitHub Provider 与新用户注册均关闭；详见 [PR #11 实时 Provider 读回](https://github.com/mykcs/the-community-lab/pull/11#issuecomment-6729568692)。
+- 该发布状态核验不证明原题许可、独立韩中人工翻译复核、官方计分等价或真实嘉宾匹配资格；这些门槛仍按 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1) 与 [Issue #2](https://github.com/mykcs/the-community-lab/issues/2) 记录。
+
+
+
+## 2026-11-08 18:18 UTC · 历史 Pages 发布快照（后续状态见顶部）
 
 - GitHub `main` 与 Pages [`/release-commit.txt`](https://mykcs.github.io/the-community-lab/release-commit.txt) 均为 `72f53085df6510b238c36d78f3fcf3c72b1e768f`。main ref 与发布标记分别通过 GitHub API 和正式站 HTTP GET 读回；该版本由 PR #367 合并产生。
 - 在此发布版本上，用隔离的 440×956 Playwright 上下文走完 S1 87/87 和 S2 37/37，并进入本站本机完成页；两季均 HTTP 200、无横向溢出、页面错误 0、非 GET/HEAD 请求 0。未下载答案、未向原站提交；记录见 [Issue #1](https://github.com/mykcs/the-community-lab/issues/1#issuecomment-6725249068)。
