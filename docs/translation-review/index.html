@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-tJf+dieOapk5qjg7gLZ0R/dVjBhLrGUKiP8JkVOsYFU=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-0/Cdk1yzGJu7B1xvHSbEFdD+QrliDk+vlKz1Jo7jL+Y=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -24,6 +24,11 @@
 .scale-grid p{margin:8px 0;font-size:13px}
 .scale-grid .scale-ko{font-weight:650;font-size:15px}
 .scale-grid button{font-size:13px;min-height:44px;padding:9px 12px}
+.scale-grid .scale-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.scale-active-filter{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:12px;padding:12px;border:1px solid var(--line);background:var(--paper);border-radius:10px;font-size:14px;overflow-wrap:anywhere}
+.scale-active-filter[hidden]{display:none}
+.scale-active-filter button{min-height:44px}
+.scale-active-filter button:focus-visible{outline:3px solid #214f92;outline-offset:3px}
 </style>
 </head>
 <body>
@@ -34,7 +39,8 @@
 <p class="source">来源资源 SHA-256：<code>59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e</code> · 当前核对版本 · 源题数量 87 + 37</p>
 <p class="source">此页不会上传审校内容。修改和标记仅保存在你当前浏览器的本地存储；可导出或重新导入同一来源版本的 JSON，导入前需确认覆盖本机草稿。此 Pages 页面公开可访问，请勿在备注中写入私人信息。</p>
 <div class="toolbar"><input id="search" aria-label="搜索题号、韩中题干或答案选项" type="search" placeholder="搜索题号、韩中题干或答案选项"><select id="season" aria-label="筛选季别"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group" aria-label="筛选题组维度"><option value="all">全部维度</option></select><select id="reviewFilter" aria-label="筛选复核状态"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="import" type="button">导入审校 JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="secondary" id="compare" type="button">对照两份审校 JSON</button><input id="compare-files" type="file" accept=".json,application/json" multiple hidden><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
-<details id="scale-review" class="scale-review"><summary id="scale-review-summary">核对重复量表标签（待计算）</summary><p class="scale-note">同一种韩文选项可能在许多题目中反复出现。这里按季别、量表长度、原始选项值与韩文原文合并展示基线中文 AI 初译，方便双语审校者先检查通用用词；点击“查看代表题”可在下方检查具体语境。列表不会写入或同步修改任何题目，也不代表已完成人工审核。每道题的答案绑定与语义仍必须逐题核验。</p><ol id="scale-review-list" class="scale-grid" aria-label="重复原始量表选项与中文 AI 初译汇总"></ol><p class="scale-note" id="scale-review-blank-note"></p></details>
+<details id="scale-review" class="scale-review"><summary id="scale-review-summary" tabindex="-1">核对重复量表标签（待计算）</summary><p class="scale-note">同一种韩文选项可能在许多题目中反复出现。这里按季别、量表长度、原始选项值与韩文原文合并展示基线中文 AI 初译，方便双语审校者先检查通用用词；点击“查看代表题”可在下方检查具体语境。列表不会写入或同步修改任何题目，也不代表已完成人工审核。每道题的答案绑定与语义仍必须逐题核验。</p><ol id="scale-review-list" class="scale-grid" aria-label="重复原始量表选项与中文 AI 初译汇总"></ol><p class="scale-note" id="scale-review-blank-note"></p></details>
+<div id="scale-active-filter" class="scale-active-filter" hidden><span id="scale-active-caption" role="status" aria-live="polite"></span><button id="clear-scale-filter" class="secondary" type="button">退出此组筛选 · 查看全部题</button></div>
 </header>
 <section class="wrap comparison" id="comparison" hidden></section>
 <main class="wrap" id="list"></main>
@@ -53,6 +59,9 @@ let lastPersistedDraftRaw=null,otherTabModified=false;
 // A slow local file must never replace edits made AFTER it was selected,
 // or an import selected more recently. This is independent of tab storage CAS.
 let reviewMutationRevision=0,latestReviewImportRequest=0;
+// This is a transient reviewer-view filter only. Do not save, upload,
+// auto-approve, or propagate edits across questions sharing a scale.
+let activeScaleIdentity=null,activeScaleCaption='';
 try{
  const raw=localStorage.getItem(key);
  const restored=JSON.parse(raw||'{}');
@@ -143,7 +152,7 @@ function renderRepeatedScaleReview(){
   const identity=JSON.stringify([q.season,q.options.length,o.value,o.ko]);
   if(!rows.has(identity))rows.set(identity,{
    season:q.season,scale:q.options.length,value:o.value,ko:o.ko,
-   translations:new Set(),count:0,representativeId:q.id,
+   translations:new Set(),count:0,representativeId:q.id,identity,
   });
   const row=rows.get(identity);row.count++;row.translations.add(o.zh_cn);
  }
@@ -160,15 +169,26 @@ function renderRepeatedScaleReview(){
   const zh=[...row.translations];
   item.append(node('p','',`中文 AI 初译：${zh.join(' / ')}${zh.length>1?'（⚠ 同源标签草稿不一致）':''}`),
    node('p','scale-note',`题内出现 ${row.count} 次 · 未经独立韩中人工审核`));
+  const actions=node('div','scale-actions');
   const open=node('button','','查看代表题 '+row.representativeId);open.type='button';
   open.addEventListener('click',()=>{
+   activeScaleIdentity=null;activeScaleCaption='';
    search.value=row.representativeId;
    season.value='all';group.value='all';reviewFilter.value='all';
    render();
    const field=listQuestionEditor();
    if(field){field.scrollIntoView({block:'center'});field.focus({preventScroll:true});}
   });
-  item.append(open);list.append(item);
+  const inspectAll=node('button','','逐题核对本组全部 '+row.count+' 处');inspectAll.type='button';
+  inspectAll.addEventListener('click',()=>{
+   activeScaleIdentity=row.identity;
+   activeScaleCaption='第 '+row.season+' 季 · '+row.scale+' 级量表 · 原始值 '+row.value;
+   search.value='';season.value='all';group.value='all';reviewFilter.value='all';
+   render();
+   const field=listQuestionEditor();
+   if(field){field.scrollIntoView({block:'center'});field.focus({preventScroll:true});}
+  });
+  actions.append(open,inspectAll);item.append(actions);list.append(item);
  }
 }
 function listQuestionEditor(){return document.querySelector('#list .card .translation')}
@@ -363,10 +383,17 @@ function matchesReviewSearch(q,e,term){
 function render(){
  const term=search.value.trim().toLowerCase();const wantedSeason=season.value,wantedGroup=group.value,wantedReview=reviewFilter.value;
  const rows=data.questions.filter(q=>{
+  if(activeScaleIdentity&&!q.options.some(o=>
+    JSON.stringify([q.season,q.options.length,o.value,o.ko])===activeScaleIdentity))return false;
   const e=edits[q.id]||{};
   const g=q.season===1?q.source_group:q.source_group_zh_cn_draft;
   return matchesReviewSearch(q,e,term)&&(wantedSeason==='all'||String(q.season)===wantedSeason)&&(wantedGroup==='all'||wantedGroup===q.season+':'+g)&&(wantedReview==='all'||(e.review||'pending')===wantedReview)
  });
+ const filter=document.querySelector('#scale-active-filter');
+ filter.hidden=!activeScaleIdentity;
+ document.querySelector('#scale-active-caption').textContent=activeScaleIdentity
+  ? '正在逐题核对 '+activeScaleCaption+'：显示 '+rows.length+' 道包含此源选项的题。只筛选视图，不自动通过或改写任何译文。'
+  : '';
  list.replaceChildren();count.textContent='显示 '+rows.length+' / '+data.questions.length+' 题';
  if(!rows.length){list.append(node('div','empty','没有符合条件的题目'));return}
  for(const q of rows){
@@ -388,7 +415,16 @@ function render(){
  }
 }
 renderRepeatedScaleReview();
-search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
+document.querySelector('#clear-scale-filter').addEventListener('click',()=>{
+ activeScaleIdentity=null;activeScaleCaption='';search.value='';
+ season.value='all';group.value='all';reviewFilter.value='all';
+ render();document.querySelector('#scale-review-summary').focus();
+});
+for(const control of [search,season,group,reviewFilter]){
+ control.addEventListener(control===search?'input':'change',()=>{
+  activeScaleIdentity=null;activeScaleCaption='';render();
+ });
+}
 document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true;if(e.review==='pass'&&e.sourceCaptionRevision==='s1-scale-empty-2-and-5@1')q.human_review_source_caption_revision=e.sourceCaptionRevision;if(typeof e.reviewNoteStaleOriginal==='string')q.human_review_note_stale_original=e.reviewNoteStaleOriginal}try{validateReviewImport(out,data)}catch(error){alert('导出已阻止：当前草稿无法通过本站离线导入校验（'+error.message+'）。请检查超长备注或译文并重新确认审校状态；本机草稿未被清除。');return}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
 const importFile=document.querySelector('#import-file');
 document.querySelector('#import').addEventListener('click',()=>importFile.click());
