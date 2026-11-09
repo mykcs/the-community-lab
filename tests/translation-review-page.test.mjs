@@ -12,6 +12,15 @@ const standaloneEmbedded = standaloneHtml.match(/<script id="embedded-data" type
 assert.ok(standaloneEmbedded, 'the standalone page must contain its self-contained translation dataset');
 const standaloneData = JSON.parse(standaloneEmbedded[1]);
 
+test('public review notices do not invent unlimited permission duration', () => {
+  for (const page of [html, standaloneHtml]) {
+    assert.match(page, /用户确认已获第一、二季当前公开材料的非营利中文翻译与转载授权/);
+    assert.match(page, /许可期限未说明/);
+    assert.match(page, /本站未.*独立核验具体条款/);
+    assert.doesNotMatch(page, /且无期限|永久授权|无限期授权/);
+  }
+});
+
 test('standalone original-question page is published only as an unreviewed draft', () => {
   assert.equal(standaloneData.status, 'PUBLIC_TRANSLATION_REVIEW_DRAFT_NOT_OFFICIAL');
   assert.equal(standaloneData.questions.length, 124);
