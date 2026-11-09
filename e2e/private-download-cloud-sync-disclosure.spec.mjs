@@ -18,6 +18,10 @@ test('private answer downloads disclose possible device-side cloud sync in both 
   await expect(page.locator('#full-quiz .full-quiz-disclosure')).toContainText('个人云盘');
   await page.locator('.full-choice').first().click();
   await expect(page.locator('#full-save')).toBeVisible();
+  const [progressFile] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-save').click(),
+  ]);
+  expect(progressFile.suggestedFilename()).toBe('community-private-season-2-progress.json');
 
   const pack = loadFullQuestionnaire();
   const questions = pack.seasons[2];
@@ -32,5 +36,9 @@ test('private answer downloads disclose possible device-side cloud sync in both 
   });
   await expect(page.locator('#full-done')).toBeVisible();
   await expect(page.locator('#full-done > .full-local')).toContainText('云存储服务');
+  const [completedFile] = await Promise.all([
+    page.waitForEvent('download'), page.locator('#full-download').click(),
+  ]);
+  expect(completedFile.suggestedFilename()).toBe('community-source-draft-season-2-answers.json');
   expect(writes).toEqual([]);
 });
