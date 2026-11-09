@@ -57,6 +57,24 @@ function make(tag, className = '', text = null) {
 
 // Chinese guidance quotes historical Korean placeholder tokens.
 // Preserve the visible text exactly and mark only the Korean tokens.
+// A Chinese note may quote the official Korean wording (for example,
+// 우리나라). Tag just those syllables, rather than asking a screen reader to
+// pronounce the entire Chinese explanation as Korean. This is text-only:
+// never interpret review notes as HTML or alter the source question/values.
+function tagKoreanReaderNote(target, text) {
+  target.replaceChildren();
+  for (const part of text.split(/([가-힣ㄱ-ㅎㅏ-ㅣ]+)/gu)) {
+    if (!part) continue;
+    if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/u.test(part)) {
+      const korean = make('span', '', part);
+      korean.lang = 'ko';
+      target.append(korean);
+    } else {
+      target.append(document.createTextNode(part));
+    }
+  }
+}
+
 function localizedOptionHint(tag, className, hint) {
   const wrapper = make(tag, className);
   for (const part of hint.split(/([25]점)/gu)) {
@@ -153,7 +171,7 @@ function render() {
   $('full-zh').textContent = q.draftZh;
   const note = $('full-reader-note');
   note.hidden = !q.readerNote;
-  note.textContent = q.readerNote || '';
+  tagKoreanReaderNote(note, q.readerNote || '');
   $('full-choice-prompt').textContent = q.options.length === 2
     ? '请选择一个更符合你观点的选项；下方韩文为公开客户端文字。'
     : `请选择一个选项（原题为 ${q.options.length} 级量表）。`;
@@ -366,7 +384,11 @@ function renderAnswerAudit(questions) {
     // The completion audit must preserve the same reading context shown
     // during answering. Omitting a culture/ambiguity note or a blank-scale
     // explanation could make a historical choice look more certain than it is.
-    if (q.readerNote) row.append(make('p', 'full-answer-audit-note', q.readerNote));
+    if (q.readerNote) {
+      const readerNote = make('p', 'full-answer-audit-note');
+      tagKoreanReaderNote(readerNote, q.readerNote);
+      row.append(readerNote);
+    }
     row.append(chosen);
     if (copy.hint) row.append(localizedOptionHint('p', 'full-answer-audit-hint', copy.hint));
     // A legacy backup may preserve the raw source answer but not the exact
