@@ -15,8 +15,10 @@ test('private answer downloads disclose possible device-side cloud sync in both 
   await expect(page.locator('#full-select .full-resume')).toContainText('iCloud Drive、OneDrive');
   await expect(page.locator('#full-select > .full-local')).toContainText('云同步服务');
   await page.locator('[data-start-season="2"]').click();
-  await expect(page.locator('#full-quiz .full-quiz-disclosure')).toContainText('个人云盘');
+  await expect(page.locator('#full-quiz .full-quiz-disclosure')).toContainText('同步至云盘');
   await page.locator('.full-choice').first().click();
+  // Privacy wording must not push the primary action off-screen.
+  await expect(page.locator('#full-next')).toBeInViewport();
   await expect(page.locator('#full-save')).toBeVisible();
   const [progressFile] = await Promise.all([
     page.waitForEvent('download'), page.locator('#full-save').click(),
