@@ -439,13 +439,13 @@ test('s1-gender-17 translates 믿음 as belief while remaining an unreviewed dra
   const question = data.questions.find(item => item.id === 's1-gender-17');
   assert.ok(question, 's1-gender-17 must remain in the source dataset');
   assert.match(question.source_text_ko, /근거 없는 믿음이다/);
-  assert.equal(question.translation_zh_cn, '性别薪酬差距是一种毫无根据的信念。女性已经因同等劳动获得与男性同等的报酬。');
-  assert.equal(question.translation_version, 'draft-0.1.2');
+  assert.equal(question.translation_zh_cn, '认为男女之间存在薪酬差距，是一种毫无根据的信念。女性从事同等劳动，已经获得与男性同等的报酬。');
+  assert.equal(question.translation_version, 'draft-0.1.3');
   assert.match(question.translator_note, /믿음.*belief\/conviction/);
   assert.match(question.translator_note, /krdict\.korean\.go\.kr/);
   assert.equal(question.translation_status, 'AI_DRAFT_UNREVIEWED');
   assert.equal(question.review_status, 'draft');
-  assert.match(data.translation_review.editorial_pass, /s1-gender-17.*draft-0\.1\.2/);
+  assert.match(data.translation_review.editorial_pass, /s1-gender-17.*draft-0\.1\.3/);
   assert.deepEqual(standaloneData.questions, data.questions, 'both published review pages must stay in sync');
   assert.equal(data.translation_review.independent_korean_chinese_human_review, 'NOT_DONE');
   assert.equal(data.translation_review.publishable, false);
