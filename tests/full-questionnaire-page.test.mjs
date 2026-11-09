@@ -172,7 +172,13 @@ test('AI idiom reader notes appear after the literal Chinese prompt, never as of
   assert.ok(marker > page.indexOf('id="full-zh"') && marker < page.indexOf('id="full-choices"'));
   assert.match(page, /id="full-reader-note"[^>]*role="note" hidden/);
   assert.match(app, /note.hidden = !q.readerNote/);
-  assert.match(app, /note.textContent = q.readerNote \|\| ''/);
+  assert.match(app, /tagKoreanReaderNote\(note, q\.readerNote \|\| ''\)/);
+  assert.match(app, /tagKoreanReaderNote\(readerNote, q\.readerNote\)/);
+  // Chinese AI notes can quote Korean words; the helper must tag just the
+  // Korean run without parsing arbitrary note prose as HTML.
+  assert.match(app, /function tagKoreanReaderNote\(target, text\)/);
+  assert.match(app, /korean\.lang = 'ko'/);
+  assert.match(app, /document\.createTextNode\(part\)/);
 });
 
 
