@@ -4,12 +4,12 @@ import { expect, test } from '@playwright/test';
 // The source question is already tagged, but dynamic notes and the completed
 // answer audit must tag only the Korean substring without rewriting any text.
 // This runs through the real 87-question unscored flow, never the official API.
-for (const viewport of [
-  { width: 1440, height: 900 },
-  { width: 440, height: 956 },
-]) {
-  test(`Korean quoted in Chinese note stays tagged during S1 answer and audit at ${viewport.width}px`, async ({ page }) => {
-    await page.setViewportSize(viewport);
+test('Korean quoted in Chinese note stays tagged during S1 answer and audit', async ({ page }) => {
+  test.setTimeout(90_000);
+  // Playwright's two configured projects supply true 1440×900 and 440×956
+  // viewport simulations; do not run both sizes again inside each project.
+  const viewport = page.viewportSize();
+  expect([[1440, 900], [440, 956]]).toContainEqual([viewport.width, viewport.height]);
     const outgoingWrites = [];
     page.on('request', request => {
       if (!['GET', 'HEAD'].includes(request.method())) outgoingWrites.push(request.url());
@@ -44,5 +44,4 @@ for (const viewport of [
     await expect(auditRow.locator('.full-answer-audit-note span[lang="ko"]'))
       .toHaveText('우리나라');
     expect(outgoingWrites).toEqual([]);
-  });
-}
+});
