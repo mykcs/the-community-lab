@@ -95,5 +95,3 @@ test('blank Korean option captions still require original ordered identity', asy
   expect(result.passed).toBe(true);
   expect(result.cleanupComplete).toBe(true);
 });
-
-[executed on device: miyuki-M2Max.local (7a113aa3-7af7-4565-a530-925856822986)]
