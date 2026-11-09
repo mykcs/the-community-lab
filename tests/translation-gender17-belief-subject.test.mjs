@@ -1,0 +1,44 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {extractDraftPack,createPrivateProgressReceipt,restorePrivateProgressReceipt} from '../lib/full-questionnaire.mjs';
+import {loadFullQuestionnaire,attachTranslationFingerprints} from '../scripts/load-full-questionnaire.mjs';
+const id='s1-gender-17';
+const previous='性别薪酬差距是一种毫无根据的信念。女性已经因同等劳动获得与男性同等的报酬。';
+const revised='认为男女之间存在薪酬差距，是一种毫无根据的信念。女性从事同等劳动，已经获得与男性同等的报酬。';
+test('S1 gender17 AI draft makes the asserted belief explicit without changing Korean/source options',()=>{
+ const paths=['docs/translation-review/index.html','docs/original-question-translation-review/index.html'];
+ const rows=paths.map(path=>{
+   const pack=extractDraftPack(readFileSync(path,'utf8'));
+   const q=pack.questions.find(row=>row.id===id);
+   assert.ok(q,path);
+   assert.equal(q.translation_zh_cn,revised);
+   assert.equal(q.translation_version,'draft-0.1.3');
+   assert.equal(q.review_status,'draft');
+   assert.equal(q.translation_status,'AI_DRAFT_UNREVIEWED');
+   assert.equal(q.scoring_version,'UNKNOWN');
+   assert.equal(pack.independent_bilingual_review,'NOT_DONE');
+   assert.match(q.source_text_ko,/근거 없는 믿음이다/);
+   assert.match(q.translator_note,/이미/);
+   assert.match(q.translator_note,/仍待独立韩中人工复核/);
+   assert.deepEqual(q.options.map(o=>o.value),[1,2,3,4,5,6]);
+   return q;
+ });
+ assert.deepEqual(rows[0],rows[1]);
+ const q=loadFullQuestionnaire().seasons[1].find(q=>q.id===id);
+ assert.equal(q.draftZh,revised);
+});
+test('S1 gender17 old answer preserves raw choice and requires reconfirmation after changed draft',()=>{
+ const current=loadFullQuestionnaire();
+ const old=structuredClone(current);
+ const index=old.seasons[1].findIndex(q=>q.id===id);
+ old.seasons[1][index].draftZh=previous;
+ old.seasons[1][index].translationVersion='draft-0.1.2';
+ attachTranslationFingerprints(old);
+ const choice=old.seasons[1][index].options[3].value;
+ const receipt=createPrivateProgressReceipt(old,1,{[id]:choice},index);
+ const imported=restorePrivateProgressReceipt(current,receipt);
+ assert.equal(imported.answers[id],choice);
+ assert.deepEqual(imported.changedQuestionIds,[id]);
+ assert.deepEqual(imported.unknownWordingQuestionIds,[]);
+});
