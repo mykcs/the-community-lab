@@ -19,6 +19,13 @@ const CASES = [
 ];
 const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 440, height: 956 }];
 
+// Reject live page bundle drift BEFORE any synthetic start/choice click.
+// Checking that a pinned URL remains downloadable is not sufficient:
+// the currently served season HTML may have switched to a new client.
+export function assertPinnedLiveSourceAsset(liveAsset) {
+  if (liveAsset !== ASSET_PATH) throw new Error('BLOCKED_LIVE_SOURCE_ASSET_DRIFT');
+}
+
 // The official site and browser automation may produce error messages with
 // page text, URLs, or local request context. Probe output may be copied into
 // public issue/CI evidence, so never forward error.message, stack or an
@@ -26,7 +33,8 @@ const VIEWPORTS = [{ width: 1440, height: 900 }, { width: 440, height: 956 }];
 export function safeReadOnlyProbeFailure(error) {
   const allowed = new Set(['TimeoutError', 'TargetClosedError', 'Error', 'TypeError', 'ReferenceError']);
   return {
-    status: 'OBSERVATION_FAILED',
+    status: error?.message === 'BLOCKED_LIVE_SOURCE_ASSET_DRIFT'
+      ? 'BLOCKED_LIVE_SOURCE_ASSET_DRIFT' : 'OBSERVATION_FAILED',
     errorKind: allowed.has(error?.name) ? error.name : 'UNKNOWN_ERROR',
   };
 }
@@ -144,6 +152,7 @@ export async function probe() {
           const liveAsset = await page.evaluate(() =>
             [...document.scripts].map(s => s.getAttribute('src')).find(s => s?.startsWith('/assets/index-')) ?? null
           );
+          assertPinnedLiveSourceAsset(liveAsset);
           await page.locator(`#season-${season}-name`).fill('Synthetic Lab Visitor');
           // Lock all outgoing network before entering the locally-rendered first question.
           network.frozen = true;
@@ -340,6 +349,7 @@ export async function probePathReadOnly({
         const liveAsset = await page.evaluate(() =>
           [...document.scripts].map(script => script.getAttribute('src')).find(src => src?.startsWith('/assets/index-')) ?? null
         );
+        assertPinnedLiveSourceAsset(liveAsset);
         network.frozen = true;
         await page.locator('button').first().click({ timeout: 5000 });
         await page.locator('.question h1').first().waitFor({ timeout: 5000 });

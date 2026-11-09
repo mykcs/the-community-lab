@@ -4,7 +4,23 @@ import { readFileSync } from 'node:fs';
 import { overlayGate, exactSuffixSourceMatches, exactDomSourceOptionMapping, exactVisibleOptionLabelMapping,
   auditReadOnlyQuestionOrder, readOnlyPathChoiceIndex, readOnlyPathChoiceIndices,
   auditReadOnlyOptionCoverage, readOnlyBacktrackPositions, auditReadOnlyBacktrack,
-  auditReadOnlyStoredRawChoice, safeReadOnlyProbeFailure } from '../scripts/probe-official-chrome.mjs';
+  auditReadOnlyStoredRawChoice, safeReadOnlyProbeFailure,
+  assertPinnedLiveSourceAsset } from '../scripts/probe-official-chrome.mjs';
+
+test('both read-only live modes stop on a changed HTML client before any synthetic click', () => {
+  assert.doesNotThrow(() => assertPinnedLiveSourceAsset('/assets/index-C735ffg4.js'));
+  for (const changed of [null, '', '/assets/index-new.js',
+    '/assets/index-C735ffg4.js?v=2', 'https://thecommunity.co.kr/assets/index-C735ffg4.js']) {
+    assert.throws(() => assertPinnedLiveSourceAsset(changed), /BLOCKED_LIVE_SOURCE_ASSET_DRIFT/);
+  }
+  assert.deepEqual(safeReadOnlyProbeFailure(new Error('BLOCKED_LIVE_SOURCE_ASSET_DRIFT')),
+    { status: 'BLOCKED_LIVE_SOURCE_ASSET_DRIFT', errorKind: 'Error' });
+  assert.deepEqual(safeReadOnlyProbeFailure(new Error('sensitive request information')),
+    { status: 'OBSERVATION_FAILED', errorKind: 'Error' });
+  const source = readFileSync(new URL('../scripts/probe-official-chrome.mjs', import.meta.url), 'utf8');
+  assert.match(source, /assertPinnedLiveSourceAsset\(liveAsset\);\s*await page\.locator\(`#season-\$\{season\}-name`\)\.fill/);
+  assert.match(source, /assertPinnedLiveSourceAsset\(liveAsset\);\s*network\.frozen = true;\s*await page\.locator\('button'\)\.first\(\)\.click/);
+});
 
 const candidate = {
   assetMatches: true, questionVisible: true, optionCount: 2,
