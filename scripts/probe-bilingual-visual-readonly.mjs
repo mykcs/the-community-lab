@@ -228,5 +228,3 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     });
   }
 }
-
-[executed on device: miyuki-M2Max.local (7a113aa3-7af7-4565-a530-925856822986)]
