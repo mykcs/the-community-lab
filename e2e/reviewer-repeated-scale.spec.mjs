@@ -28,8 +28,8 @@ test('all 550 original options collapse to 12 reviewable caption/value identitie
   expect(await korean.filter({ hasText: '（源客户端此档无韩文文字标签）' }).count()).toBe(2);
   const before = await page.evaluate(() => localStorage.length);
   const first = cards.first();
-  const sourceId = (await first.locator('button').innerText()).replace('查看代表题 ', '');
-  await first.locator('button').click();
+  const sourceId = (await first.locator('button').first().innerText()).replace('查看代表题 ', '');
+  await first.locator('button').first().click();
   await expect(page.locator('#search')).toHaveValue(sourceId);
   await expect(page.locator('#count')).toHaveText('显示 1 / 124 题');
   await expect(page.locator('#list .card')).toHaveCount(1);
