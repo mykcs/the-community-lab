@@ -3,6 +3,7 @@
  * Usage: node scripts/probe-official-chrome.mjs --live-readonly
  *        node scripts/probe-official-chrome.mjs --live-path-readonly
  *        node scripts/probe-official-chrome.mjs --live-path-all-options-readonly
+ *        node scripts/probe-official-chrome.mjs --live-path-local-values-readonly
  * Path modes use synthetic choices in anonymous sessions but never submit a
  * result. No mode prints Korean prompts/options, nickname, cookies, or vectors.
  */
@@ -267,8 +268,24 @@ export function auditReadOnlyOptionCoverage(observedIndices, expectedOptionCount
     observedIndices.every((index, position) => index === position);
 }
 
-/** One complete visible path per season; the last answer is NEVER selected. */
-export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = false, allOptions = false } = {}) {
+/**
+ * Verify one exact browser-local source-value binding in a synthetic session.
+ * Never print, return from the CLI, or persist the observed local answer map.
+ */
+export function auditReadOnlyStoredRawChoice(candidates, expectedValue) {
+  return Array.isArray(candidates) && candidates.length === 1 &&
+    (typeof expectedValue === 'string' || Number.isFinite(expectedValue)) &&
+    candidates[0] === expectedValue;
+}
+
+/** Full pinned-client visible path, never selecting a final answer or submitting. */
+export async function probePathReadOnly({
+  choiceStrategy = 'first', backtrack = false, allOptions = false,
+  verifyStoredRawValues = false,
+} = {}) {
+  if (verifyStoredRawValues && !allOptions) {
+    throw new Error('RAW_VALUE_PROBE_REQUIRES_ALL_OPTIONS');
+  }
   readOnlyPathChoiceIndices(1, allOptions ? 'all' : choiceStrategy);
   const { chromium } = await import('@playwright/test');
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
@@ -315,6 +332,7 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
       const backtrackPositions = backtrack ? readOnlyBacktrackPositions(expected.length) : [];
       const backtrackChecks = [];
       const optionCoverageChecks = [];
+      let storedRawValueChecks = 0;
       try {
         const response = await page.goto(`${ORIGIN}/season/${season}/test`, {
           waitUntil: 'domcontentloaded', timeout: 20000,
@@ -355,6 +373,35 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
             await page.waitForFunction(previousHeading =>
               (document.querySelector('.question h1')?.textContent?.trim() ?? '') !== previousHeading,
             dom.headingText, { timeout: 5000 });
+            if (verifyStoredRawValues) {
+              const expectedRaw = expected[index]?.options[choiceIndex]?.value;
+              // The real DOM does not expose source IDs or raw button values.
+              // Read only the chosen source ID's value from the synthetic
+              // browser's local answer state; never print/store the answer map.
+              const observed = await page.evaluate(async ({ sourceId, rawValue }) => {
+                const readCandidates = () => {
+                  const matches = [];
+                  for (let i = 0; i < localStorage.length; i++) {
+                    try {
+                      const value = JSON.parse(localStorage.getItem(localStorage.key(i)));
+                      if (value && typeof value === 'object' && !Array.isArray(value) &&
+                          Object.hasOwn(value, sourceId)) matches.push(value[sourceId]);
+                    } catch { /* An unrelated key need not contain JSON. */ }
+                  }
+                  return matches;
+                };
+                for (let attempt = 0; attempt < 8; attempt++) {
+                  const values = readCandidates();
+                  if (values.length === 1 && values[0] === rawValue) return values;
+                  await new Promise(resolve => setTimeout(resolve, 40));
+                }
+                return readCandidates();
+              }, { sourceId: mapping.sourceId, rawValue: expectedRaw });
+              if (!auditReadOnlyStoredRawChoice(observed, expectedRaw)) {
+                throw new Error('LOCAL_SOURCE_RAW_VALUE_BINDING_MISMATCH');
+              }
+              storedRawValueChecks++;
+            }
             const nextBefore = await readVisibleQuestion();
             const nextMapping = exactVisibleOptionLabelMapping(nextBefore, expected);
             const nextIdentityCorrect = nextMapping?.sourceId === expected[index + 1]?.id &&
@@ -423,6 +470,10 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
         const backtrackValidated = !backtrack ||
           backtrackChecks.length === backtrackPositions.length &&
           backtrackChecks.every(check => check.validated);
+        const expectedNonFinalOptionCount = expected.slice(0, -1)
+          .reduce((count, question) => count + question.options.length, 0);
+        const storedRawValuesValidated = verifyStoredRawValues
+          ? storedRawValueChecks === expectedNonFinalOptionCount : null;
         const allOptionsValidated = allOptions
           ? optionCoverageChecks.length === expected.length - 1 &&
             optionCoverageChecks.every(check => check.allOptionsNavigateToExpectedNext &&
@@ -437,12 +488,19 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
           expectedQuestionCount: expected.length, observedQuestionCount: questionIds.length,
           allQuestionsMatchedExactly: orderedPathMatchesPinnedClient &&
             mismatchCount.question === 0 && mismatchCount.ambiguous === 0 &&
-            (!backtrack || backtrackValidated) && (!allOptions || allOptionsValidated),
+            (!backtrack || backtrackValidated) && (!allOptions || allOptionsValidated) &&
+            (!verifyStoredRawValues || storedRawValuesValidated),
           completeUniqueQuestionSet, orderedPathMatchesPinnedClient,
           choiceStrategy: allOptions ? 'all' : choiceStrategy,
           backtrackAttempted: backtrack,
           backtrackPositions, backtrackChecks, backtrackValidated,
           allOptionsAttempted: allOptions, optionCoverageChecks, allOptionsValidated,
+          localRawValueAuditAttempted: verifyStoredRawValues,
+          nonFinalRawValuesVerified: storedRawValueChecks,
+          expectedNonFinalRawValues: expectedNonFinalOptionCount,
+          localRawValuesValidated: storedRawValuesValidated,
+          // Last-question buttons are deliberately never selected.
+          lastQuestionRawValuesVerified: 0,
           orderedSourceIdsSha256: orderSha256,
           mismatchCount, stoppedOnUnansweredLastQuestion: completeUniqueQuestionSet,
           attemptedNonGetRequests: network.attemptedNonGetRequests,
@@ -461,11 +519,14 @@ export async function probePathReadOnly({ choiceStrategy = 'first', backtrack = 
     }
     console.log(JSON.stringify({
       observedAt: new Date().toISOString(), sourceSha256: sha,
-      method: allOptions
-        ? 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; each visible option is selected and advanced to the exact next question; returns to the current question between choices; post-start network frozen; last answer not selected'
-        : 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; every non-final answer may be changed after backtracking; last answer not selected',
+      method: verifyStoredRawValues
+        ? 'headless Chrome; anonymous session; 440x956; every non-final visible option compared with the exact source ID/raw value saved in synthetic browser localStorage; no answers logged, post-start network frozen, last answer not selected; NOT proof of server receipt or scoring'
+        : allOptions
+          ? 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; each visible option is selected and advanced to the exact next question; returns to the current question between choices; post-start network frozen; last answer not selected'
+          : 'headless Chrome; anonymous session; 440x956; exact Korean question, option labels and pinned path order; post-start network frozen; every non-final answer may be changed after backtracking; last answer not selected',
       choiceStrategy: allOptions ? 'all' : choiceStrategy,
       backtrackAttempted: backtrack, allOptionsAttempted: allOptions,
+      localRawValueAuditAttempted: verifyStoredRawValues,
       backtrackPositionsBySeason: backtrack
         ? Object.fromEntries(Object.entries(pack.seasons).map(([season, questions]) => [
           season, readOnlyBacktrackPositions(questions.length),
@@ -482,15 +543,18 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const mode = process.argv[2];
   if (process.argv.length !== 3 || !['--live-readonly', '--live-path-readonly',
     '--live-path-last-option-readonly', '--live-path-backtrack-readonly',
-    '--live-path-all-options-readonly'].includes(mode)) {
+    '--live-path-all-options-readonly', '--live-path-local-values-readonly'].includes(mode)) {
     console.error('Explicit read-only probe mode required; no automatic official-site requests.');
     process.exitCode = 2;
   } else if (mode === '--live-path-readonly' || mode === '--live-path-last-option-readonly' ||
-    mode === '--live-path-backtrack-readonly' || mode === '--live-path-all-options-readonly') {
+    mode === '--live-path-backtrack-readonly' || mode === '--live-path-all-options-readonly' ||
+    mode === '--live-path-local-values-readonly') {
     const choiceStrategy = mode === '--live-path-last-option-readonly' ? 'last' : 'first';
     probePathReadOnly({ choiceStrategy,
       backtrack: mode === '--live-path-backtrack-readonly',
-      allOptions: mode === '--live-path-all-options-readonly',
+      allOptions: mode === '--live-path-all-options-readonly' ||
+        mode === '--live-path-local-values-readonly',
+      verifyStoredRawValues: mode === '--live-path-local-values-readonly',
     })
       .catch(error => { console.error(safeReadOnlyProbeFailure(error).errorKind); process.exitCode = 1; });
   } else {

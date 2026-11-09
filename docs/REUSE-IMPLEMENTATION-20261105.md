@@ -109,6 +109,14 @@ reordered or substituted first/second question **cannot** be declared a
 valid backtrack. This script is deliberately not run in CI or shipped as an
 installable overlay.
 
+## Browser-local raw-option binding (2026-11-09; research only)
+
+The earlier all-options Chrome probe established that all **470 S1 and 72 S2 non-final visible option buttons** advanced to the expected next question, but the live DOM does not expose an option's original `value` or a source question ID. Navigation and visible Korean text alone cannot catch a wrong raw value silently stored by a button.
+
+A new explicit `node scripts/probe-official-chrome.mjs --live-path-local-values-readonly` mode therefore uses a fresh, isolated anonymous headless Chrome context. It pins the original Korean client SHA-256 and exact current question/ordered labels, freezes **all** outgoing network before the first question, and, after each non-final synthetic option click, checks that the browser-local saved map contains **exactly one** entry for the pinned source ID with the expected original option value (S1 numbers, S2 `O`/`X`). The mode fails closed on absent, duplicate, type-changed or incorrect values. Only counts and booleans are emitted; never localStorage contents, respondent answers, question wording or real-person metadata. Synthetic unit tests guard the matching rule. The last question's 6 S1 and 2 S2 options are deliberately untouched, so no completed answer or official result is created.
+
+**Observation status for this round:** see the exact run result and PR validation. Even a successful result is evidence of **browser-local option value bindings for this one pinned client and this synthetic path**, not proof of what the official server received, an official scoring formula, account/privacy permission, or the accuracy of Chinese drafts. The official overlay remains blocked; the separate Astro site remains the public mobile path.
+
 ## Smallest next experiments and acceptance gates
 
 1. **Read-only official-site feasibility:** Under legitimate public access inspect existing client DOM and dynamic navigation; record observed source asset identity and real selectors. Do not submit new answers, defeat protection, run at scale or log answers. If no stable IDs exist, require a unique exact Korean text match before translation and do not invent IDs.
