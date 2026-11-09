@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-4CTuf0Y2jl0yKs4OjWTZJWsKjPMqu5FMkcWmqLAhAj8=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src &#39;none&#39;; base-uri &#39;none&#39;; script-src &#39;sha256-tJf+dieOapk5qjg7gLZ0R/dVjBhLrGUKiP8JkVOsYFU=&#39;; style-src &#39;unsafe-inline&#39;; img-src data:; font-src &#39;none&#39;; connect-src &#39;none&#39;; frame-src &#39;none&#39;; media-src &#39;none&#39;; worker-src &#39;none&#39;; form-action &#39;none&#39;; object-src &#39;none&#39;"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>The Community · 公开韩中译文复核草稿</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23214f92'/%3E%3Ctext x='16' y='22' font-size='19' font-family='system-ui,sans-serif' font-weight='700' text-anchor='middle' fill='white'%3ET%3C/text%3E%3C/svg%3E">
 <style>
@@ -13,6 +13,17 @@
 .comparison h2{font-size:20px;margin:0 0 8px}.comparison .metrics{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
 .comparison .metric{padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--wash)}
 .comparison details{margin-top:12px}.comparison summary{cursor:pointer;font-weight:650}.comparison li{padding:5px 0;overflow-wrap:anywhere}
+/* One representative per repeated original answer value and Korean caption;
+   read-only context for HUMAN review, never an approval or auto-propagation. */
+.scale-review{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:12px 15px;background:var(--wash)}
+.scale-review summary{cursor:pointer;font-weight:750;min-height:44px;display:list-item;padding:9px 0}
+.scale-review summary:focus-visible,.scale-grid button:focus-visible{outline:3px solid #214f92;outline-offset:3px}
+.scale-note{color:var(--muted);font-size:13px;line-height:1.7}
+.scale-grid{list-style:none;margin:14px 0 10px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px}
+.scale-grid li{border:1px solid var(--line);background:white;border-radius:10px;padding:13px;min-width:0;overflow-wrap:anywhere}
+.scale-grid p{margin:8px 0;font-size:13px}
+.scale-grid .scale-ko{font-weight:650;font-size:15px}
+.scale-grid button{font-size:13px;min-height:44px;padding:9px 12px}
 </style>
 </head>
 <body>
@@ -23,6 +34,7 @@
 <p class="source">来源资源 SHA-256：<code>59a67f9d1e0049156bedfe4d61a4cf8511dc8903ba80cf297b6bffad3c2b379e</code> · 当前核对版本 · 源题数量 87 + 37</p>
 <p class="source">此页不会上传审校内容。修改和标记仅保存在你当前浏览器的本地存储；可导出或重新导入同一来源版本的 JSON，导入前需确认覆盖本机草稿。此 Pages 页面公开可访问，请勿在备注中写入私人信息。</p>
 <div class="toolbar"><input id="search" aria-label="搜索题号、韩中题干或答案选项" type="search" placeholder="搜索题号、韩中题干或答案选项"><select id="season" aria-label="筛选季别"><option value="all">全部季别</option><option value="1">第一季</option><option value="2">第二季</option></select><select id="group" aria-label="筛选题组维度"><option value="all">全部维度</option></select><select id="reviewFilter" aria-label="筛选复核状态"><option value="all">全部复核状态</option><option value="pending">待复核</option><option value="pass">审校者自报通过（未核验）</option><option value="revise">需要修改</option></select><button id="export">导出审校 JSON</button><button class="secondary" id="import" type="button">导入审校 JSON</button><input id="import-file" type="file" accept=".json,application/json" hidden><button class="secondary" id="compare" type="button">对照两份审校 JSON</button><input id="compare-files" type="file" accept=".json,application/json" multiple hidden><button class="secondary" id="clear">清除此设备的审校记录</button><span id="count"></span><span class="source statusline">审校记录仅保存在此设备</span></div>
+<details id="scale-review" class="scale-review"><summary id="scale-review-summary">核对重复量表标签（待计算）</summary><p class="scale-note">同一种韩文选项可能在许多题目中反复出现。这里按季别、量表长度、原始选项值与韩文原文合并展示基线中文 AI 初译，方便双语审校者先检查通用用词；点击“查看代表题”可在下方检查具体语境。列表不会写入或同步修改任何题目，也不代表已完成人工审核。每道题的答案绑定与语义仍必须逐题核验。</p><ol id="scale-review-list" class="scale-grid" aria-label="重复原始量表选项与中文 AI 初译汇总"></ol><p class="scale-note" id="scale-review-blank-note"></p></details>
 </header>
 <section class="wrap comparison" id="comparison" hidden></section>
 <main class="wrap" id="list"></main>
@@ -121,6 +133,45 @@ function save(){
  }
 }
 function node(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n}
+function renderRepeatedScaleReview(){
+ // Pure read-only view of the frozen public draft. Local human edits remain
+ // question-specific and must never be copied to other source choices.
+ const rows=new Map();let optionCount=0,blankCount=0;
+ for(const q of data.questions)for(const o of q.options){
+  optionCount++;
+  if(o.ko==='')blankCount++;
+  const identity=JSON.stringify([q.season,q.options.length,o.value,o.ko]);
+  if(!rows.has(identity))rows.set(identity,{
+   season:q.season,scale:q.options.length,value:o.value,ko:o.ko,
+   translations:new Set(),count:0,representativeId:q.id,
+  });
+  const row=rows.get(identity);row.count++;row.translations.add(o.zh_cn);
+ }
+ const summary=document.querySelector('#scale-review-summary');
+ summary.textContent=`重复量表 · ${rows.size} 组原始选项 / ${optionCount} 个题内选项（人工审核未完成）`;
+ document.querySelector('#scale-review-blank-note').textContent=
+  `其中 ${blankCount} 个选项的韩文标签在冻结客户端本就为空；数值保留为原始值。空标签不得伪造韩文原文，显示中文仅供说明。所有中文均为 AI 初译，非正式审核结论。`;
+ const list=document.querySelector('#scale-review-list');list.replaceChildren();
+ for(const row of rows.values()){
+  const item=node('li');
+  item.append(node('strong','','第 '+row.season+' 季 · '+row.scale+' 级量表 · 原始值 '+row.value),
+   node('p','scale-ko',row.ko||'（源客户端此档无韩文文字标签）'));
+  item.querySelector('.scale-ko').lang=row.ko?'ko':'zh-CN';
+  const zh=[...row.translations];
+  item.append(node('p','',`中文 AI 初译：${zh.join(' / ')}${zh.length>1?'（⚠ 同源标签草稿不一致）':''}`),
+   node('p','scale-note',`题内出现 ${row.count} 次 · 未经独立韩中人工审核`));
+  const open=node('button','','查看代表题 '+row.representativeId);open.type='button';
+  open.addEventListener('click',()=>{
+   search.value=row.representativeId;
+   season.value='all';group.value='all';reviewFilter.value='all';
+   render();
+   const field=listQuestionEditor();
+   if(field){field.scrollIntoView({block:'center'});field.focus({preventScroll:true});}
+  });
+  item.append(open);list.append(item);
+ }
+}
+function listQuestionEditor(){return document.querySelector('#list .card .translation')}
 function downloadLocalJson(blob,filename){
  // A detached anchor and same-task URL revocation can lose downloads in
  // browsers that consume the object URL after the click dispatch completes.
@@ -336,6 +387,7 @@ function render(){
    }save()});review.append(status,note,node('p','status','标记通过前请填写审校者代号、韩中能力依据和复核日期。可用代号，勿写邮箱等私人信息。标记通过后再次修改题干译文或选项，会自动退回待复核，且须更新备注才能重新自报通过。此自述只作本地留痕，不证明审校者身份或能力。'));body.append(review);card.append(body);list.append(card)
  }
 }
+renderRepeatedScaleReview();
 search.addEventListener('input',render);season.addEventListener('change',render);group.addEventListener('change',render);reviewFilter.addEventListener('change',render);
 document.querySelector('#export').addEventListener('click',()=>{const out=structuredClone(data);for(const q of out.questions){const e=edits[q.id];if(!e)continue;if(e.translation!==undefined)q.translation_zh_cn=e.translation;if(e.options)q.options.forEach((o,i)=>{if(e.options[i]!==undefined)o.zh_cn=e.options[i]});q.human_review_status=e.review||'pending';q.human_review_note=e.note||'';q.human_review_note_stale=e.reviewNoteStale===true;if(e.review==='pass'&&e.sourceCaptionRevision==='s1-scale-empty-2-and-5@1')q.human_review_source_caption_revision=e.sourceCaptionRevision;if(typeof e.reviewNoteStaleOriginal==='string')q.human_review_note_stale_original=e.reviewNoteStaleOriginal}try{validateReviewImport(out,data)}catch(error){alert('导出已阻止：当前草稿无法通过本站离线导入校验（'+error.message+'）。请检查超长备注或译文并重新确认审校状态；本机草稿未被清除。');return}const blob=new Blob([JSON.stringify(out,null,2)+'\n'],{type:'application/json'});downloadLocalJson(blob,'original-question-translation-review.json')});
 const importFile=document.querySelector('#import-file');
