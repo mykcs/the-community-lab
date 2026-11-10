@@ -43,3 +43,7 @@
 ## 当前状态
 
 公开仓库已建立；GitHub OAuth App 已创建，Supabase Free 私人历史候选项目已建立。最近一次可读的控制面记录（2026-11-06）显示 GitHub Provider 仍禁用；网站 OAuth 配置、注销 Function、双账号隔离及删除验收尚未完成，网站登录和保存入口维持关闭。尚未处理真实参与者答卷。具体部署与待验收状态以 [私人历史候选 Draft PR #11](https://github.com/mykcs/the-community-lab/pull/11) 和 [部署记录](docs/DEPLOYMENT.md) 为准。
+
+## Current | 多 Agent 接手
+
+新 Agent 先读 [Current](docs/agents/current/README.md)，重新核对 GitHub 的实时 Issues、PR 和默认分支；Current 只负责恢复上下文，不取代现有 Wish/Dev、科研或发布规则。
