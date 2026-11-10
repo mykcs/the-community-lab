@@ -31,3 +31,46 @@ test('home brand points at a real visible landmark and works after demo navigati
   await expect(page.locator('#guest-social')).toBeVisible();
   await expect(page).toHaveURL(/#guest-social$/);
 });
+
+test('home demo controls enable only after the demo client initializes', async ({ page }) => {
+  await page.goto('/the-community-lab/');
+  for (const id of ['hero-start', 'start-s1', 'start-s2']) {
+    await expect(page.locator('#' + id)).toBeEnabled();
+  }
+  await expect(page.locator('#demo-boot-status')).toBeHidden();
+  await page.locator('#start-s2').click();
+  await expect(page.locator('#quiz-view')).toBeVisible();
+});
+
+test('home demo controls fail closed when the JavaScript asset is blocked', async ({ page }) => {
+  await page.route(/\.(?:m?js)(?:\?.*)?$/, route => route.abort('failed'));
+  await page.goto('/the-community-lab/', { waitUntil: 'domcontentloaded' });
+  await expect(page.locator('#demo-boot-status')).toBeVisible();
+  await expect(page.locator('#demo-boot-status')).toContainText('脚本未能加载');
+  for (const id of ['hero-start', 'start-s1', 'start-s2']) {
+    await expect(page.locator('#' + id)).toBeDisabled();
+  }
+  await expect(page.locator('noscript .demo-noscript')).toBeHidden();
+  await expect(page.locator('#demo-boot-status a')).toHaveAttribute('href', '/the-community-lab/translation-review/');
+  await expect(page.locator('.season-pilot')).toHaveCount(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(page.viewportSize().width);
+});
+
+test.describe('home with JavaScript disabled', () => {
+  test.use({ javaScriptEnabled: false });
+  test('keeps Korean-Chinese source navigation available without dead demo buttons', async ({ page }) => {
+    await page.goto('/the-community-lab/');
+    await expect(page.locator('noscript .demo-noscript')).toBeVisible();
+    for (const id of ['hero-start', 'start-s1', 'start-s2']) {
+      await expect(page.locator('#' + id)).toBeHidden();
+    }
+    await expect(page.locator('#demo-boot-status')).toBeHidden();
+    await expect(page.locator('noscript .demo-noscript a')).toHaveAttribute(
+      'href', '/the-community-lab/translation-review/',
+    );
+    await expect(page.locator('.season-pilot')).toHaveCount(2);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth))
+      .toBeLessThanOrEqual(page.viewportSize().width);
+  });
+});
