@@ -22,6 +22,8 @@ test('a reviewer can inspect 64/23/37 exact source-option occurrences and exit s
   await expect(page.locator('#list .option.scale-target')).toHaveCount(64);
   await expect(page.locator('#list .option.scale-target input').first()).toBeFocused();
   await expect(page.locator('#list .option.scale-target .scale-target-note').first()).toContainText('原始值 1');
+  // A Chinese status label nested under a Korean source label needs its own language.
+  await expect(page.locator('#list .option.scale-target .scale-target-note').first()).toHaveAttribute('lang', 'zh-CN');
   await expect(page.locator('#list .card').first().locator('.scale-target')).toHaveCount(1);
   await expect(page.locator('#list .card').first().locator('.option:not(.scale-target)')).toHaveCount(5);
   await expect(page.locator('#list .card .review select')).toHaveCount(64);
