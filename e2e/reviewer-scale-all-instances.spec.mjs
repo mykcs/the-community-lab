@@ -18,7 +18,12 @@ test('a reviewer can inspect 64/23/37 exact source-option occurrences and exit s
   await expect(page.locator('#scale-active-caption')).toContainText('原始值 1');
   await expect(page.locator('#count')).toHaveText('显示 64 / 124 题');
   await expect(page.locator('#list .card')).toHaveCount(64);
-  await expect(page.locator('#list .translation').first()).toBeFocused();
+  // The selected raw option, not the unrelated question-level textarea, gets focus.
+  await expect(page.locator('#list .option.scale-target')).toHaveCount(64);
+  await expect(page.locator('#list .option.scale-target input').first()).toBeFocused();
+  await expect(page.locator('#list .option.scale-target .scale-target-note').first()).toContainText('原始值 1');
+  await expect(page.locator('#list .card').first().locator('.scale-target')).toHaveCount(1);
+  await expect(page.locator('#list .card').first().locator('.option:not(.scale-target)')).toHaveCount(5);
   await expect(page.locator('#list .card .review select')).toHaveCount(64);
   expect(await page.locator('#list .card .review select').evaluateAll(
     els => els.every(el => el.value === 'pending')
@@ -28,18 +33,24 @@ test('a reviewer can inspect 64/23/37 exact source-option occurrences and exit s
   await page.getByRole('button', { name: /退出此组筛选/ }).click();
   await expect(page.locator('#scale-active-filter')).toBeHidden();
   await expect(page.locator('#list .card')).toHaveCount(124);
+  await expect(page.locator('#list .option.scale-target')).toHaveCount(0);
   await expect(page.locator('#scale-review-summary')).toBeFocused();
 
   await cards.nth(6).getByRole('button', { name: '逐题核对本组全部 23 处' }).click();
   await expect(page.locator('#count')).toHaveText('显示 23 / 124 题');
   await expect(page.locator('#list .card')).toHaveCount(23);
+  await expect(page.locator('#list .option.scale-target')).toHaveCount(23);
+  await expect(page.locator('#list .option.scale-target input').first()).toBeFocused();
 
   await cards.nth(10).getByRole('button', { name: '逐题核对本组全部 37 处' }).click();
   await expect(page.locator('#count')).toHaveText('显示 37 / 124 题');
   await expect(page.locator('#list .card')).toHaveCount(37);
+  await expect(page.locator('#list .option.scale-target')).toHaveCount(37);
+  await expect(page.locator('#list .option.scale-target input').first()).toBeFocused();
   await page.locator('#search').fill('sa09');
   await expect(page.locator('#scale-active-filter')).toBeHidden();
   await expect(page.locator('#count')).toHaveText('显示 1 / 124 题');
+  await expect(page.locator('#list .option.scale-target')).toHaveCount(0);
   await expect(page.locator('#list h2').first()).toContainText('sa09');
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
   expect(unexpectedRequests).toEqual([]);
