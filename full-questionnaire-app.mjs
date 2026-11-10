@@ -616,3 +616,9 @@ $('full-back').addEventListener('click', selectSeason);
 
 const fromUrl = new URLSearchParams(window.location.search).get('season');
 if (fromUrl === '1' || fromUrl === '2') begin(Number(fromUrl));
+// Enable answer/import controls only after the full module initialized.
+// When the JS asset is blocked or initialization throws, the static HTML
+// leaves the controls disabled and explains why nothing can be started.
+document.querySelectorAll('[data-start-season]').forEach(button => { button.disabled = false; });
+$('full-import').disabled = false;
+$('full-boot-status').hidden = true;
