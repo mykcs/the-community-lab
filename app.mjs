@@ -236,3 +236,8 @@ document.querySelectorAll('.brand,.header-links a[href^="#"]').forEach((link) =>
     if (state.view !== 'home') showHome();
   });
 });
+
+// Fail closed like the public-source questionnaire: missing/broken JS must
+// never leave apparently clickable demo buttons with no click handlers.
+for (const id of ['hero-start', 'start-s1', 'start-s2']) $(id).disabled = false;
+$('demo-boot-status').hidden = true;
