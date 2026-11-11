@@ -1,0 +1,5 @@
+# Browser CORS preflight carries no user JWT, so platform JWT verification would
+# reject OPTIONS before the handler can answer. The handler verifies auth.getUser
+# and an active session for every POST, and remains fail-closed when disabled.
+[functions.account-delete]
+verify_jwt = false

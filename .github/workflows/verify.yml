@@ -1,10 +1,10 @@
 name: Verify Astro bilingual demo
 on:
   pull_request:
-    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'public/**', 'lib/**', 'tests/**', 'e2e/**', 'prototypes/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
+    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'api/**', 'supabase/**', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'public/**', 'lib/**', 'tests/**', 'e2e/**', 'prototypes/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
   push:
     branches: [main]
-    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'public/**', 'lib/**', 'tests/**', 'e2e/**', 'prototypes/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
+    paths: ['app.mjs', 'full-questionnaire-app.mjs', 'api/**', 'supabase/**', 'data/**', 'docs/translation-review/**', 'docs/original-question-translation-review/**', 'public/**', 'lib/**', 'tests/**', 'e2e/**', 'prototypes/**', 'scripts/**', 'src/**', 'astro.config.mjs', 'tsconfig.json', 'package*.json', 'docs/VERIFICATION-MATRIX.md', '.github/workflows/verify.yml', '.github/workflows/pages.yml']
 permissions:
   contents: read
 concurrency:
@@ -23,3 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run build
+      - name: Verify pinned Deno from the official npm registry
+        run: npx --yes --registry=https://registry.npmjs.org deno@2.5.6 --version
+      - name: Type-check the Supabase function without deploying
+        run: npx --yes --registry=https://registry.npmjs.org deno@2.5.6 check --config supabase/functions/account-delete/deno.json supabase/functions/account-delete/index.ts
