@@ -47,3 +47,7 @@
 ## Current | 多 Agent 接手
 
 新 Agent 先读 [Current](docs/agents/current/README.md)，重新核对 GitHub 的实时 Issues、PR 和默认分支；Current 只负责恢复上下文，不取代现有 Wish/Dev、科研或发布规则。
+
+## Project lifecycle · Current / Wish / Dev
+
+Use the existing [Current](docs/agents/current/README.md) to resume safely, [Wish](docs/wish/README.md) for the faithful bilingual-test outcome, and [Dev](docs/dev/README.md) for source, CI and GitHub Pages implementation. These are discovery links, not authorization to publish unreviewed translations, claim official grading equivalence or enable private history. Shared semantics: [mykcs/.agents](https://github.com/mykcs/.agents/blob/main/docs/agents/README.md).
