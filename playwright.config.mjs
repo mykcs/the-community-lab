@@ -9,7 +9,10 @@ if (!/^\d+$/.test(portText) || Number(portText) < 1024 || Number(portText) > 655
 }
 const port = Number(portText);
 const baseURL = `http://127.0.0.1:${port}/the-community-lab/`;
-const previewCommand = `npm run preview -- --host 127.0.0.1 --port ${port}`;
+// Astro 7 auto-detaches preview servers when it detects an AI agent. That
+// makes Playwright's managed webServer exit early, so use its documented
+// foreground mode and rely on the isolated port for concurrency.
+const previewCommand = `npm run preview -- --host 127.0.0.1 --port ${port} --ignore-lock`;
 // CI already built the exact PR head with GitHub Pages paths. Locally, an
 // ordinary Astro build defaults to the old Vercel root, making every
 // Pages-path browser test time out. Build the correct target before preview.
@@ -46,6 +49,7 @@ export default defineConfig({
   webServer: {
     command: webServerCommand,
     url: `${baseURL}questionnaire/`,
+    // Avoid accidentally testing against a preview built with a different base path.
     reuseExistingServer: false,
     timeout: 120_000,
     env: {
