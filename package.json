@@ -8,10 +8,12 @@
     "test": "node --test",
     "test:browser": "playwright test",
     "audit:reproduction": "node scripts/audit-reproduction.mjs",
-    "check": "npm test && npm run audit:reproduction && astro check",
-    "build": "astro build && node scripts/stage-review-pages.mjs",
+    "check": "npm test && npm run audit:reproduction && npm run check:design && astro check",
+    "build": "npm run check:design && astro build && node scripts/stage-review-pages.mjs && node scripts/check-site-design.mjs --built",
     "dev": "astro dev",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "check:design": "node scripts/check-site-design.mjs",
+    "sync:design": "node scripts/sync-review-design.mjs --write"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.2.2",

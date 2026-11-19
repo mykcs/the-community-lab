@@ -17,7 +17,7 @@ concurrency:
 jobs:
   browser:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 25
     env:
       COMMUNITY_DEPLOY_TARGET: github-pages
     steps:
@@ -27,6 +27,14 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps --only-shell chromium
+      - run: npx playwright install --with-deps chromium webkit
       - run: npm run build
       - run: npm run test:browser
+
+      - name: Upload exact candidate browser report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: community-browser-${{ github.sha }}
+          path: playwright-report
+          retention-days: 3

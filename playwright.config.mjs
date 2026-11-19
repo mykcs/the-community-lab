@@ -20,7 +20,7 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
   workers: 1,
-  reporter: process.env.CI ? 'github' : 'list',
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: {
     baseURL,
     screenshot: 'off',
@@ -42,6 +42,8 @@ export default defineConfig({
         hasTouch: true,
       },
     },
+    { name: 'standards-webkit-desktop', testMatch: '**/site-design.spec.mjs', use: { browserName: 'webkit', viewport: { width: 1440, height: 900 } } },
+    { name: 'standards-webkit-mobile', testMatch: '**/site-design.spec.mjs', use: { browserName: 'webkit', viewport: { width: 440, height: 956 } } },
   ],
   webServer: {
     command: webServerCommand,
