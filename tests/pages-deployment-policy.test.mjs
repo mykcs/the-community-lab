@@ -80,7 +80,8 @@ test('browser acceptance runs both engines at desktop/mobile without publishing 
   assert.match(config, /COMMUNITY_DEPLOY_TARGET: 'github-pages'/);
   assert.match(config, /name: 'standards-webkit-desktop'/);
   assert.match(config, /name: 'standards-webkit-mobile'/);
-  assert.match(browserWorkflow, /name: community-browser-\$\{\{ github.sha \}\}/);
+  assert.match(browserWorkflow, /name: community-browser-\$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
+  assert.match(browserWorkflow, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
 });
 
 test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
