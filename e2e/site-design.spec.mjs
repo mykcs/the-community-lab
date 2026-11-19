@@ -9,6 +9,7 @@ function inventory(dir) {
     return entry.isDirectory() ? inventory(file) : file.endsWith('.html') ? [file] : [];
   }).sort();
 }
+test.describe.configure({ retries: 0 });
 const routes = inventory('dist').map(file => ({ file, url: '/the-community-lab/' + file.slice(5).replace(/index\.html$/, '') }));
 routes.push(...['translation-review', 'original-question-translation-review'].map(route => ({ file: `offline-${route}`, url: pathToFileURL(path.resolve(`docs/${route}/index.html`)).href })));
 
@@ -20,7 +21,8 @@ async function assertPresentation(page) {
       overflow: document.documentElement.scrollWidth - innerWidth,
       clipped: [...document.querySelectorAll('h1,h2,h3,p,button,summary')].filter(el => {
         const r=el.getBoundingClientRect(),s=getComputedStyle(el);
-        return r.height>0 && ['hidden','clip'].includes(s.overflowX) && el.scrollWidth>el.clientWidth+2;
+        const screenReaderOnly=el.matches('.full-sr-only')&&s.position==='absolute'&&s.width==='1px'&&s.height==='1px'&&s.clip==='rect(0px, 0px, 0px, 0px)';
+        return !screenReaderOnly && r.height>0 && ['hidden','clip'].includes(s.overflowX) && el.scrollWidth>el.clientWidth+2;
       }).map(el => ({tag:el.tagName,class:el.className})) };
   });
   expect(result.version).toBe('1');
@@ -47,17 +49,22 @@ async function proveConsumers(page, reviewer, questionnaire) {
     const rows=[];
     for(const [token,value,element,property] of targetTokens){
       if(!element)throw new Error(`Missing real consumer ${token}`);
-      const before=getComputedStyle(element)[property],old=root.style.getPropertyValue(token);
+      const before=getComputedStyle(element)[property],beforeWidth=element.getBoundingClientRect().width,old=root.style.getPropertyValue(token);
       root.style.setProperty(token,value);
       await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
-      const after=getComputedStyle(element)[property];
+      const after=getComputedStyle(element)[property],afterWidth=element.getBoundingClientRect().width;
       if(old)root.style.setProperty(token,old);else root.style.removeProperty(token);
-      await new Promise(resolve=>requestAnimationFrame(resolve));
-      rows.push({token,property,before,after,changed:before!==after});
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const restored=getComputedStyle(element)[property],restoredWidth=element.getBoundingClientRect().width;
+      rows.push({token,property,before,after,restored,beforeWidth,afterWidth,restoredWidth,changed:before!==after});
     }
     return rows;
   },{reviewer,questionnaire});
-  expect(probes.every(probe=>probe.changed),JSON.stringify(probes)).toBe(true);
+  expect(probes.every(probe=>probe.changed && probe.restored===probe.before),JSON.stringify(probes)).toBe(true);
+  for(const probe of probes.filter(probe=>probe.property==='width')){
+    expect(Math.abs(probe.afterWidth-probe.beforeWidth),JSON.stringify(probe)).toBeGreaterThan(.5);
+    expect(probe.restoredWidth,JSON.stringify(probe)).toBeCloseTo(probe.beforeWidth,1);
+  }
   return probes;
 }
 
