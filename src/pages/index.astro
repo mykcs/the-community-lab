@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { calendarDate } from '../../lib/calendar-date.mjs';
 import { SEASONS } from '../../data/questions.mjs';
 import { ORIGINAL_SITE_AUDIT } from '../../data/original-site-audit.mjs';
 import { GUEST_SOCIAL_DIRECTORY } from '../../data/guest-social-directory.mjs';
@@ -10,6 +11,7 @@ const socialPeople = GUEST_SOCIAL_DIRECTORY as unknown as ReadonlyArray<GuestSoc
 const socialLinkCount = socialPeople.reduce((total, person) => total + person.accounts.length, 0);
 const audit = buildReproductionAudit();
 const base = import.meta.env.BASE_URL;
+const verificationDate = '2026-10-29';
 ---
 <!doctype html>
 <html lang="zh-CN">
@@ -25,21 +27,21 @@ const base = import.meta.env.BASE_URL;
       #hero-start:disabled,.season-arrow:disabled{cursor:wait;opacity:.6}
       .demo-boot-status[hidden]{display:none!important}
       .demo-boot-status a,.demo-noscript a{color:#ffb4a5;text-decoration:underline;text-underline-offset:3px}
-      .guest-social-directory{list-style:none;padding:0;margin:20px 0 0;border-top:1px solid #ffffff28}
-      .guest-social-person{padding:16px 0;border-bottom:1px solid #ffffff20}
-      .guest-social-person strong{font-size:15px}
-      .guest-social-links{display:flex;gap:15px;flex-wrap:wrap;margin:10px 0}
-      .guest-social-links a{color:#ffb4a5;text-decoration:underline;text-underline-offset:3px;padding:8px 4px}
-      .guest-social-links .guest-social-source{color:#c1c5ce;font-size:13px}
-      .guest-social-person small{display:block;color:#aaaeb8;line-height:1.7}
-      .guest-social-caveat{border-left:2px solid #ff776c;padding:2px 0 2px 18px;margin:0 0 28px;color:#c8cbd1}
-      .guest-social-caveat strong{color:#f4f0e7;font-size:14px}
-      .guest-social-caveat p{font-size:13px;line-height:1.8;margin:8px 0 0}
-      .guest-social-seasons{display:grid;grid-template-columns:1fr 1fr;gap:34px}
-      .guest-social-season h3{font-size:20px;margin:0;color:#f4f0e7}
-      .guest-social-season .guest-social-directory{margin-top:12px}
-      .guest-social-account{display:inline-flex;align-items:center;gap:10px}
-      @media(max-width:760px){.guest-social-seasons{grid-template-columns:1fr;gap:30px}}
+      .guest-social-directory{list-style:none;padding:0;margin:var(--space-5) 0 0;border-top:1px solid #ffffff28}
+      .guest-social-person{padding:var(--space-4) 0;border-bottom:1px solid #ffffff20}
+      .guest-social-person strong{font-size:var(--type-caption)}
+      .guest-social-links{display:flex;gap:var(--space-4);flex-wrap:wrap;margin:var(--space-2) 0}
+      .guest-social-links a{color:#ffb4a5;text-decoration:underline;text-underline-offset:3px;padding:var(--space-2) var(--space-1)}
+      .guest-social-links .guest-social-source{color:#c1c5ce;font-size:var(--type-meta)}
+      .guest-social-person small{display:block;color:#aaaeb8;line-height:var(--leading-body)}
+      .guest-social-caveat{border-left:2px solid #ff776c;padding:var(--space-half) 0 var(--space-half) var(--space-4);margin:0 0 var(--space-6);color:#c8cbd1}
+      .guest-social-caveat strong{color:#f4f0e7;font-size:var(--type-caption)}
+      .guest-social-caveat p{font-size:var(--type-meta);line-height:var(--leading-reading);margin:var(--space-2) 0 0}
+      .guest-social-seasons{display:grid;grid-template-columns:1fr 1fr;gap:var(--space-8)}
+      .guest-social-season h3{font-size:var(--type-subheading);margin:0;color:#f4f0e7}
+      .guest-social-season .guest-social-directory{margin-top:var(--space-3)}
+      .guest-social-account{display:inline-flex;align-items:center;gap:var(--space-2)}
+      @media(max-width:760px){.guest-social-seasons{grid-template-columns:1fr;gap:var(--space-8)}}
     </style>
   </head>
   <body>
@@ -141,7 +143,7 @@ const base = import.meta.env.BASE_URL;
               <details class="mt-5 border-t border-white/10 pt-4 text-sm leading-7 text-[#b6bbc5]">
                 <summary class="cursor-pointer text-[#f4f0e7]">查看逐题来源与尚缺的证据</summary>
                 <p class="mt-3">索引记录了 87＋37 个源题标识、所属维度、选项数量及客户端资源指纹，不包含原题题干或选项文字。源数组位置不等于答题时的展示顺序；非连续标识也不等于漏题。</p>
-                <p class="mt-2">核对日期：2026-10-29。第一季当前客户端混用六级与四级选项；本站演示仍是独立四级量表。用户报告已获当前公开材料的官方非营利翻译许可，原件未独立核验；源站与题库版本归属、独立人工韩中审校及服务端评分金标准仍待核实。</p>
+                <p class="mt-2">核对日期：<time datetime={verificationDate}>{calendarDate(verificationDate)}</time>。第一季当前客户端混用六级与四级选项；本站演示仍是独立四级量表。用户报告已获当前公开材料的官方非营利翻译许可，原件未独立核验；源站与题库版本归属、独立人工韩中审校及服务端评分金标准仍待核实。</p>
                 <a class="mt-3 inline-flex text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/data/original-question-index.json" target="_blank" rel="noopener noreferrer">逐题来源与缺口清单 ↗</a>
               </details>
               <a class="mt-5 inline-flex text-sm text-[#ffb4a5] underline underline-offset-4" href="https://github.com/mykcs/the-community-lab/blob/main/docs/VERIFICATION-MATRIX.md" target="_blank" rel="noopener noreferrer">查看每一道验证关卡与证据 →</a>
@@ -179,7 +181,7 @@ const base = import.meta.env.BASE_URL;
                             </span>
                           ))}
                         </div>
-                        <small>两名独立 Agent 核对公开原始来源 · 2026-10-29 · 待真人逐条复核</small>
+                        <small>两名独立 Agent 核对公开原始来源 · <time datetime={verificationDate}>{calendarDate(verificationDate)}</time> · 待真人逐条复核</small>
                       </li>
                     ))}
                   </ul>

@@ -63,7 +63,7 @@ test('Only the unified Pages workflow deploys; translation review still has its 
   assert.doesNotMatch(translationWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
 });
 
-test('browser acceptance runs Chromium at both viewport widths without publishing the site', () => {
+test('browser acceptance runs both engines at desktop/mobile without publishing the site', () => {
   assert.match(browserWorkflow, /name: Browser acceptance/);
   assert.match(browserWorkflow, /pull_request:/);
   assert.match(browserWorkflow, /['"]full-questionnaire-app\.mjs['"]/);
@@ -71,13 +71,17 @@ test('browser acceptance runs Chromium at both viewport widths without publishin
     assert.equal(browserWorkflow.split(`'${path}'`).length - 1, 2,
       `${path} must trigger Chromium QA both on PR and on main`);
   }
-  assert.match(browserWorkflow, /npx playwright install --with-deps --only-shell chromium/);
+  assert.match(browserWorkflow, /npx playwright install --with-deps chromium webkit/);
   assert.match(browserWorkflow, /- run: npm run test:browser/);
   assert.doesNotMatch(browserWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
   const config = readFileSync(new URL('../playwright.config.mjs', import.meta.url), 'utf8');
   assert.match(config, /width: 1440, height: 900/);
   assert.match(config, /width: 440, height: 956/);
   assert.match(config, /COMMUNITY_DEPLOY_TARGET: 'github-pages'/);
+  assert.match(config, /name: 'standards-webkit-desktop'/);
+  assert.match(config, /name: 'standards-webkit-mobile'/);
+  assert.match(browserWorkflow, /name: community-browser-\$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
+  assert.match(browserWorkflow, /ref: \$\{\{ github.event.pull_request.head.sha \|\| github.sha \}\}/);
 });
 
 test('the homepage distinguishes source-question pilot from the translation review draft and official score', () => {
