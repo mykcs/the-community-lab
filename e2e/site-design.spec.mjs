@@ -38,7 +38,7 @@ async function proveConsumers(page, reviewer, questionnaire) {
   const probes=await page.evaluate(async ({reviewer,questionnaire}) => {
     const root=document.documentElement;
     const spacing=document.querySelector(reviewer?'.cardbody':questionnaire?'.full-shell':'.hero-copy');
-    const width=document.querySelector(reviewer?'.wrap':questionnaire?'.full-shell':'.page-shell');
+    const width=document.querySelector(reviewer?'#list.wrap':questionnaire?'.full-shell':'.page-shell');
     const targetTokens=[
       ['--font-ui','monospace',document.body,'fontFamily'],
       ['--type-body','18px',document.body,'fontSize'],
