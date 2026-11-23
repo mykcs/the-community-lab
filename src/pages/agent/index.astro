@@ -1,0 +1,118 @@
+---
+import "../../styles/global.css";
+import { readerIndex, route, prompt } from "../../lib/agent-reader.mjs";
+const host = new URL(import.meta.env.BASE_URL, Astro.site ?? "https://mykcs.github.io").href.replace(/\/$/, "");
+const copyValue = prompt.replaceAll("{{SITE_URL}}", host);
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#10131a" />
+    <title>给 Agent 读 · 同频实验室</title>
+    <meta name="description" content="让 Agent 正确理解独立非官方 The Community Lab 的翻译、题库与计分证据边界，并发现公开机器可读目录。" />
+    <link rel="help" type="text/markdown" href={route("/agent/SKILL.md")} title="Agent 阅读指南" />
+  </head>
+  <body>
+    <div class="grain" aria-hidden="true"></div>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand" href={route("/")} aria-label="返回 The Community Lab 首页">
+          <span class="brand-symbol" aria-hidden="true"><span></span></span>
+          <span class="brand-name">THE COMMUNITY <strong>LAB.</strong><small>同频实验室</small></span>
+        </a>
+        <nav class="header-links" aria-label="阅读导航">
+          <a href={route("/")}>返回首页</a>
+        </nav>
+      </header>
+      <main id="main-content" class="mx-auto max-w-3xl px-6 py-12 md:py-20">
+        <header class="mb-10">
+          <p class="eyebrow-plain mb-4">AGENT READER / 非官方</p>
+          <h1 class="text-4xl md:text-5xl font-bold tracking-tight mb-5">让 Agent 先读懂我们的研究边界。</h1>
+          <p class="text-[var(--muted)] leading-relaxed">这不是授权安装脚本，也不是连接用户答卷的聊天机器人。我们把当前已公开的目录和验证限制整理成一份可复制的上下文，让 Agent 知道去哪找资料，以及哪些说法还没有证据。</p>
+        </header>
+
+        <section class="border border-[var(--line)] bg-[var(--surface)] rounded-lg p-5 md:p-7 mb-12" aria-labelledby="copy-heading">
+          <p class="eyebrow-plain mb-3">01 / 直接使用</p>
+          <h2 id="copy-heading" class="text-2xl font-bold mb-3">把项目上下文交给 Agent</h2>
+          <p class="text-sm text-[var(--muted)] leading-relaxed mb-5">复制后粘贴到你信任的 ChatGPT、Claude 或 Codex。内容包括两季公开来源的审核状态、站点入口以及明确的非官方限制；不包含任何个人测试答案。</p>
+          <button type="button" id="copy-community-context" class="button button-primary" aria-describedby="copy-community-status">复制站点上下文</button>
+          <p id="copy-community-status" role="status" aria-live="polite" class="mt-3 text-sm text-[var(--red2)]"></p>
+          <details class="mt-6 pt-4 border-t border-[var(--line)]">
+            <summary class="cursor-pointer text-[var(--red2)] text-sm">查看将要复制的完整文本</summary>
+            <label for="community-context-text" class="block text-sm text-[var(--muted)] mt-4 mb-2">可全选或手动复制</label>
+            <textarea id="community-context-text" rows="12" spellcheck="false" readonly class="w-full rounded-lg border border-[var(--line)] bg-[var(--bg)] text-[var(--text)] text-sm p-4 font-mono leading-relaxed">{copyValue}</textarea>
+          </details>
+        </section>
+
+        <section aria-labelledby="sources-heading" class="mb-12">
+          <p class="eyebrow-plain mb-3">02 / 机器可读</p>
+          <h2 id="sources-heading" class="text-2xl font-bold mb-5">三个入口，各管一件事</h2>
+          <div class="grid gap-4 md:grid-cols-3">
+            <a href={route("/llms.txt")} class="block p-5 border border-[var(--line)] rounded-lg hover:border-[var(--red)]">
+              <strong class="block font-mono mb-2">llms.txt</strong>
+              <span class="block text-sm text-[var(--muted)]">全站快速目录</span>
+            </a>
+            <a href={route("/agent/site.json")} class="block p-5 border border-[var(--line)] rounded-lg hover:border-[var(--red)]">
+              <strong class="block font-mono mb-2">site.json</strong>
+              <span class="block text-sm text-[var(--muted)]">结构化审核元数据</span>
+            </a>
+            <a href={route("/agent/SKILL.md")} class="block p-5 border border-[var(--line)] rounded-lg hover:border-[var(--red)]">
+              <strong class="block font-mono mb-2">SKILL.md</strong>
+              <span class="block text-sm text-[var(--muted)]">如何读、怎么引用和什么不能做</span>
+            </a>
+          </div>
+        </section>
+
+        <section aria-labelledby="boundary-heading" class="mb-12">
+          <p class="eyebrow-plain mb-3">03 / 真实性优先</p>
+          <h2 id="boundary-heading" class="text-2xl font-bold mb-4">已公开，不等于已经验证。</h2>
+          <ul class="list-disc pl-6 space-y-3 text-[var(--muted)]">
+            <li>本站是独立非官方粉丝项目，不能冒充节目方。</li>
+            <li>两季试填中文为 AI 初译，独立韩中审校尚未完成。</li>
+            <li>官方服务端计分公式与同答卷同结果验收均未完成，不能凭本站计算官方成绩。</li>
+            <li>不要把参与者的真实答卷、私人身份或结果上传给 Agent 或公开仓库。</li>
+          </ul>
+          <p class="text-sm text-[var(--muted)] mt-6">所有数字只用于描述源数据覆盖；核验依据需查看 <a class="text-[var(--red2)] underline" href="https://github.com/mykcs/the-community-lab/blob/main/docs/VERIFICATION-MATRIX.md">公开核验矩阵</a>。</p>
+        </section>
+
+        <section aria-labelledby="directory-heading">
+          <h2 id="directory-heading" class="text-2xl font-bold mb-5">Agent 可以从哪里继续</h2>
+          <ul class="space-y-4">
+            {readerIndex.sections.map(section => (
+              <li class="border-b border-[var(--line)] pb-4">
+                <a href={section.href} class="text-[var(--red2)] font-semibold">{section.title}</a>
+                <p class="text-sm text-[var(--muted)] mt-2">{section.use}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </main>
+      <footer class="site-footer">
+        <div class="footer-bottom">
+          <span>THE COMMUNITY LAB. · 独立非官方</span>
+          <a class="text-[var(--red2)]" href={route("/")}>返回首页</a>
+        </div>
+      </footer>
+    </div>
+    <script>
+      const button = document.querySelector<HTMLButtonElement>("#copy-community-context");
+      const input = document.querySelector<HTMLTextAreaElement>("#community-context-text");
+      const status = document.querySelector<HTMLElement>("#copy-community-status");
+      button?.addEventListener("click", async () => {
+        if (!input || !status) return;
+        try {
+          await navigator.clipboard.writeText(input.value);
+          status.textContent = "站点上下文已复制，可以粘贴给 Agent。";
+        } catch {
+          const details = input.closest("details");
+          if (details) details.open = true;
+          input.focus();
+          input.select();
+          status.textContent = "自动复制未成功，请手动复制已选中的文本。";
+        }
+      });
+    </script>
+  </body>
+</html>
