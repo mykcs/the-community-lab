@@ -21,6 +21,7 @@ const verificationDate = '2026-10-29';
     <meta name="theme-color" content="#10131a" />
     <meta name="description" content="目标是把韩国《The Community》两季官网测试忠实译成中文，并实现同答卷同官方结果。目前可试填 124 道公开来源题，译文与官方计分仍待核验。" />
     <title>同频实验室 · The Community Lab</title>
+    <link rel="help" type="text/markdown" href={`${base}agent/SKILL.md`} title="Agent 阅读指南" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='13' fill='%2310131a'/%3E%3Ccircle cx='24' cy='24' r='14' fill='none' stroke='%23ff7468' stroke-width='4'/%3E%3Ccircle cx='24' cy='24' r='4' fill='%23ff7468'/%3E%3C/svg%3E" />
     <script>import '../../app.mjs';</script>
     <style is:global>
@@ -208,7 +209,7 @@ const verificationDate = '2026-10-29';
         <section id="result-view" class="view result-view" hidden aria-labelledby="result-title"><div id="result-content"></div></section>
       </main>
 
-      <footer class="site-footer" id="privacy"><div class="footer-main"><div><span class="footer-brand">THE COMMUNITY LAB.</span><p>一个关于差异、理解与同频的非官方实验。</p></div><div class="footer-links"><a href="https://github.com/mykcs/the-community-lab/blob/main/WISH.md" target="_blank" rel="noopener noreferrer">项目愿望 ↗</a><a href="https://github.com/mykcs/the-community-lab/blob/main/docs/TRANSLATION-STANDARD.md" target="_blank" rel="noopener noreferrer">翻译标准 ↗</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">公开源码 ↗</a></div></div><div class="footer-bottom"><span>INDEPENDENT FAN EXPERIMENT · NOT OFFICIAL</span><span>无需注册或填写个人信息 · 答案只在本页处理 · 无第三方追踪</span></div></footer>
+      <footer class="site-footer" id="privacy"><div class="footer-main"><div><span class="footer-brand">THE COMMUNITY LAB.</span><p>一个关于差异、理解与同频的非官方实验。</p></div><div class="footer-links"><a href="https://github.com/mykcs/the-community-lab/blob/main/WISH.md" target="_blank" rel="noopener noreferrer">项目愿望 ↗</a><a href="https://github.com/mykcs/the-community-lab/blob/main/docs/TRANSLATION-STANDARD.md" target="_blank" rel="noopener noreferrer">翻译标准 ↗</a><a href={`${base}agent/`}>给 Agent 读 ↗</a><a href="https://github.com/mykcs/the-community-lab" target="_blank" rel="noopener noreferrer">公开源码 ↗</a></div></div><div class="footer-bottom"><span>INDEPENDENT FAN EXPERIMENT · NOT OFFICIAL</span><span>无需注册或填写个人信息 · 答案只在本页处理 · 无第三方追踪</span></div></footer>
     </div>
   </body>
 </html>
