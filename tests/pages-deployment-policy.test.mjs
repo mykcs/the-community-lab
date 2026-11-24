@@ -71,7 +71,10 @@ test('browser acceptance runs both engines at desktop/mobile without publishing 
     assert.equal(browserWorkflow.split(`'${path}'`).length - 1, 2,
       `${path} must trigger Chromium QA both on PR and on main`);
   }
-  assert.match(browserWorkflow, /npx playwright install --with-deps chromium webkit/);
+  assert.match(browserWorkflow, /image: mcr\.microsoft\.com\/playwright:v1\.64\.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f/);
+  assert.match(browserWorkflow, /PLAYWRIGHT_BROWSERS_PATH: \/ms-playwright/);
+  assert.match(browserWorkflow, /for\(const b of \[chromium,webkit\]\)if\(!fs\.existsSync\(b\.executablePath\(\)\)\)throw Error/);
+  assert.doesNotMatch(browserWorkflow, /playwright install --with-deps/);
   assert.match(browserWorkflow, /- run: npm run test:browser/);
   assert.doesNotMatch(browserWorkflow, /deploy-pages|upload-pages-artifact|pages:\s*write/);
   const config = readFileSync(new URL('../playwright.config.mjs', import.meta.url), 'utf8');

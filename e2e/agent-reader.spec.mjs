@@ -4,6 +4,7 @@ test("public Agent Reader exposes only directory context and works at this viewp
   const res=await page.goto("agent/");
   expect(res?.status()).toBe(200);
   await expect(page.getByRole("heading",{level:1})).toContainText("Agent");
+  await expect(page.getByRole("link", {name:"THE COMMUNITY LAB. 同频实验室首页"})).toBeVisible();
   await expect(page.getByRole("button",{name:"复制站点上下文"})).toBeVisible();
   await page.locator("details summary").click();
   const content=await page.locator("#community-context-text").inputValue();
