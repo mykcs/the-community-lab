@@ -42,3 +42,5 @@
 ## 本地实施证据
 
 两份 reviewer 的嵌入源题 JSON 与执行脚本逐字保持一致，因此 CSP 脚本哈希不变。页面仍使用同一 124 题、550 选项来源。具体提交 SHA、正式 CI、截图与最终发布证据以 PR 当前记录为准。
+
+Feature-level goals and protected semantics: [Intent](../intent/README.md). This file retains its existing ownership and history.

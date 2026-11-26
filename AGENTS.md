@@ -51,3 +51,5 @@
 ## Project lifecycle · Current / Wish / Dev
 
 Use the existing [Current](docs/agents/current/README.md) to resume safely, [Wish](docs/wish/README.md) for the faithful bilingual-test outcome, and [Dev](docs/dev/README.md) for source, CI and GitHub Pages implementation. These are discovery links, not authorization to publish unreviewed translations, claim official grading equivalence or enable private history. Shared semantics: [mykcs/.agents](https://github.com/mykcs/.agents/blob/main/docs/agents/README.md).
+
+For material page/feature changes, resolve [Intent](docs/intent/README.md) first, then follow the existing Wish, Design, Dev and verification owners; preserve confirmed behavior and do not infer approval from implementation.

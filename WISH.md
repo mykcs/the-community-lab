@@ -116,3 +116,5 @@
 **今天的可学习案例：** [nuro.dev](https://nuro.dev/) 的细腻悬停反馈、图标比例与空间布局（2026-11-20）。这只是当前参考，不要求复制页面、固定动效参数、引入框架或把它列成永久唯一方向；将来找到更符合问卷/双语阅读的成熟设计，应换用更好方案。
 
 落实前先比较真实答题路径和桌面/440px 手机的阅读效果，验收键盘、触控、可访问性、减少动画偏好、选中/未选中状态、无抖动及不溢出。这个愿望低于合法来源、中文忠实度、真实官方结果对齐、用户隐私的硬标准；**此 PR 只记录意图，不代表这些能力已实现。**
+
+Feature-level goals and protected semantics: [Intent](docs/intent/README.md). This file retains its existing ownership and history.
