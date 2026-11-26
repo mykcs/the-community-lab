@@ -26,4 +26,4 @@ Do not start hosting bills, data collection, OAuth/database writes or publicatio
 
 This table maps the existing project authorities, not a certification of all pages.
 
-Feature-level goals and protected semantics: [Intent](../intent/README.md). This file retains its existing ownership and history.
+Feature-level goals and protected semantics: [Feature Design](../design/features/README.md). This file retains its existing ownership and history.
