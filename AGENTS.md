@@ -52,4 +52,4 @@
 
 Use the existing [Current](docs/agents/current/README.md) to resume safely, [Wish](docs/wish/README.md) for the faithful bilingual-test outcome, and [Dev](docs/dev/README.md) for source, CI and GitHub Pages implementation. These are discovery links, not authorization to publish unreviewed translations, claim official grading equivalence or enable private history. Shared semantics: [mykcs/.agents](https://github.com/mykcs/.agents/blob/main/docs/agents/README.md).
 
-For material page/feature changes, resolve [Intent](docs/intent/README.md) first, then follow the existing Wish, Design, Dev and verification owners; preserve confirmed behavior and do not infer approval from implementation.
+For material page/feature changes, resolve the relevant [Feature Design](docs/design/features/README.md) (intent and realization), preserve source-backed essential outcomes, then actively compare and verify a better feasible design using the latest owner intent, technology and evidence. Do not freeze the old implementation or infer approval from a passing test.

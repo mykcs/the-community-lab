@@ -117,4 +117,4 @@
 
 落实前先比较真实答题路径和桌面/440px 手机的阅读效果，验收键盘、触控、可访问性、减少动画偏好、选中/未选中状态、无抖动及不溢出。这个愿望低于合法来源、中文忠实度、真实官方结果对齐、用户隐私的硬标准；**此 PR 只记录意图，不代表这些能力已实现。**
 
-Feature-level goals and protected semantics: [Intent](docs/intent/README.md). This file retains its existing ownership and history.
+Feature-level goals and protected semantics: [Feature Design](docs/design/features/README.md). This file retains its existing ownership and history.

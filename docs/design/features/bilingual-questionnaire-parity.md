@@ -6,7 +6,7 @@
 
 让不懂韩文的读者在同季、同版本题目与选项下理解原题、完成答题，并在证据充分时取得与官方同输入完全一致的结果。
 
-依据：[现有 Wish](../../WISH.md)、[现有 Design](../workstreams/SITEWIDE-DESIGN-20261120.md)，2026-11-26 按已有仓库内容整理；不引用私人聊天，不宣称获得新的用户批准。
+依据：[现有 Wish](../../../WISH.md)、[现有 Design](../../workstreams/SITEWIDE-DESIGN-20261120.md)，2026-11-26 按已有仓库内容整理；不引用私人聊天，不宣称获得新的用户批准。
 
 ## 保护的体验与语义
 
@@ -16,8 +16,10 @@
 
 ## 实现与验收
 
-[现有页面](../../src/pages/questionnaire/index.astro) · [Design](../workstreams/SITEWIDE-DESIGN-20261120.md) · [Dev / 验收入口](../dev/README.md) · [专用核验矩阵](../VERIFICATION-MATRIX.md)。
+[现有页面](../../../src/pages/questionnaire/index.astro) · [Design](../../workstreams/SITEWIDE-DESIGN-20261120.md) · [Dev / 验收入口](../../dev/README.md) · [专用核验矩阵](../../VERIFICATION-MATRIX.md)。
 
 按核验矩阵检查逐题逐选项、条件路径、官方完整输入输出金标准、两季隔离及桌面手机流程；缺一项保持未验证。不得把本次文档接入视为官方等价或授权证据。
 
 状态：意图来源已核对；本次只接入文档，不改变网站代码或重新验收当前生产功能。后续改版按既有真实测试和用户反馈更新证据；未验证项保持明确。
+
+**守正出新 / Preserve the purpose, improve the design.** 保留有来源的目标、已确认的必要能力和重要约束；主动审视新的用户意图、更好的技术、智能、表达方式与成熟参考，比较现有方案和更优候选，并用真实验收验证改进。旧布局和实现不是上限；不能把推测冒充确认，或悄悄降低已确认的目标。
